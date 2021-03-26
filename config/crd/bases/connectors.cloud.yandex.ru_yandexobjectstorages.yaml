@@ -1,0 +1,107 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.2.5
+  creationTimestamp: null
+  name: yandexobjectstorages.connectors.cloud.yandex.ru
+spec:
+  group: connectors.cloud.yandex.ru
+  names:
+    kind: YandexObjectStorage
+    listKind: YandexObjectStorageList
+    plural: yandexobjectstorages
+    shortNames:
+    - yc-bucket
+    singular: yandexobjectstorage
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      description: 'YandexObjectStorage: is the Schema for the yandexobjectstorages
+        API'
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: 'YandexObjectStorageSpec: defines the desired state of YandexObjectStorage'
+          properties:
+            configAccess:
+              description: 'ConfigAccess: public access allows any internet user to
+                read CORS configurations, hosting of static sites and bucket objects
+                lifecycles.'
+              enum:
+              - private
+              - public
+              type: string
+            listingAccess:
+              description: 'ListingAccess: public access allows any internet user
+                to get listing of elements in bucket.'
+              enum:
+              - private
+              - public
+              type: string
+            name:
+              description: 'Name: must be unique in Yandex Cloud. Can consist of lowercase
+                latin letters, dashes, dots and numbers and must be from 3 to 64 characters
+                long.'
+              maxLength: 64
+              minLength: 3
+              pattern: '[a-z0-9][a-z0-9-.]*[a-z0-9]'
+              type: string
+            readAccess:
+              description: 'ReadAccess: public access allows any internet user to
+                download objects from the bucket.'
+              enum:
+              - private
+              - public
+              type: string
+            size:
+              description: 'Size: size of the bucket in gigabytes. Can be in range
+                from 1Gb to 1024Tb, or 1048576Gb. Must be an integer.'
+              maximum: 1048576
+              minimum: 1
+              type: integer
+            storageType:
+              description: 'StorageType: specifies which storage type that is used
+                by default for object downloading. Standard storage is dedicated to
+                storages with frequent object queries, while cold storage is better
+                suited for long-term storage of objects with rare read queries.'
+              enum:
+              - standard
+              - cold
+              type: string
+          required:
+          - configAccess
+          - listingAccess
+          - name
+          - readAccess
+          - size
+          - storageType
+          type: object
+        status:
+          description: 'YandexObjectStorageStatus: defines the observed state of YandexObjectStorage'
+          type: object
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
