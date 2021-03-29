@@ -1,7 +1,7 @@
 apiVersion: connectors.cloud.yandex.ru/v1
 kind: YandexContainerRegistry
 metadata:
-  name: yandexcontainerregistry-sample
+  name: test-registry-1
 spec:
-  # Add fields here
-  foo: bar
+  folderId: b1g7jvgmf06eel94s22d
+  name: test-registry-1
