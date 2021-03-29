@@ -13,14 +13,16 @@ spec:
     kind: YandexContainerRegistry
     listKind: YandexContainerRegistryList
     plural: yandexcontainerregistries
+    shortNames:
+    - yc-registry
     singular: yandexcontainerregistry
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: YandexContainerRegistry is the Schema for the yandexcontainerregistries
-          API
+        description: 'YandexContainerRegistry: is the Schema for the yandexcontainerregistries
+          API'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -35,23 +37,49 @@ spec:
           metadata:
             type: object
           spec:
-            description: YandexContainerRegistrySpec defines the desired state of
-              YandexContainerRegistry
+            description: 'YandexContainerRegistrySpec: defines the desired state of
+              YandexContainerRegistry'
             properties:
-              foo:
-                description: Foo is an example field of YandexContainerRegistry. Edit
-                  yandexcontainerregistry_types.go to remove/update
+              folderId:
+                description: 'FolderId: id of a folder in which registry is located'
+                type: string
+              name:
+                description: 'Name: name of registry'
+                maxLength: 63
+                minLength: 3
                 type: string
             type: object
           status:
-            description: YandexContainerRegistryStatus defines the observed state
-              of YandexContainerRegistry
+            description: 'YandexContainerRegistryStatus: defines the observed state
+              of YandexContainerRegistry'
+            properties:
+              createdAt:
+                description: 'CreatedAt: RFC3339-formatted string, representing creation
+                  time of resource'
+                type: string
+              folderId:
+                description: 'FolderId: id of a folder in which registry is located'
+                type: string
+              id:
+                description: 'Id: id of registry'
+                type: string
+              labels:
+                additionalProperties:
+                  type: string
+                description: 'Labels: registry labels in key:value form. Maximum of
+                  64 labels for resource is allowed'
+                type: object
+              name:
+                description: 'Name: name of registry'
+                type: string
+              status:
+                description: 'Status: status of registry. Valid values are: - CREATING
+                  - ACTIVE - DELETING'
+                type: string
             type: object
         type: object
     served: true
     storage: true
-    subresources:
-      status: {}
 status:
   acceptedNames:
     kind: ""
