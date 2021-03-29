@@ -2,9 +2,6 @@ domain: cloud.yandex.ru
 repo: k8s-connectors
 resources:
 - group: connectors
-  kind: YandexObjectStorage
-  version: v1
-- group: connectors
   kind: YandexContainerRegistry
   version: v1
 version: "2"

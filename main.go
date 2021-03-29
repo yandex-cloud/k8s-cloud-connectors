@@ -66,14 +66,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.YandexObjectStorageReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("YandexObjectStorage"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "YandexObjectStorage")
-		os.Exit(1)
-	}
 	if err = (&controllers.YandexContainerRegistryReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("YandexContainerRegistry"),
