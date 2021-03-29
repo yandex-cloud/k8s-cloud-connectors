@@ -57,8 +57,8 @@ type YandexContainerRegistryStatus struct {
 // TODO (covariance) make registry cluster-scope
 
 // YandexContainerRegistry: is the Schema for the yandexcontainerregistries API
-// +kubebuilder:object:root=true
-// +kubebuilder:resource:shortName=yc-registry
+//+kubebuilder:object:root=true
+//+kubebuilder:resource:shortName=yc-registry
 type YandexContainerRegistry struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -68,7 +68,7 @@ type YandexContainerRegistry struct {
 }
 
 // YandexContainerRegistryList: contains a list of YandexContainerRegistry
-// +kubebuilder:object:root=true
+//+kubebuilder:object:root=true
 type YandexContainerRegistryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

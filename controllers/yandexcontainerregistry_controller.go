@@ -5,6 +5,7 @@ package controllers
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,10 +34,10 @@ type YandexContainerRegistryInitializer struct {
 	Initialize    func(context.Context, *ycsdk.SDK, logr.Logger, *connectorsv1.YandexContainerRegistry) error
 }
 
-// +kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=yandexcontainerregistries,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=yandexcontainerregistries/status,verbs=get;update;patch
-func (r *YandexContainerRegistryReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+//+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=yandexcontainerregistries,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=yandexcontainerregistries/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=yandexcontainerregistries/finalizers,verbs=update
+func (r *YandexContainerRegistryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("yandexcontainerregistry", req.NamespacedName)
 
 	// Try to retrieve resource from k8s
@@ -319,6 +320,7 @@ func (r *YandexContainerRegistryReconciler) statusUpdate(ctx context.Context, sd
 	return nil
 }
 
+// SetupWithManager sets up the controller with the Manager.
 func (r *YandexContainerRegistryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&connectorsv1.YandexContainerRegistry{}).

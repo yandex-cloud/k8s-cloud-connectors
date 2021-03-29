@@ -21,6 +21,12 @@ rules:
 - apiGroups:
   - connectors.cloud.yandex.ru
   resources:
+  - yandexcontainerregistries/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - connectors.cloud.yandex.ru
+  resources:
   - yandexcontainerregistries/status
   verbs:
   - get

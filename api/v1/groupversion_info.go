@@ -2,8 +2,8 @@
 // Author: Martynov Pavel <covariance@yandex-team.ru>
 
 // Package v1 contains API Schema definitions for the connectors v1 API group
-// +kubebuilder:object:generate=true
-// +groupName=connectors.cloud.yandex.ru
+//+kubebuilder:object:generate=true
+//+groupName=connectors.cloud.yandex.ru
 package v1
 
 import (

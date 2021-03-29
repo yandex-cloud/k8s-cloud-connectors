@@ -13,6 +13,9 @@ sudo curl -L https://go.kubebuilder.io/dl/2.3.1/$(go env GOOS)/$(go env GOARCH) 
 export PATH=$PATH:/usr/local/kubebuilder/bin
 ```
 
+EDIT: мигрировали на версию kubebuilder@3.0.0 (пока что она в бете, но тут очевидно пофикшены некоторые прошлый проблемы).
+Чтобы последовать инструкции теперь, надо в ссылке заменить `2.3.1` на `latest`.
+
 - Установка kustomize
 ```shell
  sudo curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
