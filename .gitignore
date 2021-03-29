@@ -3,4 +3,5 @@
 
 # Compiled binaries and test outputs
 bin
+dry-run
 cover.out
