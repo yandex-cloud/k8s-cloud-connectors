@@ -32,7 +32,7 @@ EDIT: мигрировали на версию kubebuilder@3.0.0 (пока чт�
 После инициализации проекта выполняем `make controller-gen`.
 
 ## Проверяем работоспособность
-Перед тем как все делать надо сходить в веб-интерфейс
+Проверяем работоспособность контроллеров на Container Registry.
 ```shell
 # Для начала надо дать сервисному аккаунту, который менеджит инстансы, права делать вещи с реджистри
 # На самом деле можно давать не админские, но пока что так будет прощу, потом пофиксим
@@ -46,27 +46,27 @@ yc resource-manager folder add-access-binding --id $folder_id --role container-r
 # Выполняем эти команды из корня репозитория
 
 # Собираем контроллер и пушим его в реестр (там настроено на мой реестр, надо поменять)
-/bin/bash scripts/push-controller.sh
+/bin/bash scripts/push-controller.sh ycr
 
 # Устанавливаем в кластер CRD-шки
-kustomize build config/crd | kubectl apply -f -
+make install CONNECTOR="ycr"
 
 # Создаём в кластере роль и привязываем её к сервисному аккаунту
-kubectl apply -f config/rbac/role.yaml
-kubectl apply -f config/rbac/role_binding.yaml
+kubectl apply -f ./connectors/ycr/config/rbac/role.yaml
+kubectl apply -f ./connectors/ycr/config/rbac/role_binding.yaml
 
 # Запускаем контроллер в кластере, смотрим его логи (опять же, надо поменять ссылку на образ)
-/bin/bash scripts/run-controller.sh
+/bin/bash scripts/run-controller.sh ycr
 
 # Эту команду запускаем в другом окне терминала, в первом пишутся логи
 # В этом файле надо по понятной причине поменять folderId на свой 
-kubectl apply -f test-registry.yaml
+kubectl apply -f ./connectors/ycr/test-registry.yaml
 # Смотрим на логи, видим, что реестр создался, ходим в веб-интерфейс, 
 # смотрим, что он создался.
-kubectl delete -f test-registry.yaml
+kubectl delete -f ./connectors/ycr/test-registry.yaml
 # Опять смотрим в логи, смотрим что все счастливо удалилось.
 # Останавливаем контроллер, удаляем CRD-шки и роли:
-kustomize build config/crd | kubectl delete -f -
-kubectl delete -f config/rbac/role.yaml
-kubectl delete -f config/rbac/role_binding.yaml
+make uninstall CONNECTOR=ycr
+kubectl delete -f ./connectors/ycr/config/rbac/role.yaml
+kubectl delete -f ./connectors/ycr/config/rbac/role_binding.yaml
 ```

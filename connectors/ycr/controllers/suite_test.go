@@ -17,7 +17,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	connectorsv1 "k8s-connectors/api/v1"
+	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
 	//+kubebuilder:scaffold:imports
 )
 
