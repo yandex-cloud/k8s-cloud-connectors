@@ -3,4 +3,5 @@
 
 # Compiled binaries and test outputs
 bin
+testbin
 cover.out
