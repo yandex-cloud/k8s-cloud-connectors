@@ -60,7 +60,8 @@ build: generate fmt vet ## Build manager binary.
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./connectors/$(CONNECTOR)/main.go
 
-docker-build: test ## Build docker image with the manager.
+# TODO (covariance) uncomment test when tests would be built
+docker-build: ## test Build docker image with the manager.
 	docker build -t ${IMG} . --build-arg connector=$(CONNECTOR)
 
 docker-push: ## Push docker image with the manager.
