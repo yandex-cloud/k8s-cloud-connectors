@@ -55,7 +55,7 @@ test: manifests generate fmt vet ## Run tests.
 ##@ Build
 
 build: generate fmt vet ## Build manager binary.
-	go build -o ./connectors/$(CONNECTOR)/bin/manager ./connectors/$(CONNECTOR)/main.go
+	go build -o ./connectors/$(CONNECTOR)/bin/manager ./connectors/$(CONNECTOR)/cmd/$(CONNECTOR)-controller/main.go
 
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./connectors/$(CONNECTOR)/main.go
