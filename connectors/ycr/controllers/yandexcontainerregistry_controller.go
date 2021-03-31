@@ -15,8 +15,8 @@ import (
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
 	"github.com/yandex-cloud/go-sdk"
 
-	connectorsv1 "k8s-connectors/api/v1"
 	"k8s-connectors/commons"
+	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
 )
 
 // TODO (covariance) push events to get via (kubectl get events)
