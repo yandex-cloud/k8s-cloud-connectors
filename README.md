@@ -1,41 +1,34 @@
 # Описание процесса
 
-## Устанавливаем инструменты
+## Устанавливаем инструменты разработчика
+Важно: эта часть не нужна конечному пользователю. Это вообще нужно только для того, чтобы 
+
 - Установка kubebuilder
 ```shell
 # Скачиваем себе kubebuilder и распаковываем его в нужную директорию
-sudo mkdir /usr/local/kubebuilder
-sudo curl -L https://go.kubebuilder.io/dl/2.3.1/$(go env GOOS)/$(go env GOARCH) | sudo tar -xz -C /usr/local/kubebuilder
+os=$(go env GOOS)
+arch=$(go env GOARCH)
 
-# TODO: remove tar archive
+# download kubebuilder and extract it to tmp
+curl -L https://go.kubebuilder.io/dl/2.3.1/${os}/${arch} | tar -xz -C /tmp/
+
+# move to a long-term location and put it on your path
+# (you'll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else)
+sudo mkdir /usr/bin/kubebuilder
+sudo mv /tmp/kubebuilder_2.3.1_${os}_${arch} /usr/local/kubebuilder
 
 # Работает на время этой сессии, лучше дописать эту команду в ~/.profile
 export PATH=$PATH:/usr/local/kubebuilder/bin
 ```
 
-**EDIT:** мигрировали на версию kubebuilder@3.0.0 (пока что она в бете, но тут очевидно пофикшены некоторые прошлый проблемы).
-Чтобы последовать инструкции теперь, надо в ссылке заменить `2.3.1` на `latest`.
+К сожалению, для версии 3.0.0, которую я использую, пока что нет способа загрузки через командную строку. Релизы
+можно найти [здесь](https://github.com/kubernetes-sigs/kubebuilder/releases), но стоит принять во внимание, 
+что в пакеты поставки для beta-версий не включены дополнительные компоненты для тестирования.
+Их можно использовать из старой версии (в папке со старой версией заменить только бинарник kubebuilder-а). 
 
-**EDIT2:** чтобы использовать существующее решение, установка kubebuilder не требуется. Он юзается только для тестов,
-а они пока нам не очень нужны. По этой же причине я отключил (временно) тестирование в Makefile.
-
-- Установка kustomize
-```shell
- sudo curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
- sudo mv kustomize /usr/local/kubebuilder/bin
-```
-(я закидываю его к kubebuilder-у чтобы потом и удалять вместе + он так попадает в PATH)
-
-Место где нужно немного уличной магии: kubebuilder сейчас использует `controller-gen@v0.2.5`, это очень устаревшая версия.
-Она генерирует много Deprecated штук, и хотя они все рабочие, мы же хотим быть в тренде, верно? Идем в Makefile нашего проекта
-(ну, уже после того, как создали проект) и меняем в директиве `controller-gen` версию на `controller-gen@v0.5.0`.
-
-- Установка controller-gen:
-
-После инициализации проекта выполняем `make controller-gen`.
-
-**EDIT:** текущая версия проекта сама будет локально устанавливать соответствующие зависимости. 
-Никаких дополнительных телодвижений не нужно.
+**P.S.:** для того, чтобы использовать существующее решение, установка kubebuilder не требуется. Он используется только для тестов,
+а они пока нам не очень нужны. По этой же причине я отключил (временно) тестирование в Makefile. Конечному пользователю
+они тоже не нужны, так что он вообще может обойтись без kubebuilder-а.
 
 ## Проверяем работоспособность
 Проверяем работоспособность контроллеров на Container Registry.
@@ -51,25 +44,25 @@ yc resource-manager folder add-access-binding --id $folder_id --role container-r
 
 # Выполняем эти команды из корня репозитория
 
-# Собираем контроллер и пушим его в реестр (там настроено на мой реестр, надо поменять)
-/bin/bash scripts/push-controller.sh ycr
+# Собираем контроллер и пушим его в реестр (стоит подставить свой реестр)
+/bin/bash scripts/push-controller.sh ycr cr.yandex/crptp7j81e7caog8r6gq
 
 # Устанавливаем в кластер CRD-шки
-make install CONNECTOR="ycr"
+make install CONNECTOR=ycr
 
 # Создаём в кластере роль и привязываем её к сервисному аккаунту
 kubectl apply -f ./connectors/ycr/config/rbac/role.yaml
 kubectl apply -f ./connectors/ycr/config/rbac/role_binding.yaml
 
-# Запускаем контроллер в кластере, смотрим его логи (опять же, надо поменять ссылку на образ)
-/bin/bash scripts/run-controller.sh ycr
+# Запускаем контроллер в кластере, смотрим его логи (опять же, надо подставить свой реестр)
+/bin/bash scripts/run-controller.sh ycr cr.yandex/crptp7j81e7caog8r6gq
 
 # Эту команду запускаем в другом окне терминала, в первом пишутся логи
-# В этом файле надо по понятной причине поменять folderId на свой 
-kubectl apply -f ./connectors/ycr/test-registry.yaml
+folder_id=$folder_id envsubst < ./connectors/ycr/examples/test-registry.yaml.tmpl | kubectl apply -f -
+
 # Смотрим на логи, видим, что реестр создался, ходим в веб-интерфейс, 
 # смотрим, что он создался.
-kubectl delete -f ./connectors/ycr/test-registry.yaml
+folder_id=$folder_id envsubst < ./connectors/ycr/examples/test-registry.yaml.tmpl | kubectl delete -f -
 # Опять смотрим в логи, смотрим что все счастливо удалилось.
 # Останавливаем контроллер, удаляем CRD-шки и роли:
 make uninstall CONNECTOR=ycr
