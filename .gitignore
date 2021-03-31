@@ -4,5 +4,4 @@
 # Compiled binaries and test outputs
 bin
 testbin
-dry-run
 cover.out
