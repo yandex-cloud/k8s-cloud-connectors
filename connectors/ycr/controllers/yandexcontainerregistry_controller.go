@@ -116,12 +116,14 @@ func (r *YandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 const RegistryCloudClusterLabel = "cluster-mk8s-connectors-cloud-yandex-ru"
 const RegistryCloudNameLabel = "name-mk8s-connectors-cloud-yandex-ru"
 
+const NoRegistryFound string = ""
+
 // getRegistryId: tries to retrieve YC ID of registry and check whether it exists
-// If registry does not exist, this method returns empty string
+// If registry does not exist, this method returns NoRegistryFound
 func (r YandexContainerRegistryReconciler) getRegistryId(ctx context.Context, sdk *ycsdk.SDK, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) (string, error) {
 	// If it is written in the status, we need to check
 	// whether it exists in the cloud
-	if registry.Status.Id != "" {
+	if registry.Status.Id != NoRegistryFound {
 		_, err := sdk.ContainerRegistry().Registry().Get(ctx, &containerregistry.GetRegistryRequest{
 			RegistryId: registry.Status.Id,
 		})
@@ -130,11 +132,11 @@ func (r YandexContainerRegistryReconciler) getRegistryId(ctx context.Context, sd
 			// If registry was not found then it does not exist,
 			// but this error is not fatal
 			if commons.CheckRPCErrorNotFound(err) {
-				return "", nil
+				return NoRegistryFound, nil
 			}
 			// Otherwise, it is fatal
 			log.Error(err, "cannot get registry from cloud")
-			return "", err
+			return NoRegistryFound, err
 		}
 
 		return registry.Status.Id, nil
@@ -149,7 +151,7 @@ func (r YandexContainerRegistryReconciler) getRegistryId(ctx context.Context, sd
 	if err != nil {
 		// This error is fatal
 		log.Error(err, "cannot list registries in folder")
-		return "", err
+		return NoRegistryFound, err
 	}
 
 	for _, el := range list.Registries {
@@ -162,7 +164,7 @@ func (r YandexContainerRegistryReconciler) getRegistryId(ctx context.Context, sd
 	}
 
 	// Nothing found, no such registry
-	return "", nil
+	return NoRegistryFound, nil
 }
 
 const RegistryFinalizerName = "finalizer.yc-registry.connectors.cloud.yandex.ru"
@@ -178,7 +180,7 @@ func (r *YandexContainerRegistryReconciler) finalize(ctx context.Context, sdk *y
 		return err
 	}
 
-	if id != "" {
+	if id != NoRegistryFound {
 		op, err := sdk.WrapOperation(sdk.ContainerRegistry().Registry().Delete(ctx, &containerregistry.DeleteRegistryRequest{
 			RegistryId: id,
 		}))
@@ -215,7 +217,7 @@ func (r *YandexContainerRegistryReconciler) registryAllocated(ctx context.Contex
 		return false, err
 	}
 
-	return id != "", nil
+	return id != NoRegistryFound, nil
 }
 
 func (r *YandexContainerRegistryReconciler) registryAllocate(ctx context.Context, sdk *ycsdk.SDK, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
@@ -285,7 +287,7 @@ func (r *YandexContainerRegistryReconciler) statusUpdate(ctx context.Context, sd
 		log.Error(err, "unable to get registry id")
 		return err
 	}
-	if id == "" {
+	if id == NoRegistryFound {
 		err := commons.ResourceNotFoundError{
 			ResourceId: id,
 			FolderId:   registry.Spec.FolderId,
