@@ -5,6 +5,9 @@ package controllers
 
 import (
 	"context"
+	"k8s-connectors/pkg/config"
+	"k8s-connectors/pkg/errors"
+	"k8s-connectors/pkg/utils"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -15,7 +18,6 @@ import (
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
 	"github.com/yandex-cloud/go-sdk"
 
-	"k8s-connectors/commons"
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
 )
 
@@ -48,11 +50,11 @@ func (r *YandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 		// This outcome signifies that we just cannot find resource, that is ok
 		if apierrors.IsNotFound(err) {
 			log.Info("Resource not found in k8s, reconciliation not possible")
-			return commons.GetNormalResult()
+			return config.GetNormalResult()
 		}
 
 		// Some unexpected error occurred, must throw
-		return commons.GetErroredResult(err)
+		return config.GetErroredResult(err)
 	}
 
 	// Building Yandex Cloud SDK for our requests
@@ -60,19 +62,19 @@ func (r *YandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 		Credentials: ycsdk.InstanceServiceAccount(),
 	})
 	if err != nil {
-		return commons.GetErroredResult(err)
+		return config.GetErroredResult(err)
 	}
 
 	// If object must be currently finalized, do it and quit
 	mustBeFinalized, err := r.mustBeFinalized(ctx, sdk, log, &registry)
 	if err != nil {
-		return commons.GetErroredResult(err)
+		return config.GetErroredResult(err)
 	}
 	if mustBeFinalized {
 		if err := r.finalize(ctx, sdk, log, &registry); err != nil {
-			return commons.GetErroredResult(err)
+			return config.GetErroredResult(err)
 		}
-		return commons.GetNormalResult()
+		return config.GetNormalResult()
 	}
 
 	// List of initializers that are to be invoked on this object
@@ -101,16 +103,16 @@ func (r *YandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 	for _, initializer := range initializers {
 		isInitialized, err := initializer.IsInitialized(ctx, sdk, log, &registry)
 		if err != nil {
-			return commons.GetErroredResult(err)
+			return config.GetErroredResult(err)
 		}
 		if !isInitialized {
 			if err := initializer.Initialize(ctx, sdk, log, &registry); err != nil {
-				return commons.GetErroredResult(err)
+				return config.GetErroredResult(err)
 			}
 		}
 	}
 
-	return commons.GetNormalResult()
+	return config.GetNormalResult()
 }
 
 const RegistryCloudClusterLabel = "cluster-mk8s-connectors-cloud-yandex-ru"
@@ -121,7 +123,7 @@ const NoRegistryFound string = ""
 // getRegistryId: tries to retrieve YC ID of registry and check whether it exists
 // If registry does not exist, this method returns NoRegistryFound
 func (r YandexContainerRegistryReconciler) getRegistryId(ctx context.Context, sdk *ycsdk.SDK, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) (string, error) {
-	// If it is written in the status, we need to check
+	// If id is written in the status, we need to check
 	// whether it exists in the cloud
 	if registry.Status.Id != NoRegistryFound {
 		_, err := sdk.ContainerRegistry().Registry().Get(ctx, &containerregistry.GetRegistryRequest{
@@ -131,7 +133,7 @@ func (r YandexContainerRegistryReconciler) getRegistryId(ctx context.Context, sd
 		if err != nil {
 			// If registry was not found then it does not exist,
 			// but this error is not fatal
-			if commons.CheckRPCErrorNotFound(err) {
+			if errors.CheckRPCErrorNotFound(err) {
 				return NoRegistryFound, nil
 			}
 			// Otherwise, it is fatal
@@ -170,7 +172,7 @@ func (r YandexContainerRegistryReconciler) getRegistryId(ctx context.Context, sd
 const RegistryFinalizerName = "finalizer.yc-registry.connectors.cloud.yandex.ru"
 
 func (r *YandexContainerRegistryReconciler) mustBeFinalized(_ context.Context, _ *ycsdk.SDK, _ logr.Logger, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
-	return !registry.DeletionTimestamp.IsZero() && commons.ContainsString(registry.Finalizers, RegistryFinalizerName), nil
+	return !registry.DeletionTimestamp.IsZero() && utils.ContainsString(registry.Finalizers, RegistryFinalizerName), nil
 }
 
 func (r *YandexContainerRegistryReconciler) finalize(ctx context.Context, sdk *ycsdk.SDK, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
@@ -202,7 +204,7 @@ func (r *YandexContainerRegistryReconciler) finalize(ctx context.Context, sdk *y
 	}
 
 	// Now we need to state that finalization of this object is no longer needed.
-	registry.Finalizers = commons.RemoveString(registry.Finalizers, RegistryFinalizerName)
+	registry.Finalizers = utils.RemoveString(registry.Finalizers, RegistryFinalizerName)
 	if err := r.Update(ctx, registry); err != nil {
 		log.Error(err, "unable to remove finalizer")
 		return err
@@ -228,14 +230,13 @@ func (r *YandexContainerRegistryReconciler) registryAllocate(ctx context.Context
 		Labels: map[string]string{
 			RegistryCloudClusterLabel: registry.ClusterName,
 			RegistryCloudNameLabel:    registry.Name,
-			// TODO (covariance) do we need to push k8s labels to cloud? idk, guess no
 		},
 	}))
 
 	if err != nil {
 		// This case is quite strange, but we cannot do anything about it,
 		// so we just ignore it.
-		if commons.CheckRPCErrorAlreadyExists(err) {
+		if errors.CheckRPCErrorAlreadyExists(err) {
 			log.Info("resource already exists")
 			return nil
 		}
@@ -259,7 +260,7 @@ func (r *YandexContainerRegistryReconciler) registryAllocate(ctx context.Context
 }
 
 func (r *YandexContainerRegistryReconciler) finalizationRegistered(_ context.Context, _ *ycsdk.SDK, _ logr.Logger, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
-	return commons.ContainsString(registry.Finalizers, RegistryFinalizerName), nil
+	return utils.ContainsString(registry.Finalizers, RegistryFinalizerName), nil
 }
 
 func (r *YandexContainerRegistryReconciler) finalizationRegister(ctx context.Context, _ *ycsdk.SDK, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
@@ -288,7 +289,7 @@ func (r *YandexContainerRegistryReconciler) statusUpdate(ctx context.Context, sd
 		return err
 	}
 	if id == NoRegistryFound {
-		err := commons.ResourceNotFoundError{
+		err := errors.ResourceNotFoundError{
 			ResourceId: id,
 			FolderId:   registry.Spec.FolderId,
 		}
