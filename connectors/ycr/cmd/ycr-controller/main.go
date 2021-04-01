@@ -65,11 +65,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.YandexContainerRegistryReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("YandexContainerRegistry"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	reconciler, err := controllers.NewYandexContainerRegistryReconciler(
+		mgr.GetClient(),
+		ctrl.Log.WithName("controllers").WithName("YandexContainerRegistry"),
+		mgr.GetScheme(),
+	)
+	if err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "YandexContainerRegistry")
+	}
+	if err := reconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "YandexContainerRegistry")
 		os.Exit(1)
 	}

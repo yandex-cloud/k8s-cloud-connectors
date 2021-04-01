@@ -24,23 +24,39 @@ import (
 // TODO (covariance) push events to get via (kubectl get events)
 // TODO (covariance) generalize reconciler
 
-// YandexContainerRegistryReconciler reconciles a YandexContainerRegistry object
-type YandexContainerRegistryReconciler struct {
+// yandexContainerRegistryReconciler reconciles a YandexContainerRegistry object
+type yandexContainerRegistryReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	log    logr.Logger
+	scheme *runtime.Scheme
+	sdk    *ycsdk.SDK
 }
 
-type YandexContainerRegistryInitializer struct {
-	IsInitialized func(context.Context, *ycsdk.SDK, logr.Logger, *connectorsv1.YandexContainerRegistry) (bool, error)
-	Initialize    func(context.Context, *ycsdk.SDK, logr.Logger, *connectorsv1.YandexContainerRegistry) error
+func NewYandexContainerRegistryReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*yandexContainerRegistryReconciler, error) {
+	sdk, err := ycsdk.Build(context.Background(), ycsdk.Config{
+		Credentials: ycsdk.InstanceServiceAccount(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &yandexContainerRegistryReconciler{
+		Client: client,
+		log:    log,
+		scheme: scheme,
+		sdk:    sdk,
+	}, nil
+}
+
+type yandexContainerRegistryUpdater struct {
+	IsUpdated func(context.Context, logr.Logger, *connectorsv1.YandexContainerRegistry) (bool, error)
+	Update    func(context.Context, logr.Logger, *connectorsv1.YandexContainerRegistry) error
 }
 
 //+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=yandexcontainerregistries,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=yandexcontainerregistries/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=yandexcontainerregistries/finalizers,verbs=update
-func (r *YandexContainerRegistryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.Log.WithValues("yandexcontainerregistry", req.NamespacedName)
+func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := r.log.WithValues("yandexcontainerregistry", req.NamespacedName)
 
 	// Try to retrieve resource from k8s
 	var registry connectorsv1.YandexContainerRegistry
@@ -57,56 +73,48 @@ func (r *YandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 		return config.GetErroredResult(err)
 	}
 
-	// Building Yandex Cloud SDK for our requests
-	sdk, err := ycsdk.Build(ctx, ycsdk.Config{
-		Credentials: ycsdk.InstanceServiceAccount(),
-	})
-	if err != nil {
-		return config.GetErroredResult(err)
-	}
-
 	// If object must be currently finalized, do it and quit
-	mustBeFinalized, err := r.mustBeFinalized(ctx, sdk, log, &registry)
+	mustBeFinalized, err := r.mustBeFinalized(ctx, log, &registry)
 	if err != nil {
 		return config.GetErroredResult(err)
 	}
 	if mustBeFinalized {
-		if err := r.finalize(ctx, sdk, log, &registry); err != nil {
+		if err := r.finalize(ctx, log, &registry); err != nil {
 			return config.GetErroredResult(err)
 		}
 		return config.GetNormalResult()
 	}
 
 	// List of initializers that are to be invoked on this object
-	// IsInitialized blocks Initialize, and order of initializers matters,
+	// IsUpdated blocks Update, and order of initializers matters,
 	// thus if one of initializers fails, subsequent won't be processed.
-	initializers := [...]YandexContainerRegistryInitializer{
+	updaters := [...]yandexContainerRegistryUpdater{
 		// Allocate corresponding resource in cloud (is not blocked by anything)
 		{
-			IsInitialized: r.registryAllocated,
-			Initialize:    r.registryAllocate,
+			IsUpdated: r.registryAllocated,
+			Update:    r.registryAllocate,
 		},
 		// Register finalizer for the object (is blocked by allocation)
 		{
-			IsInitialized: r.finalizationRegistered,
-			Initialize:    r.finalizationRegister,
+			IsUpdated: r.finalizationRegistered,
+			Update:    r.finalizationRegister,
 		},
 		// Update status of the object (is blocked by everything, must be last ops)
 		{
-			IsInitialized: r.statusUpdated,
-			Initialize:    r.statusUpdate,
+			IsUpdated: r.statusUpdated,
+			Update:    r.statusUpdate,
 		},
 	}
 
-	// Initialize all fragments of object, keeping track of whether
+	// Update all fragments of object, keeping track of whether
 	// all of them are initialized
-	for _, initializer := range initializers {
-		isInitialized, err := initializer.IsInitialized(ctx, sdk, log, &registry)
+	for _, updater := range updaters {
+		isInitialized, err := updater.IsUpdated(ctx, log, &registry)
 		if err != nil {
 			return config.GetErroredResult(err)
 		}
 		if !isInitialized {
-			if err := initializer.Initialize(ctx, sdk, log, &registry); err != nil {
+			if err := updater.Update(ctx, log, &registry); err != nil {
 				return config.GetErroredResult(err)
 			}
 		}
@@ -122,11 +130,11 @@ const NoRegistryFound string = ""
 
 // getRegistryId: tries to retrieve YC ID of registry and check whether it exists
 // If registry does not exist, this method returns NoRegistryFound
-func (r YandexContainerRegistryReconciler) getRegistryId(ctx context.Context, sdk *ycsdk.SDK, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) (string, error) {
+func (r yandexContainerRegistryReconciler) getRegistryId(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) (string, error) {
 	// If id is written in the status, we need to check
 	// whether it exists in the cloud
 	if registry.Status.Id != NoRegistryFound {
-		_, err := sdk.ContainerRegistry().Registry().Get(ctx, &containerregistry.GetRegistryRequest{
+		_, err := r.sdk.ContainerRegistry().Registry().Get(ctx, &containerregistry.GetRegistryRequest{
 			RegistryId: registry.Status.Id,
 		})
 
@@ -147,7 +155,7 @@ func (r YandexContainerRegistryReconciler) getRegistryId(ctx context.Context, sd
 	// TODO (covariance) pagination
 	// Otherwise, we try to match cluster name and meta name
 	// with registries in the cloud
-	list, err := sdk.ContainerRegistry().Registry().List(ctx, &containerregistry.ListRegistriesRequest{
+	list, err := r.sdk.ContainerRegistry().Registry().List(ctx, &containerregistry.ListRegistriesRequest{
 		FolderId: registry.Spec.FolderId,
 	})
 	if err != nil {
@@ -171,19 +179,19 @@ func (r YandexContainerRegistryReconciler) getRegistryId(ctx context.Context, sd
 
 const RegistryFinalizerName = "finalizer.yc-registry.connectors.cloud.yandex.ru"
 
-func (r *YandexContainerRegistryReconciler) mustBeFinalized(_ context.Context, _ *ycsdk.SDK, _ logr.Logger, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
+func (r *yandexContainerRegistryReconciler) mustBeFinalized(_ context.Context, _ logr.Logger, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
 	return !registry.DeletionTimestamp.IsZero() && utils.ContainsString(registry.Finalizers, RegistryFinalizerName), nil
 }
 
-func (r *YandexContainerRegistryReconciler) finalize(ctx context.Context, sdk *ycsdk.SDK, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
+func (r *yandexContainerRegistryReconciler) finalize(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
 	log.Info("deleting registry")
-	id, err := r.getRegistryId(ctx, sdk, log, registry)
+	id, err := r.getRegistryId(ctx, log, registry)
 	if err != nil {
 		return err
 	}
 
 	if id != NoRegistryFound {
-		op, err := sdk.WrapOperation(sdk.ContainerRegistry().Registry().Delete(ctx, &containerregistry.DeleteRegistryRequest{
+		op, err := r.sdk.WrapOperation(r.sdk.ContainerRegistry().Registry().Delete(ctx, &containerregistry.DeleteRegistryRequest{
 			RegistryId: id,
 		}))
 		if err != nil {
@@ -213,8 +221,8 @@ func (r *YandexContainerRegistryReconciler) finalize(ctx context.Context, sdk *y
 	return nil
 }
 
-func (r *YandexContainerRegistryReconciler) registryAllocated(ctx context.Context, sdk *ycsdk.SDK, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
-	id, err := r.getRegistryId(ctx, sdk, log, registry)
+func (r *yandexContainerRegistryReconciler) registryAllocated(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
+	id, err := r.getRegistryId(ctx, log, registry)
 	if err != nil {
 		return false, err
 	}
@@ -222,9 +230,9 @@ func (r *YandexContainerRegistryReconciler) registryAllocated(ctx context.Contex
 	return id != NoRegistryFound, nil
 }
 
-func (r *YandexContainerRegistryReconciler) registryAllocate(ctx context.Context, sdk *ycsdk.SDK, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
+func (r *yandexContainerRegistryReconciler) registryAllocate(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
 	log.Info("creating registry")
-	op, err := sdk.WrapOperation(sdk.ContainerRegistry().Registry().Create(ctx, &containerregistry.CreateRegistryRequest{
+	op, err := r.sdk.WrapOperation(r.sdk.ContainerRegistry().Registry().Create(ctx, &containerregistry.CreateRegistryRequest{
 		FolderId: registry.Spec.FolderId,
 		Name:     registry.Spec.Name,
 		Labels: map[string]string{
@@ -259,11 +267,11 @@ func (r *YandexContainerRegistryReconciler) registryAllocate(ctx context.Context
 	return nil
 }
 
-func (r *YandexContainerRegistryReconciler) finalizationRegistered(_ context.Context, _ *ycsdk.SDK, _ logr.Logger, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
+func (r *yandexContainerRegistryReconciler) finalizationRegistered(_ context.Context, _ logr.Logger, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
 	return utils.ContainsString(registry.Finalizers, RegistryFinalizerName), nil
 }
 
-func (r *YandexContainerRegistryReconciler) finalizationRegister(ctx context.Context, _ *ycsdk.SDK, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
+func (r *yandexContainerRegistryReconciler) finalizationRegister(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
 	log.Info("registering finalizer")
 	registry.Finalizers = append(registry.Finalizers, RegistryFinalizerName)
 	if err := r.Update(ctx, registry); err != nil {
@@ -274,16 +282,16 @@ func (r *YandexContainerRegistryReconciler) finalizationRegister(ctx context.Con
 	return nil
 }
 
-func (r *YandexContainerRegistryReconciler) statusUpdated(_ context.Context, _ *ycsdk.SDK, _ logr.Logger, _ *connectorsv1.YandexContainerRegistry) (bool, error) {
+func (r *yandexContainerRegistryReconciler) statusUpdated(_ context.Context, _ logr.Logger, _ *connectorsv1.YandexContainerRegistry) (bool, error) {
 	// In every reconciliation we need to update
 	// status. Therefore, status is never marked
 	// as updated.
 	return false, nil
 }
 
-func (r *YandexContainerRegistryReconciler) statusUpdate(ctx context.Context, sdk *ycsdk.SDK, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
+func (r *yandexContainerRegistryReconciler) statusUpdate(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
 	log.Info("updating object status")
-	id, err := r.getRegistryId(ctx, sdk, log, registry)
+	id, err := r.getRegistryId(ctx, log, registry)
 	if err != nil {
 		log.Error(err, "unable to get registry id")
 		return err
@@ -300,7 +308,7 @@ func (r *YandexContainerRegistryReconciler) statusUpdate(ctx context.Context, sd
 	// No type check here is needed, if we cannot find it,
 	// it must be something internal, otherwise getRegistryId
 	// must already return error
-	op, err := sdk.ContainerRegistry().Registry().Get(ctx, &containerregistry.GetRegistryRequest{
+	op, err := r.sdk.ContainerRegistry().Registry().Get(ctx, &containerregistry.GetRegistryRequest{
 		RegistryId: id,
 	})
 	if err != nil {
@@ -324,7 +332,7 @@ func (r *YandexContainerRegistryReconciler) statusUpdate(ctx context.Context, sd
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *YandexContainerRegistryReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *yandexContainerRegistryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&connectorsv1.YandexContainerRegistry{}).
 		Complete(r)
