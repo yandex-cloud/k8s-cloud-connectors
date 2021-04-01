@@ -1,21 +1,26 @@
 // Copyright (c) 2021 Yandex LLC. All rights reserved.
 // Author: Martynov Pavel <covariance@yandex-team.ru>
 
-package commons
+package config
 
 import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"time"
 )
 
+const (
+	erroredTimeout = 10 * time.Second
+	normalTimeout = 30 * time.Second
+)
+
 func GetErroredResult(err error) (ctrl.Result, error) {
 	return ctrl.Result{
-		RequeueAfter: time.Minute,
+		RequeueAfter: erroredTimeout,
 	}, err
 }
 
 func GetNormalResult() (ctrl.Result, error) {
 	return ctrl.Result{
-		RequeueAfter: 30 * time.Second,
+		RequeueAfter: 30 * normalTimeout,
 	}, nil
 }

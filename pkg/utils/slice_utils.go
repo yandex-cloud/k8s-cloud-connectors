@@ -1,7 +1,7 @@
 // Copyright (c) 2021 Yandex LLC. All rights reserved.
 // Author: Martynov Pavel <covariance@yandex-team.ru>
 
-package commons
+package utils
 
 func ContainsString(haystack []string, needle string) bool {
 	for _, s := range haystack {
