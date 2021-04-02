@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	erroredTimeout = 10 * time.Second
+	erroredTimeout = 30 * time.Second
 	normalTimeout = 30 * time.Second
 )
 
