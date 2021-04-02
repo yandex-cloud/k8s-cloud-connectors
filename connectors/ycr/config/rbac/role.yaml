@@ -1,0 +1,34 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - connectors.cloud.yandex.ru
+  resources:
+  - yandexcontainerregistries
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - connectors.cloud.yandex.ru
+  resources:
+  - yandexcontainerregistries/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - connectors.cloud.yandex.ru
+  resources:
+  - yandexcontainerregistries/status
+  verbs:
+  - get
+  - patch
+  - update
