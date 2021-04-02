@@ -28,7 +28,6 @@ import (
 const (
 	RegistryCloudClusterLabel string = "managed-kubernetes-cluster-id"
 	RegistryCloudNameLabel    string = "managed-kubernetes-registry-metadata-name"
-	NoRegistryFound           string = "not-found"
 	RegistryFinalizerName     string = "finalizer.yc-registry.connectors.cloud.yandex.ru"
 )
 
@@ -131,27 +130,39 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 	return config.GetNormalResult()
 }
 
+func checkRegistryMatchWithYcr(ycr *containerregistry.Registry, registry *connectorsv1.YandexContainerRegistry) bool {
+	cluster, ok1 := ycr.Labels[RegistryCloudClusterLabel]
+	name, ok2 := ycr.Labels[RegistryCloudNameLabel]
+	return ok1 && ok2 && cluster == registry.ClusterName && name == registry.Name
+}
+
 // getRegistryId: tries to retrieve YC ID of registry and check whether it exists
-// If registry does not exist, this method returns NoRegistryFound
-func (r yandexContainerRegistryReconciler) getRegistryId(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) (string, error) {
+// If registry does not exist, this method returns nil
+func (r yandexContainerRegistryReconciler) getRegistry(ctx context.Context, registry *connectorsv1.YandexContainerRegistry) (*containerregistry.Registry, error) {
 	// If id is written in the status, we need to check
 	// whether it exists in the cloud
 	if registry.Status.Id != "" {
-		_, err := r.sdk.ContainerRegistry().Registry().Get(ctx, &containerregistry.GetRegistryRequest{
+		ycr, err := r.sdk.ContainerRegistry().Registry().Get(ctx, &containerregistry.GetRegistryRequest{
 			RegistryId: registry.Status.Id,
 		})
-
 		if err != nil {
 			// If registry was not found then it does not exist,
-			// but this error is not fatal
+			// but this error is not fatal, just a mismatch between
+			// out status and real world state.
 			if errors.CheckRPCErrorNotFound(err) {
-				return NoRegistryFound, nil
+				return nil, nil
 			}
 			// Otherwise, it is fatal
-			return NoRegistryFound, fmt.Errorf("cannot get registry from cloud: %v", err)
+			return nil, fmt.Errorf("cannot get registry from cloud: %v", err)
 		}
 
-		return registry.Status.Id, nil
+		// If labels do match with our object, then we have found it
+		if checkRegistryMatchWithYcr(ycr, registry) {
+			return ycr, nil
+		}
+
+		// Otherwise registry is not found, but that is ok
+		return nil, nil
 	}
 
 	// TODO (covariance) pagination
@@ -162,20 +173,18 @@ func (r yandexContainerRegistryReconciler) getRegistryId(ctx context.Context, lo
 	})
 	if err != nil {
 		// This error is fatal
-		return NoRegistryFound, fmt.Errorf("cannot list registries in folder: %v", err)
+		return nil, fmt.Errorf("cannot list registries in folder: %v", err)
 	}
 
-	for _, el := range list.Registries {
+	for _, ycr := range list.Registries {
 		// If labels do match with our object, then we have found it
-		cluster, ok1 := el.Labels[RegistryCloudClusterLabel]
-		name, ok2 := el.Labels[RegistryCloudNameLabel]
-		if ok1 && ok2 && cluster == registry.ClusterName && name == registry.Name {
-			return el.Id, nil
+		if checkRegistryMatchWithYcr(ycr, registry) {
+			return ycr, nil
 		}
 	}
 
 	// Nothing found, no such registry
-	return NoRegistryFound, nil
+	return nil, nil
 }
 
 func (r *yandexContainerRegistryReconciler) mustBeFinalized(registry *connectorsv1.YandexContainerRegistry) (bool, error) {
@@ -184,14 +193,14 @@ func (r *yandexContainerRegistryReconciler) mustBeFinalized(registry *connectors
 
 func (r *yandexContainerRegistryReconciler) finalize(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
 	log.Info("deleting registry")
-	id, err := r.getRegistryId(ctx, log, registry)
+	ycr, err := r.getRegistry(ctx, registry)
 	if err != nil {
 		return err
 	}
 
-	if id != NoRegistryFound {
+	if ycr != nil {
 		op, err := r.sdk.WrapOperation(r.sdk.ContainerRegistry().Registry().Delete(ctx, &containerregistry.DeleteRegistryRequest{
-			RegistryId: id,
+			RegistryId: ycr.Id,
 		}))
 		if err != nil {
 			// Not found error is already handled by getRegistryId
@@ -217,13 +226,13 @@ func (r *yandexContainerRegistryReconciler) finalize(ctx context.Context, log lo
 	return nil
 }
 
-func (r *yandexContainerRegistryReconciler) registryAllocated(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
-	id, err := r.getRegistryId(ctx, log, registry)
+func (r *yandexContainerRegistryReconciler) registryAllocated(ctx context.Context, _ logr.Logger, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
+	ycr, err := r.getRegistry(ctx, registry)
 	if err != nil {
 		return false, err
 	}
 
-	return id != NoRegistryFound, nil
+	return ycr != nil, nil
 }
 
 func (r *yandexContainerRegistryReconciler) registryAllocate(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
@@ -287,31 +296,25 @@ func (r *yandexContainerRegistryReconciler) statusUpdated(_ context.Context, _ l
 
 func (r *yandexContainerRegistryReconciler) statusUpdate(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
 	log.Info("updating object status")
-	id, err := r.getRegistryId(ctx, log, registry)
+	ycr, err := r.getRegistry(ctx, registry)
 	if err != nil {
 		return fmt.Errorf("unable to get registry id: %v", err)
 	}
-	if id == NoRegistryFound {
+	if ycr == nil {
 		return fmt.Errorf("registry %s not found in folder %s", registry.Spec.Name, registry.Spec.FolderId)
 	}
 
 	// No type check here is needed, if we cannot find it,
 	// it must be something internal, otherwise getRegistryId
 	// must already return error
-	op, err := r.sdk.ContainerRegistry().Registry().Get(ctx, &containerregistry.GetRegistryRequest{
-		RegistryId: id,
-	})
-	if err != nil {
-		return err
-	}
 
-	registry.Status.Id = op.Id
-	registry.Status.FolderId = op.FolderId
-	registry.Status.Name = op.Name
+	registry.Status.Id = ycr.Id
+	registry.Status.FolderId = ycr.FolderId
+	registry.Status.Name = ycr.Name
 	// TODO (covariance) decide what to do with registry.Status.Status
 	// TODO (covariance) maybe store registry.Status.CreatedAt as a timestamp?
-	registry.Status.CreatedAt = op.CreatedAt.String()
-	registry.Status.Labels = op.Labels
+	registry.Status.CreatedAt = ycr.CreatedAt.String()
+	registry.Status.Labels = ycr.Labels
 
 	if err := r.Update(ctx, registry); err != nil {
 		return fmt.Errorf("unable to update registry status: %v", err)
