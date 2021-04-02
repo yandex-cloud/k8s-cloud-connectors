@@ -309,8 +309,6 @@ func (r *yandexContainerRegistryReconciler) statusUpdate(ctx context.Context, lo
 	// must already return error
 
 	registry.Status.Id = ycr.Id
-	registry.Status.FolderId = ycr.FolderId
-	registry.Status.Name = ycr.Name
 	// TODO (covariance) decide what to do with registry.Status.Status
 	// TODO (covariance) maybe store registry.Status.CreatedAt as a timestamp?
 	registry.Status.CreatedAt = ycr.CreatedAt.String()

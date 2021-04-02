@@ -49,9 +49,6 @@ spec:
               createdAt:
                 description: 'CreatedAt: RFC3339-formatted string, representing creation time of resource'
                 type: string
-              folderId:
-                description: 'FolderId: id of a folder in which registry is located'
-                type: string
               id:
                 description: 'Id: id of registry'
                 type: string
@@ -60,9 +57,6 @@ spec:
                   type: string
                 description: 'Labels: registry labels in key:value form. Maximum of 64 labels for resource is allowed'
                 type: object
-              name:
-                description: 'Name: name of registry'
-                type: string
               status:
                 description: 'Status: status of registry. Valid values are: - CREATING - ACTIVE - DELETING'
                 type: string

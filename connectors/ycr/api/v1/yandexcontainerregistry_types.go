@@ -34,12 +34,6 @@ type YandexContainerRegistryStatus struct {
 	// Id: id of registry
 	Id string `json:"id,omitempty"`
 
-	// FolderId: id of a folder in which registry is located
-	FolderId string `json:"folderId,omitempty"`
-
-	// Name: name of registry
-	Name string `json:"name,omitempty"`
-
 	// Status: status of registry.
 	// Valid values are:
 	// - CREATING
