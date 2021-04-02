@@ -82,7 +82,7 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 	}
 
 	// If object must be currently finalized, do it and quit
-	mustBeFinalized, err := r.mustBeFinalized(ctx, log, &registry)
+	mustBeFinalized, err := r.mustBeFinalized(&registry)
 	if err != nil {
 		return config.GetErroredResult(err)
 	}
@@ -178,7 +178,7 @@ func (r yandexContainerRegistryReconciler) getRegistryId(ctx context.Context, lo
 	return NoRegistryFound, nil
 }
 
-func (r *yandexContainerRegistryReconciler) mustBeFinalized(_ context.Context, _ logr.Logger, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
+func (r *yandexContainerRegistryReconciler) mustBeFinalized(registry *connectorsv1.YandexContainerRegistry) (bool, error) {
 	return !registry.DeletionTimestamp.IsZero() && utils.ContainsString(registry.Finalizers, RegistryFinalizerName), nil
 }
 
