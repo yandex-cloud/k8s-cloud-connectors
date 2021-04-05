@@ -9,6 +9,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"k8s-connectors/pkg/config"
 	"k8s-connectors/pkg/errors"
 	"k8s-connectors/pkg/utils"
@@ -55,7 +56,7 @@ func NewYandexContainerRegistryReconciler(client client.Client, log logr.Logger,
 }
 
 type yandexContainerRegistryUpdater struct {
-	IsUpdated func(context.Context, logr.Logger, *connectorsv1.YandexContainerRegistry) (bool, error)
+	IsUpdated func(context.Context, *connectorsv1.YandexContainerRegistry) (bool, error)
 	Update    func(context.Context, logr.Logger, *connectorsv1.YandexContainerRegistry) error
 }
 
@@ -106,6 +107,12 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 			IsUpdated: r.finalizationRegistered,
 			Update:    r.finalizationRegister,
 		},
+		// In case spec was updated and our cloud registry does not match with
+		// spec, we need to update cloud registry (is blocked by allocation)
+		{
+			IsUpdated: r.specMatched,
+			Update: r.specMatch,
+		},
 		// Update status of the object (is blocked by everything, must be last ops)
 		{
 			IsUpdated: r.statusUpdated,
@@ -116,7 +123,7 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 	// Update all fragments of object, keeping track of whether
 	// all of them are initialized
 	for _, updater := range updaters {
-		isInitialized, err := updater.IsUpdated(ctx, log, &registry)
+		isInitialized, err := updater.IsUpdated(ctx, &registry)
 		if err != nil {
 			return config.GetErroredResult(err)
 		}
@@ -161,8 +168,8 @@ func (r yandexContainerRegistryReconciler) getRegistry(ctx context.Context, regi
 			return ycr, nil
 		}
 
-		// Otherwise registry is not found, but that is ok
-		return nil, nil
+		// Otherwise registry is not found, but that is ok:
+		// we will try to list resources and find the one we need.
 	}
 
 	// TODO (covariance) pagination
@@ -192,7 +199,6 @@ func (r *yandexContainerRegistryReconciler) mustBeFinalized(registry *connectors
 }
 
 func (r *yandexContainerRegistryReconciler) finalize(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
-	log.Info("deleting registry")
 	ycr, err := r.getRegistry(ctx, registry)
 	if err != nil {
 		return err
@@ -226,17 +232,16 @@ func (r *yandexContainerRegistryReconciler) finalize(ctx context.Context, log lo
 	return nil
 }
 
-func (r *yandexContainerRegistryReconciler) registryAllocated(ctx context.Context, _ logr.Logger, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
+func (r *yandexContainerRegistryReconciler) registryAllocated(ctx context.Context, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
 	ycr, err := r.getRegistry(ctx, registry)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("unable to get registry: %v", err)
 	}
 
 	return ycr != nil, nil
 }
 
 func (r *yandexContainerRegistryReconciler) registryAllocate(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
-	log.Info("creating registry")
 	op, err := r.sdk.WrapOperation(r.sdk.ContainerRegistry().Registry().Create(ctx, &containerregistry.CreateRegistryRequest{
 		FolderId: registry.Spec.FolderId,
 		Name:     registry.Spec.Name,
@@ -270,15 +275,15 @@ func (r *yandexContainerRegistryReconciler) registryAllocate(ctx context.Context
 		return fmt.Errorf("error while creating registry: %v", err)
 	}
 
+	log.Info("registry allocated in cloud")
 	return nil
 }
 
-func (r *yandexContainerRegistryReconciler) finalizationRegistered(_ context.Context, _ logr.Logger, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
+func (r *yandexContainerRegistryReconciler) finalizationRegistered(_ context.Context, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
 	return utils.ContainsString(registry.Finalizers, RegistryFinalizerName), nil
 }
 
 func (r *yandexContainerRegistryReconciler) finalizationRegister(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
-	log.Info("registering finalizer")
 	registry.Finalizers = append(registry.Finalizers, RegistryFinalizerName)
 	if err := r.Update(ctx, registry); err != nil {
 		return fmt.Errorf("unable to update registry status: %v", err)
@@ -287,7 +292,50 @@ func (r *yandexContainerRegistryReconciler) finalizationRegister(ctx context.Con
 	return nil
 }
 
-func (r *yandexContainerRegistryReconciler) statusUpdated(_ context.Context, _ logr.Logger, _ *connectorsv1.YandexContainerRegistry) (bool, error) {
+func (r *yandexContainerRegistryReconciler) specMatched(ctx context.Context, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
+	ycr, err := r.getRegistry(ctx, registry)
+	if err != nil {
+		return false, fmt.Errorf("unable to get registry: %v", err)
+	}
+	if ycr == nil {
+		return false, fmt.Errorf("registry %s not found in folder %s", registry.Spec.Name, registry.Spec.FolderId)
+	}
+
+	return ycr.Name == registry.Spec.Name, nil
+}
+
+func (r *yandexContainerRegistryReconciler) specMatch(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
+	ycr, err := r.getRegistry(ctx, registry)
+	if err != nil {
+		return fmt.Errorf("unable to get registry: %v", err)
+	}
+	if ycr == nil {
+		return fmt.Errorf("registry %s not found in folder %s", registry.Spec.Name, registry.Spec.FolderId)
+	}
+
+	op, err := r.sdk.WrapOperation(r.sdk.ContainerRegistry().Registry().Update(ctx, &containerregistry.UpdateRegistryRequest{
+		RegistryId: ycr.Id,
+		UpdateMask: &fieldmaskpb.FieldMask{
+			Paths: []string{"name"},
+		},
+		Name:       registry.Spec.Name,
+	}))
+
+	if err != nil {
+		return fmt.Errorf("can't update registry in cloud: %v", err)
+	}
+	if err := op.Wait(ctx); err != nil {
+		return fmt.Errorf("can't update registry in cloud: %v", err)
+	}
+	if _, err := op.Response(); err != nil {
+		return fmt.Errorf("can't update registry in cloud: %v", err)
+	}
+
+	log.Info("registry spec matched with cloud")
+	return nil
+}
+
+func (r *yandexContainerRegistryReconciler) statusUpdated(_ context.Context, _ *connectorsv1.YandexContainerRegistry) (bool, error) {
 	// In every reconciliation we need to update
 	// status. Therefore, status is never marked
 	// as updated.
@@ -295,10 +343,9 @@ func (r *yandexContainerRegistryReconciler) statusUpdated(_ context.Context, _ l
 }
 
 func (r *yandexContainerRegistryReconciler) statusUpdate(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
-	log.Info("updating object status")
 	ycr, err := r.getRegistry(ctx, registry)
 	if err != nil {
-		return fmt.Errorf("unable to get registry id: %v", err)
+		return fmt.Errorf("unable to get registry: %v", err)
 	}
 	if ycr == nil {
 		return fmt.Errorf("registry %s not found in folder %s", registry.Spec.Name, registry.Spec.FolderId)
@@ -318,6 +365,7 @@ func (r *yandexContainerRegistryReconciler) statusUpdate(ctx context.Context, lo
 		return fmt.Errorf("unable to update registry status: %v", err)
 	}
 
+	log.Info("registry status updated")
 	return nil
 }
 
