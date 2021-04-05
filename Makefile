@@ -46,18 +46,21 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./connectors/$(CONNECTOR)/...
 
+lint: ensure-linter ## Run golangci-lint (https://golangci-lint.run/) against code.
+	$(GOLANGCI-LINT) run ./connectors/$(CONNECTOR)/...
+
 ENVTEST_ASSETS_DIR=$(shell pwd)/connectors/$(CONNECTOR)/testbin
-test: manifests generate fmt vet ## Run tests.
+test: manifests generate fmt vet lint ## Run tests.
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.7.0/hack/setup-envtest.sh
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./connectors/$(CONNECTOR)/... -coverprofile ./connectors/$(CONNECTOR)/cover.out
 
 ##@ Build
 
-build: generate fmt vet ## Build manager binary.
+build: generate fmt vet lint ## Build manager binary.
 	go build -o ./connectors/$(CONNECTOR)/bin/manager ./connectors/$(CONNECTOR)/cmd/$(CONNECTOR)-controller/main.go
 
-run: manifests generate fmt vet ## Run a controller from your host.
+run: manifests generate fmt vet lint ## Run a controller from your host.
 	go run ./connectors/$(CONNECTOR)/main.go
 
 # TODO (covariance) uncomment test when tests would be built
@@ -82,6 +85,16 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build ./connectors/$(CONNECTOR)/config/default | kubectl delete -f -
 
+##@ Dependencies
+
+GOLANGCI-LINT = $(shell pwd)/bin/golangci-lint
+GOLANGCI-LINT-DOWNLOAD = $(shell pwd)/bin
+ensure-linter: ## Download golangci-lint if necessary.
+	if [ ! -x "$(command -v golangci-lint)" ] && [ ! -x $(GOLANGCI-LINT) ]; \
+ 	then \
+  		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+                         | sh -s -- -b $(GOLANGCI-LINT-DOWNLOAD) v1.39.0; \
+  	fi
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
