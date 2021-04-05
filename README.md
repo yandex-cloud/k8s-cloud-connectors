@@ -45,7 +45,7 @@ yc resource-manager folder add-access-binding --id $folder_id --role container-r
 # Выполняем эти команды из корня репозитория
 
 # Собираем контроллер и пушим его в реестр (стоит подставить свой реестр)
-/bin/bash scripts/push-controller.sh ycr cr.yandex/crptp7j81e7caog8r6gq
+./scripts/push-controller.sh ycr cr.yandex/crptp7j81e7caog8r6gq
 
 # Устанавливаем в кластер CRD-шки
 make install CONNECTOR=ycr
@@ -55,7 +55,7 @@ kubectl apply -f ./connectors/ycr/config/rbac/role.yaml
 kubectl apply -f ./connectors/ycr/config/rbac/role_binding.yaml
 
 # Запускаем контроллер в кластере, смотрим его логи (опять же, надо подставить свой реестр)
-/bin/bash scripts/run-controller.sh ycr cr.yandex/crptp7j81e7caog8r6gq
+./scripts/run-controller.sh ycr cr.yandex/crptp7j81e7caog8r6gq
 
 # Эту команду запускаем в другом окне терминала, в первом пишутся логи
 folder_id=$folder_id envsubst < ./connectors/ycr/examples/test-registry.yaml.tmpl | kubectl apply -f -
