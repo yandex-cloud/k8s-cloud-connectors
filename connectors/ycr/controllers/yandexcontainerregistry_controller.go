@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"k8s-connectors/pkg/config"
+	"k8s-connectors/pkg/configmaps"
 	"k8s-connectors/pkg/errors"
 	"k8s-connectors/pkg/utils"
 
@@ -111,12 +112,17 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 		// spec, we need to update cloud registry (is blocked by allocation)
 		{
 			IsUpdated: r.specMatched,
-			Update: r.specMatch,
+			Update:    r.specMatch,
 		},
-		// Update status of the object (is blocked by everything, must be last ops)
+		// Update status of the object (is blocked by everything mutating)
 		{
 			IsUpdated: r.statusUpdated,
 			Update:    r.statusUpdate,
+		},
+		// Entrypoint for resource update (is blocked by status update)
+		{
+			IsUpdated: r.entrypointUpdated,
+			Update:    r.entrypointUpdate,
 		},
 	}
 
@@ -223,11 +229,17 @@ func (r *yandexContainerRegistryReconciler) finalize(ctx context.Context, log lo
 		log.Info("corresponding object was deleted externally")
 	}
 
+	// Also we must remove configmap created as endpoint
+	if err := configmaps.Remove(ctx, r.Client, *registry); err != nil {
+		return fmt.Errorf("unable to remove entrypoint: %v", err)
+	}
+
 	// Now we need to state that finalization of this object is no longer needed.
 	registry.Finalizers = utils.RemoveString(registry.Finalizers, RegistryFinalizerName)
 	if err := r.Update(ctx, registry); err != nil {
 		return fmt.Errorf("unable to remove finalizer: %v", err)
 	}
+
 	log.Info("registry successfully deleted")
 	return nil
 }
@@ -322,7 +334,7 @@ func (r *yandexContainerRegistryReconciler) specMatch(ctx context.Context, log l
 		UpdateMask: &fieldmaskpb.FieldMask{
 			Paths: []string{"name"},
 		},
-		Name:       registry.Spec.Name,
+		Name: registry.Spec.Name,
 	}))
 
 	if err != nil {
@@ -341,8 +353,8 @@ func (r *yandexContainerRegistryReconciler) specMatch(ctx context.Context, log l
 
 func (r *yandexContainerRegistryReconciler) statusUpdated(_ context.Context, _ *connectorsv1.YandexContainerRegistry) (bool, error) {
 	// In every reconciliation we need to update
-	// status. Therefore, status is never marked
-	// as updated.
+	// status. Therefore, this updater is never
+	//	// marked as updated.
 	return false, nil
 }
 
@@ -370,6 +382,23 @@ func (r *yandexContainerRegistryReconciler) statusUpdate(ctx context.Context, lo
 	}
 
 	log.Info("registry status updated")
+	return nil
+}
+
+func (r *yandexContainerRegistryReconciler) entrypointUpdated(_ context.Context, _ *connectorsv1.YandexContainerRegistry) (bool, error) {
+	// In every reconciliation we need to update
+	// endpoint. Therefore, this updater is never
+	// marked as updated.
+	return false, nil
+}
+
+func (r *yandexContainerRegistryReconciler) entrypointUpdate(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
+	if err := configmaps.Put(ctx, &r.Client, registry, map[string]string{
+		"ID": registry.Status.Id,
+	}); err != nil {
+		return fmt.Errorf("unable to update entrypoint: %v", err)
+	}
+	log.Info("entrypoint updated")
 	return nil
 }
 
