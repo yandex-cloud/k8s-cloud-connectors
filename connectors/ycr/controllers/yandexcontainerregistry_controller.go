@@ -163,6 +163,11 @@ func (r yandexContainerRegistryReconciler) getRegistry(ctx context.Context, regi
 			return nil, fmt.Errorf("cannot get registry from cloud: %v", err)
 		}
 
+		// TODO (covariance) it's a crutch. Immutability must be done via webhooks
+		if ycr.FolderId != registry.Spec.FolderId {
+			return nil, fmt.Errorf("FolderId changed, invalid state for registry")
+		}
+
 		// If labels do match with our object, then we have found it
 		if checkRegistryMatchWithYcr(ycr, registry) {
 			return ycr, nil
