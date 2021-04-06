@@ -45,7 +45,7 @@ func Put(ctx context.Context, client *rtcl.Client, resource *ycr.YandexContainer
 	return nil
 }
 
-func Remove(ctx context.Context, client rtcl.Client, resource ycr.YandexContainerRegistry) error {
+func Remove(ctx context.Context, client rtcl.Client, resource *ycr.YandexContainerRegistry) error {
 	cmapName := cmapName(resource.Name, "ycr")
 
 	var cmapObj v1.ConfigMap
