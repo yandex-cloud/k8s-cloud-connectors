@@ -21,7 +21,7 @@ type StatusUpdater struct {
 func (r *StatusUpdater) IsUpdated(_ context.Context, _ *connectorsv1.YandexContainerRegistry) (bool, error) {
 	// In every reconciliation we need to update
 	// status. Therefore, this updater is never
-	//	// marked as updated.
+	// marked as updated.
 	return false, nil
 }
 

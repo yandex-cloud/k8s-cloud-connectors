@@ -5,7 +5,6 @@ package configmaps
 
 import (
 	"context"
-	ycr "k8s-connectors/connectors/ycr/api/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,15 +12,26 @@ import (
 )
 
 func cmapName(resourceName, kind string) string {
-	return resourceName + "-" + kind + "-" + "configmap"
+	return kind + "-" + resourceName + "-" + "configmap"
+}
+
+func Exists(ctx context.Context, client *rtcl.Client, resourceName string, namespace string, kind string) (bool, error) {
+	cmapName := cmapName(resourceName, kind)
+
+	var cmapObj v1.ConfigMap
+	err := (*client).Get(ctx, rtcl.ObjectKey{Namespace: namespace, Name: cmapName}, &cmapObj)
+	if errors.IsNotFound(err) {
+		return true, nil
+	}
+	return false, err
 }
 
 // TODO (covariance) autogenerate for all resource types
-func Put(ctx context.Context, client *rtcl.Client, resource *ycr.YandexContainerRegistry, data map[string]string) error {
-	cmapName := cmapName(resource.Name, "ycr")
+func Put(ctx context.Context, client *rtcl.Client, resourceName string, namespace string, kind string, data map[string]string) error {
+	cmapName := cmapName(resourceName, kind)
 
 	var cmapObj v1.ConfigMap
-	err := (*client).Get(ctx, rtcl.ObjectKey{Namespace: resource.Namespace, Name: cmapName}, &cmapObj)
+	err := (*client).Get(ctx, rtcl.ObjectKey{Namespace: namespace, Name: cmapName}, &cmapObj)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -29,7 +39,10 @@ func Put(ctx context.Context, client *rtcl.Client, resource *ycr.YandexContainer
 	newState := v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cmapName,
-			Namespace: resource.Namespace,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"kind" : kind,
+			},
 		},
 		Data: data,
 	}
@@ -45,11 +58,11 @@ func Put(ctx context.Context, client *rtcl.Client, resource *ycr.YandexContainer
 	return nil
 }
 
-func Remove(ctx context.Context, client rtcl.Client, resource *ycr.YandexContainerRegistry) error {
-	cmapName := cmapName(resource.Name, "ycr")
+func Remove(ctx context.Context, client rtcl.Client, resourceName string, namespace string, kind string) error {
+	cmapName := cmapName(resourceName, kind)
 
 	var cmapObj v1.ConfigMap
-	err := client.Get(ctx, rtcl.ObjectKey{Namespace: resource.Namespace, Name: cmapName}, &cmapObj)
+	err := client.Get(ctx, rtcl.ObjectKey{Namespace: namespace, Name: cmapName}, &cmapObj)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}

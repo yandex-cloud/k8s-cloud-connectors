@@ -118,7 +118,7 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 			Client: &r.Client,
 		},
 		// Entrypoint for resource update (is blocked by status update)
-		&phases.EntrypointProvider{
+		&phases.EndpointProvider{
 			Client: &r.Client,
 		},
 	}
@@ -176,7 +176,7 @@ func (r *yandexContainerRegistryReconciler) finalize(ctx context.Context, log lo
 	}
 
 	// Also we must remove configmap created as endpoint
-	if err := configmaps.Remove(ctx, r.Client, registry); err != nil {
+	if err := configmaps.Remove(ctx, r.Client, registry.Name, registry.Namespace, "ycr"); err != nil {
 		return fmt.Errorf("unable to remove entrypoint: %v", err)
 	}
 
