@@ -33,8 +33,8 @@ func (r *Allocator) Update(ctx context.Context, log logr.Logger, registry *conne
 		FolderId: registry.Spec.FolderId,
 		Name:     registry.Spec.Name,
 		Labels: map[string]string{
-			config.ResourceCloudClusterLabel: registry.ClusterName,
-			config.ResourceCloudNameLabel:    registry.Name,
+			config.CloudClusterLabel: registry.ClusterName,
+			config.CloudNameLabel:    registry.Name,
 		},
 	}))
 
@@ -43,7 +43,7 @@ func (r *Allocator) Update(ctx context.Context, log logr.Logger, registry *conne
 		// so we just ignore it.
 		if errors.CheckRPCErrorAlreadyExists(err) {
 			// TODO (covariance) is it considered error or not?
-			log.Info("resource already exists")
+			log.Info("registry already exists")
 			return nil
 		}
 		return fmt.Errorf("error while creating registry: %v", err)
@@ -62,6 +62,34 @@ func (r *Allocator) Update(ctx context.Context, log logr.Logger, registry *conne
 		return fmt.Errorf("error while creating registry: %v", err)
 	}
 
-	log.Info("registry allocated in cloud")
+	log.Info("registry allocated successfully")
+	return nil
+}
+
+func (r *Allocator) Cleanup(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
+	ycr, err := ycrutils.GetRegistry(ctx, registry, r.Sdk)
+	if err != nil {
+		return fmt.Errorf("error while deleting registry")
+	}
+
+	if ycr != nil {
+		op, err := r.Sdk.WrapOperation(r.Sdk.ContainerRegistry().Registry().Delete(ctx, &containerregistry.DeleteRegistryRequest{
+			RegistryId: ycr.Id,
+		}))
+		if err != nil {
+			// Not found error is already handled by getRegistryId
+			return fmt.Errorf("error while deleting registry: %v", err)
+		}
+		if err := op.Wait(ctx); err != nil {
+			return fmt.Errorf("error while deleting registry: %v", err)
+		}
+		log.Info("registry deleted successfully")
+		return nil
+	}
+	// It is assumed that id is the actual id of the object since
+	// its lifecycle must be fully managed by connector.
+	// id being empty means that it was deleted externally,
+	// thus finalization is considered complete.
+	log.Info("registry was deleted externally")
 	return nil
 }

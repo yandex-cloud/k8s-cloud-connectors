@@ -51,3 +51,7 @@ func (r *StatusUpdater) Update(ctx context.Context, log logr.Logger, registry *c
 	log.Info("registry status updated")
 	return nil
 }
+
+func (r *StatusUpdater) Cleanup(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
+	return nil
+}
