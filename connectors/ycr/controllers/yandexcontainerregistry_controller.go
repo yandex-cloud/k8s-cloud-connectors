@@ -9,11 +9,11 @@ package controllers
 import (
 	"context"
 	"fmt"
-	ycrconfig "k8s-connectors/connectors/ycr/pkg"
+	ycrconfig "k8s-connectors/connectors/ycr/pkg/config"
 	ycrutils "k8s-connectors/connectors/ycr/pkg/utils"
-	config "k8s-connectors/pkg"
+	"k8s-connectors/pkg/config"
 	"k8s-connectors/pkg/configmaps"
-	utils "k8s-connectors/pkg/utils"
+	"k8s-connectors/pkg/utils"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -176,7 +176,7 @@ func (r *yandexContainerRegistryReconciler) finalize(ctx context.Context, log lo
 	}
 
 	// Also we must remove configmap created as endpoint
-	if err := configmaps.Remove(ctx, r.Client, registry.Name, registry.Namespace, "ycr"); err != nil {
+	if err := configmaps.Remove(ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ResourceShortName); err != nil {
 		return fmt.Errorf("unable to remove entrypoint: %v", err)
 	}
 

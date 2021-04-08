@@ -9,13 +9,13 @@ import (
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
 	ycsdk "github.com/yandex-cloud/go-sdk"
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
-	config "k8s-connectors/connectors/ycr/pkg"
+	config2 "k8s-connectors/connectors/ycr/pkg/config"
 	"k8s-connectors/pkg/errors"
 )
 
 func checkRegistryMatchWithYcr(ycr *containerregistry.Registry, registry *connectorsv1.YandexContainerRegistry) bool {
-	cluster, ok1 := ycr.Labels[config.RegistryCloudClusterLabel]
-	name, ok2 := ycr.Labels[config.RegistryCloudNameLabel]
+	cluster, ok1 := ycr.Labels[config2.RegistryCloudClusterLabel]
+	name, ok2 := ycr.Labels[config2.RegistryCloudNameLabel]
 	return ok1 && ok2 && cluster == registry.ClusterName && name == registry.Name
 }
 
