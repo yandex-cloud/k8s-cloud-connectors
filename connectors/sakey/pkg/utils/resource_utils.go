@@ -8,17 +8,18 @@ import (
 	"fmt"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/iam/v1/awscompatibility"
 	ycsdk "github.com/yandex-cloud/go-sdk"
-	connectorsv1 "k8s-connectors/connectors/awskey/api/v1"
+	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
+	"k8s-connectors/pkg/config"
 	"k8s-connectors/pkg/errors"
 	"k8s-connectors/pkg/secrets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	awskeyconfig "k8s-connectors/connectors/awskey/pkg/config"
+	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
 )
 
 // getRegistryId: tries to retrieve YC ID of registry and check whether it exists
 // If registry does not exist, this method returns nil
-func GetAWSAccessKey(ctx context.Context, object *connectorsv1.AWSAccessKey, sdk *ycsdk.SDK) (*awscompatibility.AccessKey, error) {
+func GetStaticAccessKey(ctx context.Context, object *connectorsv1.StaticAccessKey, sdk *ycsdk.SDK) (*awscompatibility.AccessKey, error) {
 	// If id is written in the status, we need to check
 	// whether it exists in the cloud.
 
@@ -52,7 +53,7 @@ func GetAWSAccessKey(ctx context.Context, object *connectorsv1.AWSAccessKey, sdk
 	}
 
 	for _, res := range lst.AccessKeys {
-		if res.Description == GetAWSAccessKeyDescription(object) {
+		if res.Description == GetStaticAccessKeyDescription(object) {
 			// By description match we deduce that its our key
 			return res, nil
 		}
@@ -61,16 +62,16 @@ func GetAWSAccessKey(ctx context.Context, object *connectorsv1.AWSAccessKey, sdk
 	return nil, nil
 }
 
-func GetAWSAccessKeyDescription(object *connectorsv1.AWSAccessKey) string {
-	return awskeyconfig.CloudClusterLabel + ":" + object.ClusterName + "\n" + awskeyconfig.CloudClusterLabel + ":" + object.Name
+func GetStaticAccessKeyDescription(object *connectorsv1.StaticAccessKey) string {
+	return config.CloudClusterLabel + ":" + object.ClusterName + "\n" + config.CloudClusterLabel + ":" + object.Name
 }
 
-func DeleteAWSAccessKeyAndSecret(ctx context.Context, client *client.Client, sdk *ycsdk.SDK, object *connectorsv1.AWSAccessKey) error {
-	if err := secrets.Remove(ctx, client, object.ObjectMeta, awskeyconfig.ShortName); err != nil {
+func DeleteStaticAccessKeyAndSecret(ctx context.Context, client *client.Client, sdk *ycsdk.SDK, object *connectorsv1.StaticAccessKey) error {
+	if err := secrets.Remove(ctx, client, object.ObjectMeta, sakeyconfig.ShortName); err != nil {
 		return err
 	}
 
-	res, err := GetAWSAccessKey(ctx, object, sdk)
+	res, err := GetStaticAccessKey(ctx, object, sdk)
 	if err != nil {
 		return err
 	}

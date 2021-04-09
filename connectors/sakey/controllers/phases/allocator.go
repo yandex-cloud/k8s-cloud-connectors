@@ -9,12 +9,12 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/iam/v1/awscompatibility"
 	ycsdk "github.com/yandex-cloud/go-sdk"
-	connectorsv1 "k8s-connectors/connectors/awskey/api/v1"
-	awskeyconfig "k8s-connectors/connectors/awskey/pkg/config"
+	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
+	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
 	"k8s-connectors/pkg/secrets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	awskeyutils "k8s-connectors/connectors/awskey/pkg/utils"
+	sakeyutils "k8s-connectors/connectors/sakey/pkg/utils"
 )
 
 type Allocator struct {
@@ -22,8 +22,8 @@ type Allocator struct {
 	Client *client.Client
 }
 
-func (r *Allocator) IsUpdated(ctx context.Context, object *connectorsv1.AWSAccessKey) (bool, error) {
-	res, err := awskeyutils.GetAWSAccessKey(ctx, object, r.Sdk)
+func (r *Allocator) IsUpdated(ctx context.Context, object *connectorsv1.StaticAccessKey) (bool, error) {
+	res, err := sakeyutils.GetStaticAccessKey(ctx, object, r.Sdk)
 	if err != nil {
 		return false, err
 	}
@@ -32,17 +32,17 @@ func (r *Allocator) IsUpdated(ctx context.Context, object *connectorsv1.AWSAcces
 	return res != nil, nil
 }
 
-func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connectorsv1.AWSAccessKey) error {
+func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey) error {
 	res, err := r.Sdk.IAM().AWSCompatibility().AccessKey().Create(ctx, &awscompatibility.CreateAccessKeyRequest{
 		ServiceAccountId: object.Spec.ServiceAccountID,
-		Description:      awskeyutils.GetAWSAccessKeyDescription(object),
+		Description:      sakeyutils.GetStaticAccessKeyDescription(object),
 	})
 	if err != nil {
 		return fmt.Errorf("error while creating resource: %v", err)
 	}
 
 	// Now we need to create a secret with the key
-	if err := secrets.Put(ctx, r.Client, object.ObjectMeta, awskeyconfig.ShortName, map[string]string{
+	if err := secrets.Put(ctx, r.Client, object.ObjectMeta, sakeyconfig.ShortName, map[string]string{
 		"key":    res.AccessKey.KeyId,
 		"secret": res.Secret,
 	}); err != nil {
@@ -54,7 +54,7 @@ func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connect
 	}
 
 	// And we need to update status
-	object.Status.SecretName = secrets.SecretName(object.ObjectMeta, awskeyconfig.ShortName)
+	object.Status.SecretName = secrets.SecretName(object.ObjectMeta, sakeyconfig.ShortName)
 	if err := (*r.Client).Update(ctx, object); err != nil {
 		return fmt.Errorf("error while creating resource: %v", err)
 	}
@@ -63,9 +63,9 @@ func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connect
 	return nil
 }
 
-func (r *Allocator) Cleanup(ctx context.Context, log logr.Logger, object *connectorsv1.AWSAccessKey) error {
+func (r *Allocator) Cleanup(ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey) error {
 
-	if err := awskeyutils.DeleteAWSAccessKeyAndSecret(ctx, r.Client, r.Sdk, object); err != nil {
+	if err := sakeyutils.DeleteStaticAccessKeyAndSecret(ctx, r.Client, r.Sdk, object); err != nil {
 		return err
 	}
 

@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"github.com/go-logr/logr"
 	ycsdk "github.com/yandex-cloud/go-sdk"
-	connectorsv1 "k8s-connectors/connectors/awskey/api/v1"
-	awskeyutils "k8s-connectors/connectors/awskey/pkg/utils"
+	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
+	sakeyutils "k8s-connectors/connectors/sakey/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -18,19 +18,19 @@ type StatusUpdater struct {
 	Client *client.Client
 }
 
-func (r *StatusUpdater) IsUpdated(_ context.Context, _ *connectorsv1.AWSAccessKey) (bool, error) {
+func (r *StatusUpdater) IsUpdated(_ context.Context, _ *connectorsv1.StaticAccessKey) (bool, error) {
 	// In every reconciliation we need to update
 	// status. Therefore, this updater is never
 	// marked as updated.
 	return false, nil
 }
 
-func (r *StatusUpdater) Update(ctx context.Context, log logr.Logger, object *connectorsv1.AWSAccessKey) error {
+func (r *StatusUpdater) Update(ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey) error {
 	// We must not forget that field SecretName is
 	// managed by another phase and therefore only
 	// thing we do is update key cloud id.
 
-	res, err := awskeyutils.GetAWSAccessKey(ctx, object, r.Sdk)
+	res, err := sakeyutils.GetStaticAccessKey(ctx, object, r.Sdk)
 	if err != nil {
 		return err
 	}
@@ -50,6 +50,6 @@ func (r *StatusUpdater) Update(ctx context.Context, log logr.Logger, object *con
 	return nil
 }
 
-func (r *StatusUpdater) Cleanup(_ context.Context, _ logr.Logger, _ *connectorsv1.AWSAccessKey) error {
+func (r *StatusUpdater) Cleanup(_ context.Context, _ logr.Logger, _ *connectorsv1.StaticAccessKey) error {
 	return nil
 }

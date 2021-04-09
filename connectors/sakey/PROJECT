@@ -10,6 +10,6 @@ resources:
   domain: cloud.yandex.ru
   group: connectors
   kind: AWSAccessKey
-  path: k8s-connectors/connectors/awskey/api/v1
+  path: k8s-connectors/connectors/sakey/api/v1
   version: v1
 version: "3"

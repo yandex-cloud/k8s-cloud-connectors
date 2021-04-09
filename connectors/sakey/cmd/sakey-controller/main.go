@@ -5,7 +5,7 @@ package main
 
 import (
 	"flag"
-	"k8s-connectors/connectors/awskey/pkg/config"
+	"k8s-connectors/connectors/sakey/pkg/config"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -19,8 +19,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	connectorsv1 "k8s-connectors/connectors/awskey/api/v1"
-	"k8s-connectors/connectors/awskey/controllers"
+	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
+	"k8s-connectors/connectors/sakey/controllers"
 	//+kubebuilder:scaffold:imports
 )
 

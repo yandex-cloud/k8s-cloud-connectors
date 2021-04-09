@@ -9,7 +9,7 @@ package controllers
 import (
 	"context"
 	"fmt"
-	awskeyconfig "k8s-connectors/connectors/awskey/pkg/config"
+	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
 	"k8s-connectors/pkg/config"
 	"k8s-connectors/pkg/utils"
 
@@ -21,12 +21,12 @@ import (
 
 	"github.com/yandex-cloud/go-sdk"
 
-	connectorsv1 "k8s-connectors/connectors/awskey/api/v1"
-	"k8s-connectors/connectors/awskey/controllers/phases"
+	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
+	"k8s-connectors/connectors/sakey/controllers/phases"
 )
 
-// awsAccessKeyReconciler reconciles a AWSAccessKey object
-type awsAccessKeyReconciler struct {
+// staticAccessKeyReconciler reconciles a StaticAccessKey object
+type staticAccessKeyReconciler struct {
 	client.Client
 	log    logr.Logger
 	scheme *runtime.Scheme
@@ -40,14 +40,14 @@ type awsAccessKeyReconciler struct {
 	phases []phases.AWSAccessKeyPhase
 }
 
-func NewAWSAccessKeyReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*awsAccessKeyReconciler, error) {
+func NewAWSAccessKeyReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*staticAccessKeyReconciler, error) {
 	sdk, err := ycsdk.Build(context.Background(), ycsdk.Config{
 		Credentials: ycsdk.InstanceServiceAccount(),
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &awsAccessKeyReconciler{
+	return &staticAccessKeyReconciler{
 		Client: client,
 		log:    log,
 		scheme: scheme,
@@ -79,48 +79,38 @@ func NewAWSAccessKeyReconciler(client client.Client, log logr.Logger, scheme *ru
 	}, nil
 }
 
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=awsaccesskeys,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=awsaccesskeys/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=awsaccesskeys/finalizers,verbs=update
+//+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=staticaccesskeys,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=staticaccesskeys/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=staticaccesskeys/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=secrets,verbs=create;delete;list;get;watch;update
-func (r *awsAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.log.WithValues("awsaccesskey", req.NamespacedName)
+func (r *staticAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := r.log.WithValues(sakeyconfig.LongName, req.NamespacedName)
 
 	// Try to retrieve object from k8s
-	var object connectorsv1.AWSAccessKey
+	var object connectorsv1.StaticAccessKey
 	if err := r.Get(ctx, req.NamespacedName, &object); err != nil {
 		// It still can be OK if we have not found it, and we do not need to reconcile it again
 
 		// This outcome signifies that we just cannot find object, that is ok
 		if apierrors.IsNotFound(err) {
 			log.Info("object not found in k8s, reconciliation not possible")
-			return ctrl.Result{
-				RequeueAfter: config.ErroredTimeout,
-			}, nil
+			return config.GetNeverResult()
 		}
 
 		// Some unexpected error occurred, must throw
-		return ctrl.Result{
-			RequeueAfter: config.ErroredTimeout,
-		}, err
+		return config.GetErroredResult(err)
 	}
 
 	// If object must be currently finalized, do it and quit
 	mustBeFinalized, err := r.mustBeFinalized(&object)
 	if err != nil {
-		return ctrl.Result{
-			RequeueAfter: config.ErroredTimeout,
-		}, err
+		return config.GetErroredResult(err)
 	}
 	if mustBeFinalized {
 		if err := r.finalize(ctx, log, &object); err != nil {
-			return ctrl.Result{
-				RequeueAfter: config.ErroredTimeout,
-			}, err
+			return config.GetErroredResult(err)
 		}
-		return ctrl.Result{
-			RequeueAfter: config.NormalTimeout,
-		}, nil
+		return config.GetNormalResult()
 	}
 
 	// Update all fragments of object, keeping track of whether
@@ -128,29 +118,23 @@ func (r *awsAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	for _, updater := range r.phases {
 		isInitialized, err := updater.IsUpdated(ctx, &object)
 		if err != nil {
-			return ctrl.Result{
-				RequeueAfter: config.ErroredTimeout,
-			}, err
+			return config.GetErroredResult(err)
 		}
 		if !isInitialized {
 			if err := updater.Update(ctx, log, &object); err != nil {
-				return ctrl.Result{
-					RequeueAfter: config.ErroredTimeout,
-				}, err
+				return config.GetErroredResult(err)
 			}
 		}
 	}
 
-	return ctrl.Result{
-		RequeueAfter: config.NormalTimeout,
-	}, nil
+	return config.GetNormalResult()
 }
 
-func (r *awsAccessKeyReconciler) mustBeFinalized(object *connectorsv1.AWSAccessKey) (bool, error) {
-	return !object.DeletionTimestamp.IsZero() && utils.ContainsString(object.Finalizers, awskeyconfig.FinalizerName), nil
+func (r *staticAccessKeyReconciler) mustBeFinalized(object *connectorsv1.StaticAccessKey) (bool, error) {
+	return !object.DeletionTimestamp.IsZero() && utils.ContainsString(object.Finalizers, sakeyconfig.FinalizerName), nil
 }
 
-func (r *awsAccessKeyReconciler) finalize(ctx context.Context, log logr.Logger, object *connectorsv1.AWSAccessKey) error {
+func (r *staticAccessKeyReconciler) finalize(ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey) error {
 	for i := len(r.phases); i != 0; i-- {
 		if err := r.phases[i-1].Cleanup(ctx, log, object); err != nil {
 			return fmt.Errorf("error during finalization: %v", err)
@@ -161,8 +145,8 @@ func (r *awsAccessKeyReconciler) finalize(ctx context.Context, log logr.Logger, 
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *awsAccessKeyReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *staticAccessKeyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&connectorsv1.AWSAccessKey{}).
+		For(&connectorsv1.StaticAccessKey{}).
 		Complete(r)
 }

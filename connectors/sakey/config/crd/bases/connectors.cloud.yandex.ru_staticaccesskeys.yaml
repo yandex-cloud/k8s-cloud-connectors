@@ -6,22 +6,22 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.5.0
   creationTimestamp: null
-  name: awsaccesskeys.connectors.cloud.yandex.ru
+  name: staticaccesskeys.connectors.cloud.yandex.ru
 spec:
   group: connectors.cloud.yandex.ru
   names:
-    kind: AWSAccessKey
-    listKind: AWSAccessKeyList
-    plural: awsaccesskeys
+    kind: StaticAccessKey
+    listKind: StaticAccessKeyList
+    plural: staticaccesskeys
     shortNames:
-    - awskey
-    singular: awsaccesskey
+    - sakey
+    singular: staticaccesskey
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: 'AWSAccessKey: is the Schema for the awsaccesskey API'
+        description: 'StaticAccessKey: is the Schema for the staticaccesskey API'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
@@ -32,28 +32,21 @@ spec:
           metadata:
             type: object
           spec:
-            description: 'AWSAccessKeySpec: defines the desired state of AWSAccessKeySpec'
+            description: 'StaticAccessKeySpec: defines the desired state of StaticAccessKeySpec'
             properties:
-              name:
+              serviceAccountId:
                 description: 'ServiceAccountID: id of service account from which the key will be issued'
                 type: string
             type: object
           status:
-            description: 'AWSAccessKeyStatus: defines the observed state of AWSAccessKey'
+            description: 'StaticAccessKeyStatus: defines the observed state of StaticAccessKey'
             properties:
-              folderId:
+              keyId:
                 description: 'KeyID: id of an issued key'
                 type: string
-              secretRef:
-                description: 'SecretRef: reference to a secret containing issued key values.'
-                properties:
-                  name:
-                    description: Name is unique within a namespace to reference a secret resource.
-                    type: string
-                  namespace:
-                    description: Namespace defines the space within which the secret name must be unique.
-                    type: string
-                type: object
+              secretName:
+                description: 'SecretRef: reference to a secret containing issued key values. It is always in the same namespace as the StaticAccessKey.'
+                type: string
             type: object
         type: object
     served: true
