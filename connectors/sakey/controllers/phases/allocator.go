@@ -65,7 +65,18 @@ func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connect
 
 func (r *Allocator) Cleanup(ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey) error {
 
-	if err := sakeyutils.DeleteStaticAccessKeyAndSecret(ctx, r.Client, r.Sdk, object); err != nil {
+	if err := secrets.Remove(ctx, r.Client, object.ObjectMeta, sakeyconfig.ShortName); err != nil {
+		return err
+	}
+
+	res, err := sakeyutils.GetStaticAccessKey(ctx, object, r.Sdk)
+	if err != nil {
+		return err
+	}
+
+	if _, err := r.Sdk.IAM().AWSCompatibility().AccessKey().Delete(ctx, &awscompatibility.DeleteAccessKeyRequest{
+		AccessKeyId: res.Id,
+	}); err != nil {
 		return err
 	}
 

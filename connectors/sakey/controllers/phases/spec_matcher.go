@@ -5,6 +5,7 @@ package phases
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-logr/logr"
 	ycsdk "github.com/yandex-cloud/go-sdk"
 	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
@@ -26,17 +27,11 @@ func (r *SpecMatcher) IsUpdated(ctx context.Context, object *connectorsv1.Static
 	return res.ServiceAccountId != object.Spec.ServiceAccountID, nil
 }
 
-func (r *SpecMatcher) Update(ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey) error {
+func (r *SpecMatcher) Update(_ context.Context, _ logr.Logger, _ *connectorsv1.StaticAccessKey) error {
 	// If update is necessary, then user has changed
-	// the service account id. We need to delete old
-	// key and secret and let it be, because next
-	// reconciliation phase will allocate them anew.
-	if err := sakeyutils.DeleteStaticAccessKeyAndSecret(ctx, r.Client, r.Sdk, object); err != nil {
-		return err
-	}
-
-	log.Info("spec updated successfully")
-	return nil
+	// the service account id. It must be immutable,
+	// thus we will just throw an error.
+	return fmt.Errorf("ServiceAccountId was changed, but must be immutable")
 }
 
 func (r *SpecMatcher) Cleanup(_ context.Context, _ logr.Logger, _ *connectorsv1.StaticAccessKey) error {

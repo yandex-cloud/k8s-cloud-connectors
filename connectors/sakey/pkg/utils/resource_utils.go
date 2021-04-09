@@ -11,10 +11,6 @@ import (
 	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
 	"k8s-connectors/pkg/config"
 	"k8s-connectors/pkg/errors"
-	"k8s-connectors/pkg/secrets"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
 )
 
 // GetStaticAccessKey: tries to retrieve YC resource and check whether it exists.
@@ -64,23 +60,4 @@ func GetStaticAccessKey(ctx context.Context, object *connectorsv1.StaticAccessKe
 
 func GetStaticAccessKeyDescription(object *connectorsv1.StaticAccessKey) string {
 	return config.CloudClusterLabel + ":" + object.ClusterName + "\n" + config.CloudClusterLabel + ":" + object.Name
-}
-
-func DeleteStaticAccessKeyAndSecret(ctx context.Context, client *client.Client, sdk *ycsdk.SDK, object *connectorsv1.StaticAccessKey) error {
-	if err := secrets.Remove(ctx, client, object.ObjectMeta, sakeyconfig.ShortName); err != nil {
-		return err
-	}
-
-	res, err := GetStaticAccessKey(ctx, object, sdk)
-	if err != nil {
-		return err
-	}
-
-	if _, err := sdk.IAM().AWSCompatibility().AccessKey().Delete(ctx, &awscompatibility.DeleteAccessKeyRequest{
-		AccessKeyId: res.Id,
-	}); err != nil {
-		return err
-	}
-
-	return nil
 }
