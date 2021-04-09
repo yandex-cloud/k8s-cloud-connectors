@@ -18,11 +18,11 @@ type FinalizerRegistrar struct {
 }
 
 func (r *FinalizerRegistrar) IsUpdated(_ context.Context, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
-	return utils.ContainsString(registry.Finalizers, config.RegistryFinalizerName), nil
+	return utils.ContainsString(registry.Finalizers, config.ResourceFinalizerName), nil
 }
 
 func (r *FinalizerRegistrar) Update(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
-	registry.Finalizers = append(registry.Finalizers, config.RegistryFinalizerName)
+	registry.Finalizers = append(registry.Finalizers, config.ResourceFinalizerName)
 	if err := (*r.Client).Update(ctx, registry); err != nil {
 		return fmt.Errorf("unable to update registry status: %v", err)
 	}

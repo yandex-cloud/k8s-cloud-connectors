@@ -33,8 +33,8 @@ func (r *Allocator) Update(ctx context.Context, log logr.Logger, registry *conne
 		FolderId: registry.Spec.FolderId,
 		Name:     registry.Spec.Name,
 		Labels: map[string]string{
-			config.RegistryCloudClusterLabel: registry.ClusterName,
-			config.RegistryCloudNameLabel:    registry.Name,
+			config.ResourceCloudClusterLabel: registry.ClusterName,
+			config.ResourceCloudNameLabel:    registry.Name,
 		},
 	}))
 

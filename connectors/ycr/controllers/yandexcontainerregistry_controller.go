@@ -147,7 +147,7 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 }
 
 func (r *yandexContainerRegistryReconciler) mustBeFinalized(registry *connectorsv1.YandexContainerRegistry) (bool, error) {
-	return !registry.DeletionTimestamp.IsZero() && utils.ContainsString(registry.Finalizers, ycrconfig.RegistryFinalizerName), nil
+	return !registry.DeletionTimestamp.IsZero() && utils.ContainsString(registry.Finalizers, ycrconfig.ResourceFinalizerName), nil
 }
 
 func (r *yandexContainerRegistryReconciler) finalize(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
@@ -181,7 +181,7 @@ func (r *yandexContainerRegistryReconciler) finalize(ctx context.Context, log lo
 	}
 
 	// Now we need to state that finalization of this object is no longer needed.
-	registry.Finalizers = utils.RemoveString(registry.Finalizers, ycrconfig.RegistryFinalizerName)
+	registry.Finalizers = utils.RemoveString(registry.Finalizers, ycrconfig.ResourceFinalizerName)
 	if err := r.Update(ctx, registry); err != nil {
 		return fmt.Errorf("unable to remove finalizer: %v", err)
 	}

@@ -4,8 +4,9 @@
 package config
 
 const (
-	RegistryCloudClusterLabel string = "managed-kubernetes-cluster-id"
-	RegistryCloudNameLabel    string = "managed-kubernetes-registry-metadata-name"
-	RegistryFinalizerName     string = "finalizer.ycr.connectors.cloud.yandex.ru"
+	ResourceCloudClusterLabel string = "managed-kubernetes-cluster-id"
+	ResourceCloudNameLabel    string = "managed-kubernetes-registry-metadata-name"
+	ResourceFinalizerName     string = "finalizer.ycr.connectors.cloud.yandex.ru"
+	ResourceLongName          string = "YandexContainerRegistry"
 	ResourceShortName         string = "ycr"
 )
