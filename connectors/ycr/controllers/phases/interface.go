@@ -9,7 +9,7 @@ import (
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
 )
 
-type YandexContainerRegistryUpdater interface {
+type YandexContainerRegistryPhase interface {
 	IsUpdated(context.Context, *connectorsv1.YandexContainerRegistry) (bool, error)
 	Update(context.Context, logr.Logger, *connectorsv1.YandexContainerRegistry) error
 	Cleanup(context.Context, logr.Logger, *connectorsv1.YandexContainerRegistry) error

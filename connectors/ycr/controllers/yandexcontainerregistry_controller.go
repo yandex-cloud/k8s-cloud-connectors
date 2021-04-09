@@ -37,7 +37,7 @@ type yandexContainerRegistryReconciler struct {
 	// thus if one of initializers fails, subsequent won't be processed.
 	// Upon destruction of object, phase cleanups are called in
 	// reverse order.
-	phases []phases.YandexContainerRegistryUpdater
+	phases []phases.YandexContainerRegistryPhase
 }
 
 func NewYandexContainerRegistryReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*yandexContainerRegistryReconciler, error) {
@@ -52,7 +52,7 @@ func NewYandexContainerRegistryReconciler(client client.Client, log logr.Logger,
 		log:    log,
 		scheme: scheme,
 		sdk:    sdk,
-		phases: []phases.YandexContainerRegistryUpdater{
+		phases: []phases.YandexContainerRegistryPhase{
 			// Register finalizer for the object (is blocked by allocation)
 			&phases.FinalizerRegistrar{
 				Client: &client,
