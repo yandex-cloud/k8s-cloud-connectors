@@ -5,11 +5,14 @@ package configmaps
 
 import (
 	"context"
+	"fmt"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	rtcl "sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+// TODO (covariance) pass only ObjectMeta, not resource, namespace and kind, it's unnecessary
 
 func cmapName(resourceName, kind string) string {
 	return kind + "-" + resourceName + "-" + "configmap"
@@ -21,12 +24,11 @@ func Exists(ctx context.Context, client *rtcl.Client, resourceName string, names
 	var cmapObj v1.ConfigMap
 	err := (*client).Get(ctx, rtcl.ObjectKey{Namespace: namespace, Name: cmapName}, &cmapObj)
 	if errors.IsNotFound(err) {
-		return true, nil
+		return false, nil
 	}
-	return false, err
+	return true, fmt.Errorf("cannot get configmap: %v", err)
 }
 
-// TODO (covariance) autogenerate for all resource types
 func Put(ctx context.Context, client *rtcl.Client, resourceName string, namespace string, kind string, data map[string]string) error {
 	cmapName := cmapName(resourceName, kind)
 
@@ -48,23 +50,24 @@ func Put(ctx context.Context, client *rtcl.Client, resourceName string, namespac
 	}
 	if errors.IsNotFound(err) {
 		if err := (*client).Create(ctx, &newState); err != nil {
-			return err
+			return fmt.Errorf("cannot create configmap: %v", err)
 		}
 	} else {
 		if err := (*client).Update(ctx, &newState); err != nil {
-			return err
+			return fmt.Errorf("cannot update configmap: %v", err)
 		}
 	}
 	return nil
 }
 
+// TODO (covariance) take client as pointer!
 func Remove(ctx context.Context, client rtcl.Client, resourceName string, namespace string, kind string) error {
 	cmapName := cmapName(resourceName, kind)
 
 	var cmapObj v1.ConfigMap
 	err := client.Get(ctx, rtcl.ObjectKey{Namespace: namespace, Name: cmapName}, &cmapObj)
 	if err != nil && !errors.IsNotFound(err) {
-		return err
+		return fmt.Errorf("cannot get configmap: %v", err)
 	}
 
 	if errors.IsNotFound(err) {
@@ -72,7 +75,7 @@ func Remove(ctx context.Context, client rtcl.Client, resourceName string, namesp
 	}
 
 	if err := client.Delete(ctx, &cmapObj); err != nil {
-		return err
+		return fmt.Errorf("cannot delete configmap: %v", err)
 	}
 
 	return nil
