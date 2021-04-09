@@ -9,7 +9,7 @@ rules:
 - apiGroups:
   - connectors.cloud.yandex.ru
   resources:
-  - yandexcontainerregistries
+  - staticaccesskeys
   verbs:
   - create
   - delete
@@ -21,13 +21,13 @@ rules:
 - apiGroups:
   - connectors.cloud.yandex.ru
   resources:
-  - yandexcontainerregistries/finalizers
+  - staticaccesskeys/finalizers
   verbs:
   - update
 - apiGroups:
   - connectors.cloud.yandex.ru
   resources:
-  - yandexcontainerregistries/status
+  - staticaccesskeys/status
   verbs:
   - get
   - patch

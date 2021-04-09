@@ -1,13 +1,13 @@
-# permissions for end users to edit yandexcontainerregistries.
+# permissions for end users to edit staticaccesskeys.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: yandexcontainerregistry-editor-role
+  name: staticaccesskey-editor-role
 rules:
 - apiGroups:
   - connectors.cloud.yandex.ru
   resources:
-  - yandexcontainerregistries
+  - staticaccesskeys
   verbs:
   - create
   - delete
@@ -19,6 +19,6 @@ rules:
 - apiGroups:
   - connectors.cloud.yandex.ru
   resources:
-  - yandexcontainerregistries/status
+  - staticaccesskeys/status
   verbs:
   - get
