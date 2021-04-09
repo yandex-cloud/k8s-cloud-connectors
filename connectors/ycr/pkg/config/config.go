@@ -4,9 +4,9 @@
 package config
 
 const (
-	ResourceCloudClusterLabel string = "managed-kubernetes-cluster-id"
-	ResourceCloudNameLabel    string = "managed-kubernetes-registry-metadata-name"
-	ResourceFinalizerName     string = "finalizer.ycr.connectors.cloud.yandex.ru"
-	ResourceLongName          string = "YandexContainerRegistry"
-	ResourceShortName         string = "ycr"
+	CloudClusterLabel string = "managed-kubernetes-cluster-id"
+	CloudNameLabel    string = "managed-kubernetes-registry-metadata-name"
+	FinalizerName     string = "finalizer.ycr.connectors.cloud.yandex.ru"
+	LongName          string = "YandexContainerRegistry"
+	ShortName         string = "ycr"
 )

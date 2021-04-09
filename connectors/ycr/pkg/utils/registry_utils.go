@@ -14,8 +14,8 @@ import (
 )
 
 func checkRegistryMatchWithYcr(ycr *containerregistry.Registry, registry *connectorsv1.YandexContainerRegistry) bool {
-	cluster, ok1 := ycr.Labels[ycrconfig.ResourceCloudClusterLabel]
-	name, ok2 := ycr.Labels[ycrconfig.ResourceCloudNameLabel]
+	cluster, ok1 := ycr.Labels[ycrconfig.CloudClusterLabel]
+	name, ok2 := ycr.Labels[ycrconfig.CloudNameLabel]
 	return ok1 && ok2 && cluster == registry.ClusterName && name == registry.Name
 }
 

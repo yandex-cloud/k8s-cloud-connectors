@@ -64,3 +64,7 @@ func (r *SpecMatcher) Update(ctx context.Context, log logr.Logger, registry *con
 	log.Info("registry spec matched with cloud")
 	return nil
 }
+
+func (r *SpecMatcher) Cleanup(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
+	return nil
+}
