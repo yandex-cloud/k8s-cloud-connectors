@@ -17,8 +17,8 @@ import (
 	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
 )
 
-// getRegistryId: tries to retrieve YC ID of registry and check whether it exists
-// If registry does not exist, this method returns nil
+// GetStaticAccessKey: tries to retrieve YC resource and check whether it exists.
+// If resource does not exist or cannot be found, this method returns nil.
 func GetStaticAccessKey(ctx context.Context, object *connectorsv1.StaticAccessKey, sdk *ycsdk.SDK) (*awscompatibility.AccessKey, error) {
 	// If id is written in the status, we need to check
 	// whether it exists in the cloud.

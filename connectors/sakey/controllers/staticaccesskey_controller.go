@@ -37,10 +37,10 @@ type staticAccessKeyReconciler struct {
 	// thus if one of initializers fails, subsequent won't be processed.
 	// Upon destruction of object, phase cleanups are called in
 	// reverse order.
-	phases []phases.AWSAccessKeyPhase
+	phases []phases.StaticAccessKeyPhase
 }
 
-func NewAWSAccessKeyReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*staticAccessKeyReconciler, error) {
+func NewStaticAccessKeyReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*staticAccessKeyReconciler, error) {
 	sdk, err := ycsdk.Build(context.Background(), ycsdk.Config{
 		Credentials: ycsdk.InstanceServiceAccount(),
 	})
@@ -52,7 +52,7 @@ func NewAWSAccessKeyReconciler(client client.Client, log logr.Logger, scheme *ru
 		log:    log,
 		scheme: scheme,
 		sdk:    sdk,
-		phases: []phases.AWSAccessKeyPhase{
+		phases: []phases.StaticAccessKeyPhase{
 			// Register finalizer for the object (is blocked by allocation)
 			&phases.FinalizerRegistrar{
 				Client: &client,
@@ -89,15 +89,13 @@ func (r *staticAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	// Try to retrieve object from k8s
 	var object connectorsv1.StaticAccessKey
 	if err := r.Get(ctx, req.NamespacedName, &object); err != nil {
-		// It still can be OK if we have not found it, and we do not need to reconcile it again
-
-		// This outcome signifies that we just cannot find object, that is ok
+		// This outcome signifies that we just cannot find object, that is OK,
+		// we just never want to reconcile it again unless triggered externally.
 		if apierrors.IsNotFound(err) {
 			log.Info("object not found in k8s, reconciliation not possible")
 			return config.GetNeverResult()
 		}
 
-		// Some unexpected error occurred, must throw
 		return config.GetErroredResult(err)
 	}
 

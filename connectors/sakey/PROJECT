@@ -9,7 +9,7 @@ resources:
   controller: true
   domain: cloud.yandex.ru
   group: connectors
-  kind: AWSAccessKey
+  kind: StaticAccessKey
   path: k8s-connectors/connectors/sakey/api/v1
   version: v1
 version: "3"

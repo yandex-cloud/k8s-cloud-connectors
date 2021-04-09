@@ -66,7 +66,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	reconciler, err := controllers.NewAWSAccessKeyReconciler(
+	reconciler, err := controllers.NewStaticAccessKeyReconciler(
 		mgr.GetClient(),
 		ctrl.Log.WithName("controllers").WithName(config.LongName),
 		mgr.GetScheme(),

@@ -9,7 +9,7 @@ import (
 	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
 )
 
-type AWSAccessKeyPhase interface {
+type StaticAccessKeyPhase interface {
 	IsUpdated(context.Context, *connectorsv1.StaticAccessKey) (bool, error)
 	Update(context.Context, logr.Logger, *connectorsv1.StaticAccessKey) error
 	Cleanup(context.Context, logr.Logger, *connectorsv1.StaticAccessKey) error
