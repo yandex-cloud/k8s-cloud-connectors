@@ -6,22 +6,22 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.5.0
   creationTimestamp: null
-  name: yandexcontainerregistries.connectors.cloud.yandex.com
+  name: staticaccesskeys.connectors.cloud.yandex.com
 spec:
   group: connectors.cloud.yandex.com
   names:
-    kind: YandexContainerRegistry
-    listKind: YandexContainerRegistryList
-    plural: yandexcontainerregistries
+    kind: StaticAccessKey
+    listKind: StaticAccessKeyList
+    plural: staticaccesskeys
     shortNames:
-    - yc-registry
-    singular: yandexcontainerregistry
+    - sakey
+    singular: staticaccesskey
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: 'YandexContainerRegistry: is the Schema for the yandexcontainerregistries API'
+        description: 'StaticAccessKey: is the Schema for the staticaccesskey API'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
@@ -32,33 +32,22 @@ spec:
           metadata:
             type: object
           spec:
-            description: 'YandexContainerRegistrySpec: defines the desired state of YandexContainerRegistry'
+            description: 'StaticAccessKeySpec: defines the desired state of StaticAccessKeySpec'
             properties:
-              folderId:
-                description: 'FolderId: id of a folder in which registry is located'
+              serviceAccountId:
+                description: 'ServiceAccountID: id of service account from which the key will be issued'
                 type: string
-              name:
-                description: 'Name: name of registry'
-                maxLength: 63
-                minLength: 3
-                type: string
+            required:
+            - serviceAccountId
             type: object
           status:
-            description: 'YandexContainerRegistryStatus: defines the observed state of YandexContainerRegistry'
+            description: 'StaticAccessKeyStatus: defines the observed state of StaticAccessKey'
             properties:
-              createdAt:
-                description: 'CreatedAt: RFC3339-formatted string, representing creation time of resource'
+              keyId:
+                description: 'KeyID: id of an issued key'
                 type: string
-              id:
-                description: 'Id: id of registry'
-                type: string
-              labels:
-                additionalProperties:
-                  type: string
-                description: 'Labels: registry labels in key:value form. Maximum of 64 labels for resource is allowed'
-                type: object
-              status:
-                description: 'Status: status of registry. Valid values are: - CREATING - ACTIVE - DELETING'
+              secretName:
+                description: 'SecretRef: reference to a secret containing issued key values. It is always in the same namespace as the StaticAccessKey.'
                 type: string
             type: object
         type: object

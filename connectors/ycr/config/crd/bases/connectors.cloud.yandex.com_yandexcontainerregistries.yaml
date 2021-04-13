@@ -1,0 +1,75 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.5.0
+  creationTimestamp: null
+  name: yandexcontainerregistries.connectors.cloud.yandex.com
+spec:
+  group: connectors.cloud.yandex.com
+  names:
+    kind: YandexContainerRegistry
+    listKind: YandexContainerRegistryList
+    plural: yandexcontainerregistries
+    shortNames:
+    - yc-registry
+    singular: yandexcontainerregistry
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: 'YandexContainerRegistry: is the Schema for the yandexcontainerregistries API'
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: 'YandexContainerRegistrySpec: defines the desired state of YandexContainerRegistry'
+            properties:
+              folderId:
+                description: 'FolderId: id of a folder in which registry is located'
+                type: string
+              name:
+                description: 'Name: name of registry'
+                maxLength: 63
+                minLength: 3
+                type: string
+            required:
+            - folderId
+            - name
+            type: object
+          status:
+            description: 'YandexContainerRegistryStatus: defines the observed state of YandexContainerRegistry'
+            properties:
+              createdAt:
+                description: 'CreatedAt: RFC3339-formatted string, representing creation time of resource'
+                type: string
+              id:
+                description: 'Id: id of registry'
+                type: string
+              labels:
+                additionalProperties:
+                  type: string
+                description: 'Labels: registry labels in key:value form. Maximum of 64 labels for resource is allowed'
+                type: object
+              status:
+                description: 'Status: status of registry. Valid values are: - CREATING - ACTIVE - DELETING'
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

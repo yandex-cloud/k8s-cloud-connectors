@@ -21,12 +21,12 @@ type YandexContainerRegistrySpec struct {
 	//+kubebuilder:validation:Required
 	//+kubebuilder:validation:MinLength=3
 	//+kubebuilder:validation:MaxLength=63
-	Name string `json:"name,omitempty"`
+	Name string `json:"name"`
 
 	// FolderId: id of a folder in which registry is located
 	//+kubebuilder:validation:Required
 	//+kubebuilder:validation:
-	FolderId string `json:"folderId,omitempty"`
+	FolderId string `json:"folderId"`
 }
 
 // YandexContainerRegistryStatus: defines the observed state of YandexContainerRegistry
