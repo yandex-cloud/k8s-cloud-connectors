@@ -10,8 +10,8 @@ import (
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
 	ycsdk "github.com/yandex-cloud/go-sdk"
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
-	"k8s-connectors/connectors/ycr/pkg/config"
 	ycrutils "k8s-connectors/connectors/ycr/pkg/utils"
+	"k8s-connectors/pkg/config"
 	"k8s-connectors/pkg/errors"
 )
 

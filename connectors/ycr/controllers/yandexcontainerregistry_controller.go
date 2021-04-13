@@ -86,7 +86,7 @@ func NewYandexContainerRegistryReconciler(client client.Client, log logr.Logger,
 //+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=yandexcontainerregistries/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources:configmaps,verbs=create,update,delete
 func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.log.WithValues("yandexcontainerregistry", req.NamespacedName)
+	log := r.log.WithValues(ycrconfig.LongName, req.NamespacedName)
 
 	// Try to retrieve resource from k8s
 	var registry connectorsv1.YandexContainerRegistry
@@ -96,33 +96,23 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 		// This outcome signifies that we just cannot find resource, that is ok
 		if apierrors.IsNotFound(err) {
 			log.Info("Resource not found in k8s, reconciliation not possible")
-			return ctrl.Result{
-				RequeueAfter: config.ErroredTimeout,
-			}, nil
+			return config.GetNeverResult()
 		}
 
 		// Some unexpected error occurred, must throw
-		return ctrl.Result{
-			RequeueAfter: config.ErroredTimeout,
-		}, err
+		return config.GetErroredResult(err)
 	}
 
 	// If object must be currently finalized, do it and quit
 	mustBeFinalized, err := r.mustBeFinalized(&registry)
 	if err != nil {
-		return ctrl.Result{
-			RequeueAfter: config.ErroredTimeout,
-		}, err
+		return config.GetErroredResult(err)
 	}
 	if mustBeFinalized {
 		if err := r.finalize(ctx, log, &registry); err != nil {
-			return ctrl.Result{
-				RequeueAfter: config.ErroredTimeout,
-			}, err
+			return config.GetErroredResult(err)
 		}
-		return ctrl.Result{
-			RequeueAfter: config.NormalTimeout,
-		}, nil
+		return config.GetNormalResult()
 	}
 
 	// Update all fragments of object, keeping track of whether
@@ -130,22 +120,16 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 	for _, updater := range r.phases {
 		isInitialized, err := updater.IsUpdated(ctx, &registry)
 		if err != nil {
-			return ctrl.Result{
-				RequeueAfter: config.ErroredTimeout,
-			}, err
+			return config.GetErroredResult(err)
 		}
 		if !isInitialized {
 			if err := updater.Update(ctx, log, &registry); err != nil {
-				return ctrl.Result{
-					RequeueAfter: config.ErroredTimeout,
-				}, err
+				return config.GetErroredResult(err)
 			}
 		}
 	}
 
-	return ctrl.Result{
-		RequeueAfter: config.NormalTimeout,
-	}, nil
+	return config.GetNormalResult()
 }
 
 func (r *yandexContainerRegistryReconciler) mustBeFinalized(registry *connectorsv1.YandexContainerRegistry) (bool, error) {
@@ -154,7 +138,7 @@ func (r *yandexContainerRegistryReconciler) mustBeFinalized(registry *connectors
 
 func (r *yandexContainerRegistryReconciler) finalize(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
 	for i := len(r.phases); i != 0; i-- {
-		if err := r.phases[i - 1].Cleanup(ctx, log, registry); err != nil {
+		if err := r.phases[i-1].Cleanup(ctx, log, registry); err != nil {
 			return fmt.Errorf("error during finalization: %v", err)
 		}
 	}

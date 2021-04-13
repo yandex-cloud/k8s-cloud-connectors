@@ -1,0 +1,24 @@
+# permissions for end users to edit staticaccesskeys.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: staticaccesskey-editor-role
+rules:
+- apiGroups:
+  - connectors.cloud.yandex.ru
+  resources:
+  - staticaccesskeys
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - connectors.cloud.yandex.ru
+  resources:
+  - staticaccesskeys/status
+  verbs:
+  - get
