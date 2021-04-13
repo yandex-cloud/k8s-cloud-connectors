@@ -4,7 +4,7 @@
 package config
 
 const (
-	FinalizerName string = "finalizer.sakey.connectors.cloud.yandex.ru"
+	FinalizerName string = "finalizer.sakey.connectors.cloud.yandex.com"
 	LongName      string = "StaticAccessKey"
 	ShortName     string = "sakey"
 )

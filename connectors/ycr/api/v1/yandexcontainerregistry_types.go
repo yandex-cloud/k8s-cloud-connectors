@@ -18,14 +18,14 @@ const (
 // YandexContainerRegistrySpec: defines the desired state of YandexContainerRegistry
 type YandexContainerRegistrySpec struct {
 	// Name: name of registry
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MinLength=3
-	// +kubebuilder:validation:MaxLength=63
+	//+kubebuilder:validation:Required
+	//+kubebuilder:validation:MinLength=3
+	//+kubebuilder:validation:MaxLength=63
 	Name string `json:"name,omitempty"`
 
 	// FolderId: id of a folder in which registry is located
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:
+	//+kubebuilder:validation:Required
+	//+kubebuilder:validation:
 	FolderId string `json:"folderId,omitempty"`
 }
 
@@ -47,8 +47,6 @@ type YandexContainerRegistryStatus struct {
 	// Labels: registry labels in key:value form. Maximum of 64 labels for resource is allowed
 	Labels map[string]string `json:"labels,omitempty"`
 }
-
-// TODO (covariance) make registry cluster-scope
 
 // YandexContainerRegistry: is the Schema for the yandexcontainerregistries API
 //+kubebuilder:object:root=true

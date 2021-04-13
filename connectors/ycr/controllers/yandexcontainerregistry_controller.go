@@ -81,9 +81,9 @@ func NewYandexContainerRegistryReconciler(client client.Client, log logr.Logger,
 	}, nil
 }
 
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=yandexcontainerregistries,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=yandexcontainerregistries/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=yandexcontainerregistries/finalizers,verbs=update
+//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexcontainerregistries,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexcontainerregistries/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexcontainerregistries/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources:configmaps,verbs=create,update,delete
 func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.log.WithValues(ycrconfig.LongName, req.NamespacedName)

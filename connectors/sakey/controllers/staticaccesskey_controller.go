@@ -79,9 +79,9 @@ func NewStaticAccessKeyReconciler(client client.Client, log logr.Logger, scheme 
 	}, nil
 }
 
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=staticaccesskeys,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=staticaccesskeys/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.ru,resources=staticaccesskeys/finalizers,verbs=update
+//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=staticaccesskeys,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=staticaccesskeys/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=staticaccesskeys/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=secrets,verbs=create;delete;list;get;watch;update
 func (r *staticAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.log.WithValues(sakeyconfig.LongName, req.NamespacedName)

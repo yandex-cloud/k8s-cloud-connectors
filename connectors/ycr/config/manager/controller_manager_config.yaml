@@ -8,4 +8,4 @@ webhook:
   port: 9443
 leaderElection:
   leaderElect: true
-  resourceName: faeacf9e.cloud.yandex.ru
+  resourceName: faeacf9e.cloud.yandex.com
