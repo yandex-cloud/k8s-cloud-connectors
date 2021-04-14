@@ -1,0 +1,12 @@
+resources:
+  - ../../../../config/deploy/
+
+namePrefix: yos-
+namespace: yandex-cloud-connectors
+images:
+  - name: controller
+    newName: yos-controller
+    newTag: latest
+
+patchesStrategicMerge:
+  - role.yaml
