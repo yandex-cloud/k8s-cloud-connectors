@@ -4,7 +4,7 @@
 package config
 
 const (
-	FinalizerName string = "finalizer.ycr.connectors.cloud.yandex.ru"
+	FinalizerName string = "finalizer.ycr.connectors.cloud.yandex.com"
 	LongName      string = "YandexContainerRegistry"
 	ShortName     string = "ycr"
 )

@@ -1,4 +1,4 @@
-domain: cloud.yandex.ru
+domain: cloud.yandex.com
 layout: go.kubebuilder.io/v3
 projectName: k8s-connectors
 repo: k8s-connectors
@@ -7,7 +7,7 @@ resources:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: cloud.yandex.ru
+  domain: cloud.yandex.com
   group: connectors
   kind: YandexContainerRegistry
   path: k8s-connectors/connectors/ycr/api/v1

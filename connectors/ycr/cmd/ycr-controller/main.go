@@ -6,6 +6,7 @@ package main
 import (
 	"flag"
 	"os"
+	"k8s-connectors/connectors/ycr/pkg/config"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -58,7 +59,7 @@ func main() {
 		Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "faeacf9e.cloud.yandex.ru",
+		LeaderElectionID:       "faeacf9e.cloud.yandex.com",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -67,14 +68,14 @@ func main() {
 
 	reconciler, err := controllers.NewYandexContainerRegistryReconciler(
 		mgr.GetClient(),
-		ctrl.Log.WithName("controllers").WithName("YandexContainerRegistry"),
+		ctrl.Log.WithName("controllers").WithName(config.LongName),
 		mgr.GetScheme(),
 	)
 	if err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "YandexContainerRegistry")
+		setupLog.Error(err, "unable to create controller", "controller", config.LongName)
 	}
 	if err := reconciler.SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "YandexContainerRegistry")
+		setupLog.Error(err, "unable to create controller", "controller", config.LongName)
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

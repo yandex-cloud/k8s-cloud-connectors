@@ -3,7 +3,7 @@
 
 // Package v1 contains API Schema definitions for the connectors v1 API group
 //+kubebuilder:object:generate=true
-//+groupName=connectors.cloud.yandex.ru
+//+groupName=connectors.cloud.yandex.com
 package v1
 
 import (
@@ -13,7 +13,7 @@ import (
 
 var (
 	// GroupVersion is group version used to register these objects
-	GroupVersion = schema.GroupVersion{Group: "connectors.cloud.yandex.ru", Version: "v1"}
+	GroupVersion = schema.GroupVersion{Group: "connectors.cloud.yandex.com", Version: "v1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}

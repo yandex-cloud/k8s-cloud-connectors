@@ -6,9 +6,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.5.0
   creationTimestamp: null
-  name: yandexcontainerregistries.connectors.cloud.yandex.ru
+  name: yandexcontainerregistries.connectors.cloud.yandex.com
 spec:
-  group: connectors.cloud.yandex.ru
+  group: connectors.cloud.yandex.com
   names:
     kind: YandexContainerRegistry
     listKind: YandexContainerRegistryList
@@ -42,6 +42,9 @@ spec:
                 maxLength: 63
                 minLength: 3
                 type: string
+            required:
+            - folderId
+            - name
             type: object
           status:
             description: 'YandexContainerRegistryStatus: defines the observed state of YandexContainerRegistry'

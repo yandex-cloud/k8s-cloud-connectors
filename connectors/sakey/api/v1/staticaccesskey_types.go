@@ -12,7 +12,7 @@ type StaticAccessKeySpec struct {
 	// ServiceAccountID: id of service account from which
 	// the key will be issued
 	//+kubebuilder:validation:Required
-	ServiceAccountID string `json:"serviceAccountId,omitempty"`
+	ServiceAccountID string `json:"serviceAccountId"`
 }
 
 // StaticAccessKeyStatus: defines the observed state of StaticAccessKey

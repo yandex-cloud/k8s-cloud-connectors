@@ -5,7 +5,7 @@ metadata:
   name: yandexcontainerregistry-editor-role
 rules:
 - apiGroups:
-  - connectors.cloud.yandex.ru
+  - connectors.cloud.yandex.com
   resources:
   - yandexcontainerregistries
   verbs:
@@ -17,7 +17,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - connectors.cloud.yandex.ru
+  - connectors.cloud.yandex.com
   resources:
   - yandexcontainerregistries/status
   verbs:
