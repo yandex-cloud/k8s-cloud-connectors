@@ -2,4 +2,4 @@
 
 REGISTRY="$2"
 
-kubectl run controller-"$1" --restart=Never --rm -it --serviceaccount default --image "$REGISTRY"/controller-"$1":latest
+kubectl run "$1"-controller --restart=Never --rm -it --serviceaccount default --image "$REGISTRY"/"$1"-controller:latest

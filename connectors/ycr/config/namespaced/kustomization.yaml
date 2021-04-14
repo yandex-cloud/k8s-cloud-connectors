@@ -5,7 +5,7 @@ namePrefix: ycr-
 namespace: yandex-cloud-connectors
 images:
   - name: controller
-    newName: cr.yandex/crptp7j81e7caog8r6gq/controller-ycr
+    newName: ycr-controller
     newTag: latest
 
 patchesStrategicMerge:
