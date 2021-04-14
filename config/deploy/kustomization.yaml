@@ -1,0 +1,4 @@
+resources:
+  - base-cluster-role.yaml
+  - base-cluster-role-binding.yaml
+  - base-deployment.yaml

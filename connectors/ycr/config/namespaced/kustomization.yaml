@@ -1,0 +1,12 @@
+resources:
+  - ../../../../config/deploy/
+
+namePrefix: ycr-
+namespace: yandex-cloud-connectors
+images:
+  - name: controller
+    newName: ycr-controller
+    newTag: latest
+
+patchesStrategicMerge:
+  - role.yaml

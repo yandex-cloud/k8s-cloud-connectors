@@ -1,0 +1,4 @@
+resources:
+  - ../../../../config/system/
+  - crd/connectors.cloud.yandex.com_yandexcontainerregistries.yaml
+  - ../namespaced/

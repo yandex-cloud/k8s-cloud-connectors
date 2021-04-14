@@ -1,0 +1,12 @@
+resources:
+  - ../../../../config/deploy/
+
+namePrefix: sakey-
+namespace: yandex-cloud-connectors
+images:
+  - name: controller
+    newName: sakey-controller
+    newTag: latest
+
+patchesStrategicMerge:
+  - role.yaml
