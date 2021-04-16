@@ -24,7 +24,7 @@ func (r *SpecMatcher) IsUpdated(ctx context.Context, object *connectorsv1.Static
 		return false, err
 	}
 
-	return res.ServiceAccountId != object.Spec.ServiceAccountID, nil
+	return res.ServiceAccountId == object.Spec.ServiceAccountID, nil
 }
 
 func (r *SpecMatcher) Update(_ context.Context, _ logr.Logger, _ *connectorsv1.StaticAccessKey) error {
