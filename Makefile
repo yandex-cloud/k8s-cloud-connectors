@@ -73,10 +73,10 @@ docker-push: ## Push docker image with the manager.
 ##@ Deployment
 
 install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build ./connectors/$(CONNECTOR)/config/crd | kubectl apply -f -
+	$(KUSTOMIZE) build ./connectors/$(CONNECTOR)/config/base | kubectl apply -f -
 
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build ./connectors/$(CONNECTOR)/config/crd | kubectl delete -f -
+	$(KUSTOMIZE) build ./connectors/$(CONNECTOR)/config/base | kubectl delete -f -
 
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
