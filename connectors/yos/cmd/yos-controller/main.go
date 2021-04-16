@@ -21,6 +21,8 @@ import (
 
 	connectorsv1 "k8s-connectors/connectors/yos/api/v1"
 	"k8s-connectors/connectors/yos/controllers"
+
+	dependency "k8s-connectors/connectors/sakey/api/v1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -33,6 +35,9 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(connectorsv1.AddToScheme(scheme))
+
+	// We depend on a key as a resource
+	utilruntime.Must(dependency.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

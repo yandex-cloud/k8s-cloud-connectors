@@ -45,6 +45,11 @@ type YandexObjectStorageSpec struct {
 	// +kubebuilder:validation:Enum=standard;cold
 	// +kubebuilder:validation:default=standard
 	StorageType string `json:"storageType"`
+
+	// SAKeyRef: specifies name of the Static Access Key that is used to authenticate this
+	// Yandex Object Storage in the cloud.
+	// +kubebuilder:validation:Required
+	SAKeyRef string `json:"SAKeyRef"`
 }
 
 // YandexObjectStorageStatus: defines the observed state of YandexObjectStorage
