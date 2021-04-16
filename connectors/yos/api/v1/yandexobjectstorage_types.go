@@ -54,7 +54,9 @@ type YandexObjectStorageSpec struct {
 
 // YandexObjectStorageStatus: defines the observed state of YandexObjectStorage
 type YandexObjectStorageStatus struct {
-	// TODO (covariance) match status with GET from SDK
+	// Created: placeholder variable indicating whether bucket have been created or not
+	// TODO (covariance) create normal Status
+	Created bool `json:"created"`
 }
 
 // YandexObjectStorage: is the Schema for the yandex object storage API

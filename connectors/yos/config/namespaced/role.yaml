@@ -29,3 +29,21 @@ rules:
       - get
       - patch
       - update
+  - apiGroups:
+      - connectors.cloud.yandex.com
+    resources:
+      - staticaccesskeys
+    verbs:
+      - get
+  - apiGroups:
+      - connectors.cloud.yandex.com
+    resources:
+      - staticaccesskeys/status
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
