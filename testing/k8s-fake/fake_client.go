@@ -66,8 +66,7 @@ func (r *FakeClient) Create(ctx context.Context, obj client.Object, opts ...clie
 
 // Delete deletes the given obj from Kubernetes cluster.
 func (r *FakeClient) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
-	_, ok := r.objects[utils.NamespacedName(obj)]
-	if ok {
+	if _, ok := r.objects[utils.NamespacedName(obj)]; ok {
 		delete(r.objects, utils.NamespacedName(obj))
 	}
 	return nil
@@ -76,8 +75,14 @@ func (r *FakeClient) Delete(ctx context.Context, obj client.Object, opts ...clie
 // Update updates the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
 func (r *FakeClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
-	// TODO (covariance) implement me!
-	panic("not implemented")
+	if _, ok := r.objects[utils.NamespacedName(obj)]; !ok {
+		return errors.NewNotFound(schema.GroupResource{
+			Group:    obj.GetObjectKind().GroupVersionKind().Group,
+			Resource: obj.GetObjectKind().GroupVersionKind().Kind,
+		}, utils.NamespacedName(obj).String())
+	}
+
+	return r.Create(ctx, obj)
 }
 
 // Patch patches the given obj in the Kubernetes cluster. obj must be a

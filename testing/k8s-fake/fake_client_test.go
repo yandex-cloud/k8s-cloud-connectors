@@ -17,46 +17,6 @@ func TestCreate(t *testing.T) {
 	// Arrange
 	c := NewFakeClient()
 	ctx := context.Background()
-
-	// Act
-	err1 := c.Create(ctx, &v1.Secret{
-		TypeMeta:   metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:                       "secret",
-			Namespace:                  "default",
-			Generation:                 0,
-		},
-		Immutable:  nil,
-		Data:       nil,
-		StringData: map[string]string{
-			"secret-specific-data" : "exists",
-		},
-		Type:       "opaque",
-	})
-
-	var res v1.Secret
-	err2 := c.Get(ctx, client.ObjectKey{
-		Name: "secret",
-		Namespace: "default",
-	}, &res)
-
-	// Assert
-	assert.NoError(t, err1)
-	assert.NoError(t, err2)
-	assert.Equal(t, "secret", res.Name)
-	assert.Equal(t, "default", res.Namespace)
-	assert.Equal(t, "exists", res.StringData["secret-specific-data"])
-}
-
-func TestCreateDelete(t *testing.T) {
-	// Arrange
-	c := NewFakeClient()
-	ctx := context.Background()
-
-	// Act
 	secret := &v1.Secret{
 		TypeMeta:   metav1.TypeMeta{
 			Kind:       "Secret",
@@ -75,13 +35,53 @@ func TestCreateDelete(t *testing.T) {
 		Type:       "opaque",
 	}
 
+
+	// Act
+	err1 := c.Create(ctx, secret)
+
+	var res v1.Secret
+	err2 := c.Get(ctx, client.ObjectKey{
+		Name: secret.Name,
+		Namespace: secret.Namespace,
+	}, &res)
+
+	// Assert
+	assert.NoError(t, err1)
+	assert.NoError(t, err2)
+	assert.Equal(t, *secret, res)
+}
+
+func TestCreateDelete(t *testing.T) {
+	// Arrange
+	c := NewFakeClient()
+	ctx := context.Background()
+	secret := &v1.Secret{
+		TypeMeta:   metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:                       "secret",
+			Namespace:                  "default",
+			Generation:                 0,
+		},
+		Immutable:  nil,
+		Data:       nil,
+		StringData: map[string]string{
+			"secret-specific-data" : "exists",
+		},
+		Type:       "opaque",
+	}
+
+
+	// Act
 	err1 := c.Create(ctx, secret)
 	err2 := c.Delete(ctx, secret)
 
 	var res v1.Secret
 	err3 := c.Get(ctx, client.ObjectKey{
-		Name: "secret",
-		Namespace: "default",
+		Name: secret.Name,
+		Namespace: secret.Namespace,
 	}, &res)
 
 	// Assert
@@ -89,4 +89,61 @@ func TestCreateDelete(t *testing.T) {
 	assert.NoError(t, err2)
 	assert.Error(t, err3)
 	assert.True(t, errors.IsNotFound(err3))
+}
+
+func TestUpdate(t *testing.T) {
+	// Arrange
+	c := NewFakeClient()
+	ctx := context.Background()
+	secret := &v1.Secret{
+		TypeMeta:   metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:                       "secret",
+			Namespace:                  "default",
+			Generation:                 0,
+		},
+		Immutable:  nil,
+		Data:       nil,
+		StringData: map[string]string{
+			"secret-specific-data" : "exists",
+		},
+		Type:       "opaque",
+	}
+
+	updSecret := &v1.Secret{
+		TypeMeta:   metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:                       "secret",
+			Namespace:                  "default",
+			Generation:                 0,
+		},
+		Immutable:  nil,
+		Data:       nil,
+		StringData: map[string]string{
+			"secret-specific-data" : "does-not-exist",
+		},
+		Type:       "opaque",
+	}
+
+	// Act
+	err1 := c.Create(ctx, secret)
+	err2 := c.Update(ctx, updSecret)
+
+	var res v1.Secret
+	err3 := c.Get(ctx, client.ObjectKey{
+		Name: secret.Name,
+		Namespace: secret.Namespace,
+	}, &res)
+
+	// Assert
+	assert.NoError(t, err1)
+	assert.NoError(t, err2)
+	assert.NoError(t, err3)
+	assert.Equal(t, *updSecret, res)
 }
