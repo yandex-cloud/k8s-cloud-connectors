@@ -16,18 +16,26 @@ import (
 )
 
 type FakeClient struct {
+	scheme *runtime.Scheme
 	objects map[types.NamespacedName]client.Object
 }
 
 func NewFakeClient() client.Client {
 	return &FakeClient{
+		scheme: nil,
+		objects: map[types.NamespacedName]client.Object{},
+	}
+}
+
+func NewFakeClientWithScheme(scheme *runtime.Scheme) client.Client {
+	return &FakeClient{
+		scheme:  scheme,
 		objects: map[types.NamespacedName]client.Object{},
 	}
 }
 
 func (r *FakeClient) Scheme() *runtime.Scheme {
-	// TODO (covariance) implement me!
-	panic("not implemented")
+	return r.scheme
 }
 
 func (r *FakeClient) RESTMapper() meta.RESTMapper {
