@@ -39,7 +39,7 @@ type yandexObjectStorageReconciler struct {
 }
 
 func NewYandexObjectStorageReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*yandexObjectStorageReconciler, error) {
-	s3provider := yosutils.NewDefaultProvider()
+	s3provider := yosutils.NewStaticProvider()
 	return &yandexObjectStorageReconciler{
 		Client: client,
 		log:    log,

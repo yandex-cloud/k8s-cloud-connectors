@@ -11,13 +11,17 @@ import (
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	sakey "k8s-connectors/connectors/sakey/api/v1"
 	"k8s-connectors/connectors/yos/pkg/config"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type AwsSdkProvider = func(ctx context.Context, key string, secret string) (*s3.S3, error)
 
-func NewDefaultProvider() AwsSdkProvider {
-	return func(ctx context.Context, key string, secret string) (*s3.S3, error) {
+func NewStaticProvider() AwsSdkProvider {
+	return func(_ context.Context, key string, secret string) (*s3.S3, error) {
 		ses, err := session.NewSession(&aws.Config{
 			Credentials: credentials.NewStaticCredentials(key, secret, ""),
 			Endpoint:    aws.String(config.Endpoint),
@@ -35,4 +39,24 @@ func NewDefaultProvider() AwsSdkProvider {
 
 		return s3.New(ses), nil
 	}
+}
+
+func KeyAndSecretFromStaticAccessKey(ctx context.Context, sakeyRef types.NamespacedName, client client.Client) (string, string, error) {
+	var key sakey.StaticAccessKey
+	if err := client.Get(ctx, types.NamespacedName{
+		Namespace: sakeyRef.Namespace,
+		Name:      sakeyRef.Name,
+	}, &key); err != nil {
+		return "", "", fmt.Errorf("unable to retrieve corresponding SAKey: %v", err)
+	}
+
+	var secret v1.Secret
+	if err := client.Get(ctx, types.NamespacedName{
+		Namespace: "default",
+		Name:      key.Status.SecretName,
+	}, &secret); err != nil {
+		return "", "", fmt.Errorf("unable to retrieve corresponding secret: %v", err)
+	}
+
+	return string(secret.Data["key"]), string(secret.Data["secret"]), nil
 }
