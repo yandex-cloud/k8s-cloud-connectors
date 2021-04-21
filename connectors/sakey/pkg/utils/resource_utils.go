@@ -59,5 +59,5 @@ func GetStaticAccessKey(ctx context.Context, object *connectorsv1.StaticAccessKe
 }
 
 func GetStaticAccessKeyDescription(object *connectorsv1.StaticAccessKey) string {
-	return config.CloudClusterLabel + ":" + object.ClusterName + "\n" + config.CloudClusterLabel + ":" + object.Name
+	return config.CloudClusterLabel + ":" + object.ClusterName + "\n" + config.CloudNameLabel + ":" + object.Name
 }

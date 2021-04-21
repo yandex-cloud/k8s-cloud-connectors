@@ -35,7 +35,7 @@ help: ## Display this help.
 ##@ Development
 
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./connectors/$(CONNECTOR)/..." output:crd:artifacts:config=./connectors/$(CONNECTOR)/config/crd/bases
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./connectors/$(CONNECTOR)/..." output:crd:artifacts:config=./connectors/$(CONNECTOR)/config/base/crd
 
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="LICENSE" paths="./connectors/$(CONNECTOR)/..."
@@ -73,10 +73,10 @@ docker-push: ## Push docker image with the manager.
 ##@ Deployment
 
 install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build ./connectors/$(CONNECTOR)/config/crd | kubectl apply -f -
+	$(KUSTOMIZE) build ./connectors/$(CONNECTOR)/config/base | kubectl apply -f -
 
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build ./connectors/$(CONNECTOR)/config/crd | kubectl delete -f -
+	$(KUSTOMIZE) build ./connectors/$(CONNECTOR)/config/base | kubectl delete -f -
 
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
