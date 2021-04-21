@@ -6,67 +6,235 @@ package phases
 import (
 	"context"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
+	ycrconfig "k8s-connectors/connectors/ycr/pkg/config"
+	"k8s-connectors/pkg/utils"
 	k8sfake "k8s-connectors/testing/k8s-fake"
 	logrfake "k8s-connectors/testing/logr-fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 )
 
-func TestRegistrar(t *testing.T) {
-	// Arrange
-	c := k8sfake.NewFakeClient()
-	ctx := context.Background()
-	log := logrfake.NewFakeLogger()
-	resource := connectorsv1.YandexContainerRegistry{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "YandexContainerRegistry",
-			APIVersion: "connectors.cloud.yandex.com/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              "resource",
-			Namespace:         "default",
-			Generation:        0,
-			CreationTimestamp: metav1.Time{},
-			DeletionTimestamp: nil,
-			Labels:            map[string]string{},
-			Annotations:       map[string]string{},
-			OwnerReferences:   []metav1.OwnerReference{},
-			Finalizers:        []string{},
-			ClusterName:       "",
-			ManagedFields:     []metav1.ManagedFieldsEntry{},
-		},
-		Spec:   connectorsv1.YandexContainerRegistrySpec{
-			Name:     "test-resource",
-			FolderId: "TODO",
-		},
-		Status: connectorsv1.YandexContainerRegistryStatus{},
-	}
-	phase := FinalizerRegistrar{
-		Client: &c,
-	}
+func TestIsUpdated(t *testing.T) {
+	t.Run("empty finalizers means not updated", func(t *testing.T) {
+		// Arrange
+		resource := connectorsv1.YandexContainerRegistry{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "resource",
+				Namespace:  "default",
+				Finalizers: []string{},
+			},
+		}
+		c := k8sfake.NewFakeClient()
+		phase := FinalizerRegistrar{
+			Client: &c,
+		}
+		require.NoError(t, c.Create(context.Background(), &resource))
 
-	// Act
-	err1 := c.Create(ctx, &resource)
+		// Act
+		updated, err := phase.IsUpdated(context.Background(), &resource)
+		require.NoError(t, err)
 
-	check1, err2 := phase.IsUpdated(ctx, &resource)
+		// Assert
+		assert.False(t, updated)
+	})
 
-	err3 := phase.Update(ctx, log, &resource)
+	t.Run("other finalizers means not updated", func(t *testing.T) {
+		// Arrange
+		resource := connectorsv1.YandexContainerRegistry{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "resource",
+				Namespace:  "default",
+				Finalizers: []string{"not.that.finalizer", "yet.another.false.finalizer"},
+			},
+		}
+		c := k8sfake.NewFakeClient()
+		phase := FinalizerRegistrar{
+			Client: &c,
+		}
+		require.NoError(t, c.Create(context.Background(), &resource))
 
-	check2, err4 := phase.IsUpdated(ctx, &resource)
+		// Act
+		updated, err := phase.IsUpdated(context.Background(), &resource)
+		require.NoError(t, err)
 
-	err5 := phase.Cleanup(ctx, log, &resource)
+		// Assert
+		assert.False(t, updated)
+	})
 
-	check3, err6 := phase.IsUpdated(ctx, &resource)
+	t.Run("finalizer exist means updated", func(t *testing.T) {
+		// Arrange
+		resource := connectorsv1.YandexContainerRegistry{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "resource",
+				Namespace:  "default",
+				Finalizers: []string{ycrconfig.FinalizerName},
+			},
+		}
+		c := k8sfake.NewFakeClient()
+		phase := FinalizerRegistrar{
+			Client: &c,
+		}
+		require.NoError(t, c.Create(context.Background(), &resource))
 
-	// Assert
-	assert.NoError(t, err1)
-	assert.NoError(t, err2)
-	assert.NoError(t, err3)
-	assert.NoError(t, err4)
-	assert.NoError(t, err5)
-	assert.NoError(t, err6)
-	assert.False(t, check1)
-	assert.True(t, check2)
-	assert.False(t, check3)
+		// Act
+		updated, err := phase.IsUpdated(context.Background(), &resource)
+		require.NoError(t, err)
+
+		// Assert
+		assert.True(t, updated)
+	})
+
+	t.Run("finalizer and others exist means updated", func(t *testing.T) {
+		// Arrange
+		resource := connectorsv1.YandexContainerRegistry{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "resource",
+				Namespace:  "default",
+				Finalizers: []string{"not.that.finalizer", ycrconfig.FinalizerName, "yet.another.false.finalizer"},
+			},
+		}
+		c := k8sfake.NewFakeClient()
+		phase := FinalizerRegistrar{
+			Client: &c,
+		}
+		require.NoError(t, c.Create(context.Background(), &resource))
+
+		// Act
+		updated, err := phase.IsUpdated(context.Background(), &resource)
+		require.NoError(t, err)
+
+		// Assert
+		assert.True(t, updated)
+	})
+}
+
+func TestUpdate(t *testing.T) {
+	t.Run("update on empty finalizer list adds finalizer", func(t *testing.T) {
+		// Arrange
+		resource := connectorsv1.YandexContainerRegistry{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "resource",
+				Namespace:  "default",
+				Finalizers: []string{},
+			},
+		}
+		c := k8sfake.NewFakeClient()
+		log := logrfake.NewFakeLogger(t)
+		phase := FinalizerRegistrar{
+			Client: &c,
+		}
+		require.NoError(t, c.Create(context.Background(), &resource))
+
+		// Act
+		require.NoError(t, phase.Update(context.Background(), log, &resource))
+
+		// Assert
+		var res connectorsv1.YandexContainerRegistry
+		require.NoError(t, c.Get(context.Background(), utils.NamespacedName(&resource), &res))
+		assert.Equal(t, []string{ycrconfig.FinalizerName}, res.Finalizers)
+	})
+
+	t.Run("update on non-empty finalizer list adds finalizer", func(t *testing.T) {
+		// Arrange
+		resource := connectorsv1.YandexContainerRegistry{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "resource",
+				Namespace:  "default",
+				Finalizers: []string{"not.that.finalizer", "yet.another.finalizer"},
+			},
+		}
+		c := k8sfake.NewFakeClient()
+		log := logrfake.NewFakeLogger(t)
+		phase := FinalizerRegistrar{
+			Client: &c,
+		}
+		require.NoError(t, c.Create(context.Background(), &resource))
+
+		// Act
+		require.NoError(t, phase.Update(context.Background(), log, &resource))
+
+		// Assert
+		var res connectorsv1.YandexContainerRegistry
+		require.NoError(t, c.Get(context.Background(), utils.NamespacedName(&resource), &res))
+		assert.Equal(t, []string{"not.that.finalizer", "yet.another.finalizer", ycrconfig.FinalizerName}, res.Finalizers)
+	})
+}
+
+func TestCleanup(t *testing.T) {
+	t.Run("cleanup on empty finalizer list does nothing", func(t *testing.T) {
+		// Arrange
+		resource := connectorsv1.YandexContainerRegistry{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "resource",
+				Namespace:  "default",
+				Finalizers: []string{},
+			},
+		}
+		c := k8sfake.NewFakeClient()
+		log := logrfake.NewFakeLogger(t)
+		phase := FinalizerRegistrar{
+			Client: &c,
+		}
+		require.NoError(t, c.Create(context.Background(), &resource))
+
+		// Act
+		require.NoError(t, phase.Cleanup(context.Background(), log, &resource))
+
+		// Assert
+		var res connectorsv1.YandexContainerRegistry
+		require.NoError(t, c.Get(context.Background(), utils.NamespacedName(&resource), &res))
+		assert.Equal(t, []string{}, res.Finalizers)
+	})
+
+	t.Run("cleanup on non-empty finalizer list removes finalizer", func(t *testing.T) {
+		// Arrange
+		resource := connectorsv1.YandexContainerRegistry{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "resource",
+				Namespace:  "default",
+				Finalizers: []string{"not.that.finalizer", ycrconfig.FinalizerName, "yet.another.finalizer"},
+			},
+		}
+		c := k8sfake.NewFakeClient()
+		log := logrfake.NewFakeLogger(t)
+		phase := FinalizerRegistrar{
+			Client: &c,
+		}
+		require.NoError(t, c.Create(context.Background(), &resource))
+
+		// Act
+		require.NoError(t, phase.Cleanup(context.Background(), log, &resource))
+
+		// Assert
+		var res connectorsv1.YandexContainerRegistry
+		require.NoError(t, c.Get(context.Background(), utils.NamespacedName(&resource), &res))
+		assert.Equal(t, []string{"not.that.finalizer", "yet.another.finalizer"}, res.Finalizers)
+	})
+
+	t.Run("cleanup on non-empty finalizer list without needed finalizer does nothing", func(t *testing.T) {
+		// Arrange
+		resource := connectorsv1.YandexContainerRegistry{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "resource",
+				Namespace:  "default",
+				Finalizers: []string{"not.that.finalizer", "yet.another.finalizer"},
+			},
+		}
+		c := k8sfake.NewFakeClient()
+		log := logrfake.NewFakeLogger(t)
+		phase := FinalizerRegistrar{
+			Client: &c,
+		}
+		require.NoError(t, c.Create(context.Background(), &resource))
+
+		// Act
+		require.NoError(t, phase.Cleanup(context.Background(), log, &resource))
+
+		// Assert
+		var res connectorsv1.YandexContainerRegistry
+		require.NoError(t, c.Get(context.Background(), utils.NamespacedName(&resource), &res))
+		assert.Equal(t, []string{"not.that.finalizer", "yet.another.finalizer"}, res.Finalizers)
+	})
 }

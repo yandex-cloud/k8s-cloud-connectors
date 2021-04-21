@@ -12,12 +12,13 @@ func ContainsString(haystack []string, needle string) bool {
 	return false
 }
 
-func RemoveString(slice []string, s string) (result []string) {
+func RemoveString(slice []string, s string) []string {
+	result := []string{}
 	for _, item := range slice {
 		if item == s {
 			continue
 		}
 		result = append(result, item)
 	}
-	return
+	return result
 }
