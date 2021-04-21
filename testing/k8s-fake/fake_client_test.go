@@ -6,6 +6,7 @@ package k8s_fake
 import (
 	"context"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,27 +28,22 @@ func TestCreate(t *testing.T) {
 			Namespace:                  "default",
 			Generation:                 0,
 		},
-		Immutable:  nil,
-		Data:       nil,
 		StringData: map[string]string{
 			"secret-specific-data" : "exists",
 		},
 		Type:       "opaque",
 	}
 
-
 	// Act
-	err1 := c.Create(ctx, secret)
+	require.NoError(t, c.Create(ctx, secret))
 
 	var res v1.Secret
-	err2 := c.Get(ctx, client.ObjectKey{
+	require.NoError(t, c.Get(ctx, client.ObjectKey{
 		Name: secret.Name,
 		Namespace: secret.Namespace,
-	}, &res)
+	}, &res))
 
 	// Assert
-	assert.NoError(t, err1)
-	assert.NoError(t, err2)
 	assert.Equal(t, *secret, res)
 }
 
@@ -73,22 +69,18 @@ func TestCreateDelete(t *testing.T) {
 		Type:       "opaque",
 	}
 
-
 	// Act
-	err1 := c.Create(ctx, secret)
-	err2 := c.Delete(ctx, secret)
+	require.NoError(t, c.Create(ctx, secret))
+	require.NoError(t, c.Delete(ctx, secret))
 
 	var res v1.Secret
-	err3 := c.Get(ctx, client.ObjectKey{
+	err := c.Get(ctx, client.ObjectKey{
 		Name: secret.Name,
 		Namespace: secret.Namespace,
 	}, &res)
 
 	// Assert
-	assert.NoError(t, err1)
-	assert.NoError(t, err2)
-	assert.Error(t, err3)
-	assert.True(t, errors.IsNotFound(err3))
+	assert.True(t, errors.IsNotFound(err))
 }
 
 func TestUpdate(t *testing.T) {
@@ -132,18 +124,15 @@ func TestUpdate(t *testing.T) {
 	}
 
 	// Act
-	err1 := c.Create(ctx, secret)
-	err2 := c.Update(ctx, updSecret)
+	require.NoError(t, c.Create(ctx, secret))
+	require.NoError(t, c.Update(ctx, updSecret))
 
 	var res v1.Secret
-	err3 := c.Get(ctx, client.ObjectKey{
+	require.NoError(t, c.Get(ctx, client.ObjectKey{
 		Name: secret.Name,
 		Namespace: secret.Namespace,
-	}, &res)
+	}, &res))
 
 	// Assert
-	assert.NoError(t, err1)
-	assert.NoError(t, err2)
-	assert.NoError(t, err3)
 	assert.Equal(t, *updSecret, res)
 }

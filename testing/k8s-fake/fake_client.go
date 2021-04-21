@@ -54,7 +54,7 @@ func (r *FakeClient) Get(_ context.Context, key client.ObjectKey, obj client.Obj
 		}, key.String())
 	}
 
-	// TODO (covariance) check tye mismatch behaviour
+	// TODO (covariance) check type mismatch behaviour
 	return copier.Copy(obj, r.objects[key])
 }
 
@@ -74,9 +74,7 @@ func (r *FakeClient) Create(ctx context.Context, obj client.Object, opts ...clie
 
 // Delete deletes the given obj from Kubernetes cluster.
 func (r *FakeClient) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
-	if _, ok := r.objects[utils.NamespacedName(obj)]; ok {
-		delete(r.objects, utils.NamespacedName(obj))
-	}
+	delete(r.objects, utils.NamespacedName(obj))
 	return nil
 }
 
