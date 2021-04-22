@@ -49,41 +49,32 @@ vet: ## Run go vet against code.
 lint: ensure-linter ## Run golangci-lint (https://golangci-lint.run/) against code.
 	$(GOLANGCI-LINT) run ./connectors/$(CONNECTOR)/...
 
-ENVTEST_ASSETS_DIR=$(shell pwd)/connectors/$(CONNECTOR)/testbin
-test: manifests generate fmt vet lint ## Run tests.
-	mkdir -p ${ENVTEST_ASSETS_DIR}
-	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.7.0/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./connectors/$(CONNECTOR)/... -coverprofile ./connectors/$(CONNECTOR)/cover.out
+test: manifests generate fmt vet lint ## Run tests for this connector and common packages.
+	go test ./connectors/$(CONNECTOR)/... -coverprofile ./connectors/$(CONNECTOR)/cover.out
+	go test ./pkg/... -coverprofile ./pkg/cover.out
+	go test ./testing/... -coverprofile ./testing/cover.out
 
 ##@ Build
 
-build: generate fmt vet lint ## Build manager binary.
+build: manifests generate test ## Build manager binary.
 	go build -o ./connectors/$(CONNECTOR)/bin/manager ./connectors/$(CONNECTOR)/cmd/$(CONNECTOR)-controller/main.go
 
-run: manifests generate fmt vet lint ## Run a controller from your host.
+run: manifests generate test ## Run a controller from your host.
 	go run ./connectors/$(CONNECTOR)/main.go
 
-# TODO (covariance) uncomment test when tests would be built
-docker-build: ## test Build docker image with the manager.
+docker-build: build ## test Build docker image with the manager.
 	docker build -t ${IMG} . --build-arg connector=$(CONNECTOR)
 
-docker-push: ## Push docker image with the manager.
+docker-push: docker-build ## Push docker image with the manager.
 	docker push ${IMG}
 
 ##@ Deployment
 
-install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
+install: build kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build ./connectors/$(CONNECTOR)/config/base | kubectl apply -f -
 
-uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
+uninstall: build kustomize ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build ./connectors/$(CONNECTOR)/config/base | kubectl delete -f -
-
-deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build ./connectors/$(CONNECTOR)/config/default | kubectl apply -f -
-
-undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build ./connectors/$(CONNECTOR)/config/default | kubectl delete -f -
 
 ##@ Dependencies
 
