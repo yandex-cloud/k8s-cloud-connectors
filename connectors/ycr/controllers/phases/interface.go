@@ -10,7 +10,7 @@ import (
 )
 
 type YandexContainerRegistryPhase interface {
-	IsUpdated(context.Context, *connectorsv1.YandexContainerRegistry) (bool, error)
+	IsUpdated(context.Context, logr.Logger, *connectorsv1.YandexContainerRegistry) (bool, error)
 	Update(context.Context, logr.Logger, *connectorsv1.YandexContainerRegistry) error
 	Cleanup(context.Context, logr.Logger, *connectorsv1.YandexContainerRegistry) error
 }

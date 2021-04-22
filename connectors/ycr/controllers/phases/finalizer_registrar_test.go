@@ -27,13 +27,14 @@ func TestIsUpdated(t *testing.T) {
 			},
 		}
 		c := k8sfake.NewFakeClient()
+		log := logrfake.NewFakeLogger(t)
 		phase := FinalizerRegistrar{
 			Client: &c,
 		}
 		require.NoError(t, c.Create(context.Background(), &resource))
 
 		// Act
-		updated, err := phase.IsUpdated(context.Background(), &resource)
+		updated, err := phase.IsUpdated(context.Background(), log, &resource)
 		require.NoError(t, err)
 
 		// Assert
@@ -50,13 +51,14 @@ func TestIsUpdated(t *testing.T) {
 			},
 		}
 		c := k8sfake.NewFakeClient()
+		log := logrfake.NewFakeLogger(t)
 		phase := FinalizerRegistrar{
 			Client: &c,
 		}
 		require.NoError(t, c.Create(context.Background(), &resource))
 
 		// Act
-		updated, err := phase.IsUpdated(context.Background(), &resource)
+		updated, err := phase.IsUpdated(context.Background(), log, &resource)
 		require.NoError(t, err)
 
 		// Assert
@@ -73,13 +75,14 @@ func TestIsUpdated(t *testing.T) {
 			},
 		}
 		c := k8sfake.NewFakeClient()
+		log := logrfake.NewFakeLogger(t)
 		phase := FinalizerRegistrar{
 			Client: &c,
 		}
 		require.NoError(t, c.Create(context.Background(), &resource))
 
 		// Act
-		updated, err := phase.IsUpdated(context.Background(), &resource)
+		updated, err := phase.IsUpdated(context.Background(), log, &resource)
 		require.NoError(t, err)
 
 		// Assert
@@ -96,13 +99,14 @@ func TestIsUpdated(t *testing.T) {
 			},
 		}
 		c := k8sfake.NewFakeClient()
+		log := logrfake.NewFakeLogger(t)
 		phase := FinalizerRegistrar{
 			Client: &c,
 		}
 		require.NoError(t, c.Create(context.Background(), &resource))
 
 		// Act
-		updated, err := phase.IsUpdated(context.Background(), &resource)
+		updated, err := phase.IsUpdated(context.Background(), log, &resource)
 		require.NoError(t, err)
 
 		// Assert

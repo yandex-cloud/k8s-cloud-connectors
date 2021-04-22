@@ -17,7 +17,7 @@ type EndpointProvider struct {
 	Client *client.Client
 }
 
-func (r *EndpointProvider) IsUpdated(ctx context.Context, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
+func (r *EndpointProvider) IsUpdated(ctx context.Context, _ logr.Logger, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
 	return configmaps.Exists(ctx, r.Client, registry.Name, registry.Namespace, "ycr")
 }
 
