@@ -133,7 +133,8 @@ func TestUpdate(t *testing.T) {
 		// Assert
 		var res connectorsv1.YandexContainerRegistry
 		require.NoError(t, c.Get(context.Background(), utils.NamespacedName(&resource), &res))
-		assert.Equal(t, []string{ycrconfig.FinalizerName}, res.Finalizers)
+		assert.Len(t, res.Finalizers, 1)
+		assert.Contains(t, res.Finalizers, ycrconfig.FinalizerName)
 	})
 
 	t.Run("update on non-empty finalizer list adds finalizer", func(t *testing.T) {
@@ -158,7 +159,10 @@ func TestUpdate(t *testing.T) {
 		// Assert
 		var res connectorsv1.YandexContainerRegistry
 		require.NoError(t, c.Get(context.Background(), utils.NamespacedName(&resource), &res))
-		assert.Equal(t, []string{"not.that.finalizer", "yet.another.finalizer", ycrconfig.FinalizerName}, res.Finalizers)
+		assert.Len(t, res.Finalizers, 3)
+		assert.Contains(t, res.Finalizers, "not.that.finalizer")
+		assert.Contains(t, res.Finalizers, "yet.another.finalizer")
+		assert.Contains(t, res.Finalizers, ycrconfig.FinalizerName)
 	})
 }
 
@@ -185,7 +189,7 @@ func TestCleanup(t *testing.T) {
 		// Assert
 		var res connectorsv1.YandexContainerRegistry
 		require.NoError(t, c.Get(context.Background(), utils.NamespacedName(&resource), &res))
-		assert.Equal(t, []string{}, res.Finalizers)
+		assert.Len(t, res.Finalizers, 0)
 	})
 
 	t.Run("cleanup on non-empty finalizer list removes finalizer", func(t *testing.T) {
@@ -210,7 +214,9 @@ func TestCleanup(t *testing.T) {
 		// Assert
 		var res connectorsv1.YandexContainerRegistry
 		require.NoError(t, c.Get(context.Background(), utils.NamespacedName(&resource), &res))
-		assert.Equal(t, []string{"not.that.finalizer", "yet.another.finalizer"}, res.Finalizers)
+		assert.Len(t, res.Finalizers, 2)
+		assert.Contains(t, res.Finalizers, "not.that.finalizer")
+		assert.Contains(t, res.Finalizers, "yet.another.finalizer")
 	})
 
 	t.Run("cleanup on non-empty finalizer list without needed finalizer does nothing", func(t *testing.T) {
@@ -235,6 +241,8 @@ func TestCleanup(t *testing.T) {
 		// Assert
 		var res connectorsv1.YandexContainerRegistry
 		require.NoError(t, c.Get(context.Background(), utils.NamespacedName(&resource), &res))
-		assert.Equal(t, []string{"not.that.finalizer", "yet.another.finalizer"}, res.Finalizers)
+		assert.Len(t, res.Finalizers, 2)
+		assert.Contains(t, res.Finalizers, "not.that.finalizer")
+		assert.Contains(t, res.Finalizers, "yet.another.finalizer")
 	})
 }
