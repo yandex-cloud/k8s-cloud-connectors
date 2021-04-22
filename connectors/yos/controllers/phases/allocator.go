@@ -10,7 +10,6 @@ import (
 	"github.com/go-logr/logr"
 	connectorsv1 "k8s-connectors/connectors/yos/api/v1"
 	yosutils "k8s-connectors/connectors/yos/pkg/utils"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -19,22 +18,42 @@ type ResourceAllocator struct {
 	S3provider yosutils.AwsSdkProvider
 }
 
-func (r *ResourceAllocator) IsUpdated(_ context.Context, resource *connectorsv1.YandexObjectStorage) (bool, error) {
-	return resource.Status.Created, nil
+func (r *ResourceAllocator) IsUpdated(ctx context.Context, resource *connectorsv1.YandexObjectStorage) (bool, error) {
+	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, resource, *r.Client)
+	if err != nil {
+		return false, err
+	}
+	sdk, err := r.S3provider(ctx, key, secret)
+	if err != nil {
+		return false, err
+	}
+
+	res, err := sdk.ListBuckets(&s3.ListBucketsInput{})
+	if err != nil {
+		return false, fmt.Errorf("cannot list resources in cloud: %v", err)
+	}
+
+	for _, bucket := range res.Buckets {
+		if *bucket.Name == resource.Spec.Name {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (r *ResourceAllocator) Update(ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage) error {
-	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, types.NamespacedName{
-		Namespace: "default",
-		Name:      resource.Spec.SAKeyRef,
-	}, *r.Client)
+	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, resource, *r.Client)
+	if err != nil {
+		return err
+	}
 	sdk, err := r.S3provider(ctx, key, secret)
 	if err != nil {
 		return err
 	}
 
 	if _, err = sdk.CreateBucket(&s3.CreateBucketInput{
-		Bucket:                     &resource.Spec.Name,
+		Bucket: &resource.Spec.Name,
 	}); err != nil {
 		return fmt.Errorf("error while creating resource: %v", err)
 	}
@@ -44,10 +63,10 @@ func (r *ResourceAllocator) Update(ctx context.Context, log logr.Logger, resourc
 }
 
 func (r *ResourceAllocator) Cleanup(ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage) error {
-	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, types.NamespacedName{
-		Namespace: "default",
-		Name:      resource.Spec.SAKeyRef,
-	}, *r.Client)
+	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, resource, *r.Client)
+	if err != nil {
+		return err
+	}
 	sdk, err := r.S3provider(ctx, key, secret)
 	if err != nil {
 		return err

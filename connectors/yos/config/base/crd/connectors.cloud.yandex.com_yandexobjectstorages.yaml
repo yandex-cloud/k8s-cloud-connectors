@@ -32,61 +32,27 @@ spec:
           spec:
             description: 'YandexObjectStorageSpec: defines the desired state of YandexObjectStorage'
             properties:
-              SAKeyRef:
-                description: 'SAKeyRef: specifies name of the Static Access Key that is used to authenticate this Yandex Object Storage in the cloud.'
+              ACL:
+                description: 'ACL: canned Access Control List to apply to this bucket. Read further about ACL in Yandex Cloud here: https://cloud.yandex.ru/docs/storage/concepts/acl'
                 type: string
-              configAccess:
-                description: 'ConfigAccess: public access allows any internet user to read CORS configurations, hosting of static sites and bucket objects lifecycles.'
-                enum:
-                - private
-                - public
+              SAKeyName:
+                description: 'SAKeyName: specifies name of the Static Access Key that is used to authenticate this Yandex Object Storage in the cloud.'
                 type: string
-              listingAccess:
-                description: 'ListingAccess: public access allows any internet user to get listing of elements in bucket.'
-                enum:
-                - private
-                - public
+              SAKeyNamespace:
+                description: 'SAKeyNamespace: specifies namespace in which the Static Access Key for this bucket is located. Defaults to "default" if not specified.'
                 type: string
               name:
-                description: 'Name: must be unique in Yandex Cloud. Can consist of lowercase latin letters, dashes, dots and numbers and must be from 3 to 64 characters long.'
+                description: 'Name: must be unique in Yandex Cloud. Can consist of lowercase latin letters, dashes, dots and numbers and must be from 3 to 64 characters long. Must be immutable.'
                 maxLength: 64
                 minLength: 3
                 pattern: '[a-z0-9][a-z0-9-.]*[a-z0-9]'
                 type: string
-              readAccess:
-                description: 'ReadAccess: public access allows any internet user to download objects from the bucket.'
-                enum:
-                - private
-                - public
-                type: string
-              size:
-                description: 'Size: size of the bucket in gigabytes. Can be in range from 1Gb to 1024Tb, or 1048576Gb. Must be an integer.'
-                maximum: 1048576
-                minimum: 1
-                type: integer
-              storageType:
-                description: 'StorageType: specifies which storage type that is used by default for object downloading. Standard storage is dedicated to storages with frequent object queries, while cold storage is better suited for long-term storage of objects with rare read queries.'
-                enum:
-                - standard
-                - cold
-                type: string
             required:
-            - SAKeyRef
-            - configAccess
-            - listingAccess
+            - SAKeyName
             - name
-            - readAccess
-            - size
-            - storageType
             type: object
           status:
             description: 'YandexObjectStorageStatus: defines the observed state of YandexObjectStorage'
-            properties:
-              created:
-                description: 'Created: placeholder variable indicating whether bucket have been created or not TODO (covariance) create normal Status'
-                type: boolean
-            required:
-            - created
             type: object
         type: object
     served: true

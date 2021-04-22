@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	sakey "k8s-connectors/connectors/sakey/api/v1"
+	connectorsv1 "k8s-connectors/connectors/yos/api/v1"
 	"k8s-connectors/connectors/yos/pkg/config"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -41,11 +42,15 @@ func NewStaticProvider() AwsSdkProvider {
 	}
 }
 
-func KeyAndSecretFromStaticAccessKey(ctx context.Context, sakeyRef types.NamespacedName, client client.Client) (string, string, error) {
+func KeyAndSecretFromStaticAccessKey(ctx context.Context, bucket *connectorsv1.YandexObjectStorage, client client.Client) (string, string, error) {
+	ns := bucket.Spec.SAKeyNamespace
+	if ns == "" {
+		ns = "default"
+	}
 	var key sakey.StaticAccessKey
 	if err := client.Get(ctx, types.NamespacedName{
-		Namespace: sakeyRef.Namespace,
-		Name:      sakeyRef.Name,
+		Namespace: ns,
+		Name:      bucket.Spec.SAKeyName,
 	}, &key); err != nil {
 		return "", "", fmt.Errorf("unable to retrieve corresponding SAKey: %v", err)
 	}

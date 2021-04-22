@@ -10,53 +10,33 @@ import (
 // YandexObjectStorageSpec: defines the desired state of YandexObjectStorage
 type YandexObjectStorageSpec struct {
 	// Name: must be unique in Yandex Cloud. Can consist of lowercase latin letters, dashes, dots and numbers
-	// and must be from 3 to 64 characters long.
+	// and must be from 3 to 64 characters long. Must be immutable.
 	// +kubebuilder:validation:MinLength=3
 	// +kubebuilder:validation:MaxLength=64
 	// +kubebuilder:validation:Pattern=[a-z0-9][a-z0-9-.]*[a-z0-9]
 	// +kubebuilder:validation:Required
 	Name string `json:"name"`
 
-	// Size: size of the bucket in gigabytes. Can be in range from 1Gb to 1024Tb, or 1048576Gb. Must be an integer.
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=1048576
-	// +kubebuilder:validation:Required
-	Size int `json:"size"`
+	// ACL: canned Access Control List to apply to this bucket. Read further
+	// about ACL in Yandex Cloud here: https://cloud.yandex.ru/docs/storage/concepts/acl
+	// +kubebuilder:validation:Optional
+	ACL string `json:"ACL,omitempty"`
 
-	// ReadAccess: public access allows any internet user to download objects from the bucket.
-	// +kubebuilder:validation:Enum=private;public
-	// +kubebuilder:validation:default=private
-	ReadAccess string `json:"readAccess"`
+	// SAKeyNamespace: specifies namespace in which the Static Access Key for this bucket
+	// is located. Defaults to "default" if not specified.
+	// +kubebuilder:validation:Optional
+	SAKeyNamespace string `json:"SAKeyNamespace,omitempty"`
 
-	// ListingAccess: public access allows any internet user to get listing of elements in bucket.
-	// +kubebuilder:validation:Enum=private;public
-	// +kubebuilder:validation:default=private
-	ListingAccess string `json:"listingAccess"`
-
-	// ConfigAccess: public access allows any internet user to read CORS configurations, hosting of static sites and
-	// bucket objects lifecycles.
-	// +kubebuilder:validation:Enum=private;public
-	// +kubebuilder:validation:default=private
-	ConfigAccess string `json:"configAccess"`
-
-	// StorageType: specifies which storage type that is used by default for object downloading.
-	// Standard storage is dedicated to storages with frequent object queries, while cold storage is better suited
-	// for long-term storage of objects with rare read queries.
-	// +kubebuilder:validation:Enum=standard;cold
-	// +kubebuilder:validation:default=standard
-	StorageType string `json:"storageType"`
-
-	// SAKeyRef: specifies name of the Static Access Key that is used to authenticate this
+	// SAKeyName: specifies name of the Static Access Key that is used to authenticate this
 	// Yandex Object Storage in the cloud.
 	// +kubebuilder:validation:Required
-	SAKeyRef string `json:"SAKeyRef"`
+	SAKeyName string `json:"SAKeyName"`
 }
 
 // YandexObjectStorageStatus: defines the observed state of YandexObjectStorage
 type YandexObjectStorageStatus struct {
-	// Created: placeholder variable indicating whether bucket have been created or not
-	// TODO (covariance) create normal Status
-	Created bool `json:"created"`
+	// Bucket can be accessed with just a name and
+	// key from secret provided by Static Access Key.
 }
 
 // YandexObjectStorage: is the Schema for the yandex object storage API

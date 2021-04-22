@@ -41,9 +41,9 @@ type yandexObjectStorageReconciler struct {
 func NewYandexObjectStorageReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*yandexObjectStorageReconciler, error) {
 	s3provider := yosutils.NewStaticProvider()
 	return &yandexObjectStorageReconciler{
-		Client: client,
-		log:    log,
-		scheme: scheme,
+		Client:     client,
+		log:        log,
+		scheme:     scheme,
 		s3provider: s3provider,
 		phases: []phases.YandexObjectStoragePhase{
 			// Register finalizer for the object (is blocked by allocation)
