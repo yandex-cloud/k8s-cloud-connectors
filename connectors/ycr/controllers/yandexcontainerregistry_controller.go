@@ -6,7 +6,7 @@ package controllers
 import (
 	"context"
 	"fmt"
-	sdk2 "k8s-connectors/connectors/ycr/controllers/sdk"
+	"k8s-connectors/connectors/ycr/controllers/sdk"
 	ycrconfig "k8s-connectors/connectors/ycr/pkg/config"
 	"k8s-connectors/pkg/config"
 	"k8s-connectors/pkg/utils"
@@ -36,10 +36,7 @@ type yandexContainerRegistryReconciler struct {
 }
 
 func NewYandexContainerRegistryReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*yandexContainerRegistryReconciler, error) {
-	/*sdk, err := ycsdk.Build(context.Background(), ycsdk.Config{
-		Credentials: ycsdk.InstanceServiceAccount(),
-	})*/
-	sdk, err := sdk2.NewYandexContainerRegistrySDKImpl()
+	impl, err := sdk.NewYandexContainerRegistrySDKImpl()
 	if err != nil {
 		return nil, err
 	}
@@ -56,16 +53,16 @@ func NewYandexContainerRegistryReconciler(client client.Client, log logr.Logger,
 			// (is blocked by finalizer registration,
 			// because otherwise resource can leak)
 			&phases.Allocator{
-				Sdk: sdk,
+				Sdk: impl,
 			},
 			// In case spec was updated and our cloud registry does not match with
 			// spec, we need to update cloud registry (is blocked by allocation)
 			&phases.SpecMatcher{
-				Sdk: sdk,
+				Sdk: impl,
 			},
 			// Update status of the object (is blocked by everything mutating)
 			&phases.StatusUpdater{
-				Sdk:    sdk,
+				Sdk:    impl,
 				Client: &client,
 			},
 			// Entrypoint for resource update (is blocked by status update)

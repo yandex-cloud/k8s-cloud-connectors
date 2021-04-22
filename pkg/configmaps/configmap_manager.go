@@ -12,8 +12,6 @@ import (
 	rtcl "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// TODO (covariance) pass only ObjectMeta, not resource, namespace and kind, it's unnecessary
-
 func cmapName(resourceName, kind string) string {
 	return kind + "-" + resourceName + "-" + "configmap"
 }
@@ -26,7 +24,10 @@ func Exists(ctx context.Context, client *rtcl.Client, resourceName string, names
 	if errors.IsNotFound(err) {
 		return false, nil
 	}
-	return true, fmt.Errorf("cannot get configmap: %v", err)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func Put(ctx context.Context, client *rtcl.Client, resourceName string, namespace string, kind string, data map[string]string) error {
@@ -60,12 +61,11 @@ func Put(ctx context.Context, client *rtcl.Client, resourceName string, namespac
 	return nil
 }
 
-// TODO (covariance) take client as pointer!
-func Remove(ctx context.Context, client rtcl.Client, resourceName string, namespace string, kind string) error {
+func Remove(ctx context.Context, client *rtcl.Client, resourceName string, namespace string, kind string) error {
 	cmapName := cmapName(resourceName, kind)
 
 	var cmapObj v1.ConfigMap
-	err := client.Get(ctx, rtcl.ObjectKey{Namespace: namespace, Name: cmapName}, &cmapObj)
+	err := (*client).Get(ctx, rtcl.ObjectKey{Namespace: namespace, Name: cmapName}, &cmapObj)
 	if err != nil && !errors.IsNotFound(err) {
 		return fmt.Errorf("cannot get configmap: %v", err)
 	}
@@ -74,7 +74,7 @@ func Remove(ctx context.Context, client rtcl.Client, resourceName string, namesp
 		return nil
 	}
 
-	if err := client.Delete(ctx, &cmapObj); err != nil {
+	if err := (*client).Delete(ctx, &cmapObj); err != nil {
 		return fmt.Errorf("cannot delete configmap: %v", err)
 	}
 

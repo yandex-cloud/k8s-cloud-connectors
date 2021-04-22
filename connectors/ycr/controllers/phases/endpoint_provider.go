@@ -32,7 +32,7 @@ func (r *EndpointProvider) Update(ctx context.Context, log logr.Logger, registry
 }
 
 func (r *EndpointProvider) Cleanup(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
-	if err := configmaps.Remove(ctx, *r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName); err != nil {
+	if err := configmaps.Remove(ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName); err != nil {
 		return fmt.Errorf("unable to remove endpoint: %v", err)
 	}
 	log.Info("endpoint successfully removed")
