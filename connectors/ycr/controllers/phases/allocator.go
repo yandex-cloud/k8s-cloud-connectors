@@ -6,21 +6,30 @@ package phases
 import (
 	"context"
 	"github.com/go-logr/logr"
+	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
-	"k8s-connectors/connectors/ycr/controllers/sdk"
+	"k8s-connectors/connectors/ycr/controllers/adapter"
+	"k8s-connectors/pkg/config"
 )
 
 type Allocator struct {
-	Sdk sdk.YandexContainerRegistrySDK
+	Sdk adapter.YandexContainerRegistryAdapter
 }
 
-func (r *Allocator) IsUpdated(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) (bool, error) {
-	res, err := r.Sdk.Read(ctx, log, object)
+func (r *Allocator) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.YandexContainerRegistry) (bool, error) {
+	res, err := r.Sdk.Read(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName)
 	return res != nil, err
 }
 
 func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) error {
-	if err := r.Sdk.Create(ctx, log, object); err != nil {
+	if err := r.Sdk.Create(ctx, &containerregistry.CreateRegistryRequest{
+		FolderId: object.Spec.FolderId,
+		Name:     object.Spec.Name,
+		Labels: map[string]string{
+			config.CloudClusterLabel: object.ClusterName,
+			config.CloudNameLabel:    object.Name,
+		},
+	}); err != nil {
 		return err
 	}
 	log.Info("resource allocated successfully")
@@ -28,7 +37,9 @@ func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connect
 }
 
 func (r *Allocator) Cleanup(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) error {
-	if err := r.Sdk.Delete(ctx, log, object); err != nil {
+	if err := r.Sdk.Delete(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, &containerregistry.DeleteRegistryRequest{
+		RegistryId: object.Status.Id,
+	}); err != nil {
 		return err
 	}
 	log.Info("registry deleted successfully")

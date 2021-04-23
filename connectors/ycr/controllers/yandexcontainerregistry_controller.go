@@ -6,7 +6,7 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"k8s-connectors/connectors/ycr/controllers/sdk"
+	"k8s-connectors/connectors/ycr/controllers/adapter"
 	ycrconfig "k8s-connectors/connectors/ycr/pkg/config"
 	"k8s-connectors/pkg/config"
 	"k8s-connectors/pkg/utils"
@@ -36,7 +36,7 @@ type yandexContainerRegistryReconciler struct {
 }
 
 func NewYandexContainerRegistryReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*yandexContainerRegistryReconciler, error) {
-	impl, err := sdk.NewYandexContainerRegistrySDKImpl()
+	impl, err := adapter.NewYandexContainerRegistryAdapterSDK()
 	if err != nil {
 		return nil, err
 	}

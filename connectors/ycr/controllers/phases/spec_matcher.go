@@ -7,16 +7,18 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
+	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
-	"k8s-connectors/connectors/ycr/controllers/sdk"
+	"k8s-connectors/connectors/ycr/controllers/adapter"
 )
 
 type SpecMatcher struct {
-	Sdk sdk.YandexContainerRegistrySDK
+	Sdk adapter.YandexContainerRegistryAdapter
 }
 
-func (r *SpecMatcher) IsUpdated(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) (bool, error) {
-	res, err := r.Sdk.Read(ctx, log, object)
+func (r *SpecMatcher) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.YandexContainerRegistry) (bool, error) {
+	res, err := r.Sdk.Read(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName)
 	if err != nil {
 		return false, err
 	}
@@ -32,7 +34,11 @@ func (r *SpecMatcher) IsUpdated(ctx context.Context, log logr.Logger, object *co
 }
 
 func (r *SpecMatcher) Update(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) error {
-	if err := r.Sdk.Update(ctx, log, object); err != nil {
+	if err := r.Sdk.Update(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, &containerregistry.UpdateRegistryRequest{
+		RegistryId: object.Status.Id,
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"name"}},
+		Name:       object.Spec.Name,
+	}); err != nil {
 		return err
 	}
 	log.Info("object spec matched with cloud")
