@@ -46,7 +46,6 @@ func NewYandexObjectStorageReconciler(client client.Client, log logr.Logger, sch
 		scheme:     scheme,
 		s3provider: s3provider,
 		phases: []phases.YandexObjectStoragePhase{
-			// Register finalizer for the object (is blocked by allocation)
 			&phases.FinalizerRegistrar{
 				Client: &client,
 			},
