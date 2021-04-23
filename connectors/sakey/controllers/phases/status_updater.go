@@ -7,18 +7,17 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
-	ycsdk "github.com/yandex-cloud/go-sdk"
 	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
-	sakeyutils "k8s-connectors/connectors/sakey/pkg/utils"
+	"k8s-connectors/connectors/sakey/controllers/adapter"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type StatusUpdater struct {
-	Sdk    *ycsdk.SDK
+	Sdk    adapter.StaticAccessKeyAdapter
 	Client *client.Client
 }
 
-func (r *StatusUpdater) IsUpdated(_ context.Context, _ *connectorsv1.StaticAccessKey) (bool, error) {
+func (r *StatusUpdater) IsUpdated(_ context.Context, _ logr.Logger, _ *connectorsv1.StaticAccessKey) (bool, error) {
 	// In every reconciliation we need to update
 	// status. Therefore, this updater is never
 	// marked as updated.
@@ -30,7 +29,7 @@ func (r *StatusUpdater) Update(ctx context.Context, log logr.Logger, object *con
 	// managed by another phase and therefore only
 	// thing we do is update key cloud id.
 
-	res, err := sakeyutils.GetStaticAccessKey(ctx, object, r.Sdk)
+	res, err := r.Sdk.Read(ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name)
 	if err != nil {
 		return err
 	}

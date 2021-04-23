@@ -17,7 +17,7 @@ type FinalizerRegistrar struct {
 	Client *client.Client
 }
 
-func (r *FinalizerRegistrar) IsUpdated(_ context.Context, registry *connectorsv1.StaticAccessKey) (bool, error) {
+func (r *FinalizerRegistrar) IsUpdated(_ context.Context, _ logr.Logger, registry *connectorsv1.StaticAccessKey) (bool, error) {
 	return utils.ContainsString(registry.Finalizers, sakeyconfig.FinalizerName), nil
 }
 

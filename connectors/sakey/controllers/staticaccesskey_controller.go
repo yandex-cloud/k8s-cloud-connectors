@@ -9,6 +9,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"k8s-connectors/connectors/sakey/controllers/adapter"
 	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
 	"k8s-connectors/pkg/config"
 	"k8s-connectors/pkg/utils"
@@ -19,8 +20,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/yandex-cloud/go-sdk"
-
 	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
 	"k8s-connectors/connectors/sakey/controllers/phases"
 )
@@ -30,7 +29,6 @@ type staticAccessKeyReconciler struct {
 	client.Client
 	log    logr.Logger
 	scheme *runtime.Scheme
-	sdk    *ycsdk.SDK
 
 	// phases that are to be invoked on this object
 	// IsUpdated blocks Update, and order of initializers matters,
@@ -41,9 +39,7 @@ type staticAccessKeyReconciler struct {
 }
 
 func NewStaticAccessKeyReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*staticAccessKeyReconciler, error) {
-	sdk, err := ycsdk.Build(context.Background(), ycsdk.Config{
-		Credentials: ycsdk.InstanceServiceAccount(),
-	})
+	impl, err := adapter.NewStaticAccessKeyAdapter()
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +47,6 @@ func NewStaticAccessKeyReconciler(client client.Client, log logr.Logger, scheme 
 		Client: client,
 		log:    log,
 		scheme: scheme,
-		sdk:    sdk,
 		phases: []phases.StaticAccessKeyPhase{
 			// Register finalizer for the object (is blocked by allocation)
 			&phases.FinalizerRegistrar{
@@ -61,18 +56,18 @@ func NewStaticAccessKeyReconciler(client client.Client, log logr.Logger, scheme 
 			// (is blocked by finalizer registration,
 			// because otherwise resource can leak)
 			&phases.Allocator{
-				Sdk:    sdk,
+				Sdk:    impl,
 				Client: &client,
 			},
 			// In case spec was updated and our cloud resource does not match with
 			// spec, we need to update cloud resource (is blocked by allocation)
 			&phases.SpecMatcher{
-				Sdk:    sdk,
+				Sdk:    impl,
 				Client: &client,
 			},
 			// Update status of the object (is blocked by everything mutating)
 			&phases.StatusUpdater{
-				Sdk:    sdk,
+				Sdk:    impl,
 				Client: &client,
 			},
 		},
@@ -114,7 +109,7 @@ func (r *staticAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	// Update all fragments of object, keeping track of whether
 	// all of them are initialized
 	for _, updater := range r.phases {
-		isInitialized, err := updater.IsUpdated(ctx, &object)
+		isInitialized, err := updater.IsUpdated(ctx, log, &object)
 		if err != nil {
 			return config.GetErroredResult(err)
 		}
