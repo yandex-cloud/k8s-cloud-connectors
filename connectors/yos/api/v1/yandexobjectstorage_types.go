@@ -22,11 +22,6 @@ type YandexObjectStorageSpec struct {
 	// +kubebuilder:validation:Optional
 	ACL string `json:"ACL,omitempty"`
 
-	// SAKeyNamespace: specifies namespace in which the Static Access Key for this bucket
-	// is located. Defaults to "default" if not specified.
-	// +kubebuilder:validation:Optional
-	SAKeyNamespace string `json:"SAKeyNamespace,omitempty"`
-
 	// SAKeyName: specifies name of the Static Access Key that is used to authenticate this
 	// Yandex Object Storage in the cloud.
 	// +kubebuilder:validation:Required

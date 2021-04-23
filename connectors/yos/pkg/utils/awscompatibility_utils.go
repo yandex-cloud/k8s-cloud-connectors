@@ -43,13 +43,9 @@ func NewStaticProvider() AwsSdkProvider {
 }
 
 func KeyAndSecretFromStaticAccessKey(ctx context.Context, bucket *connectorsv1.YandexObjectStorage, client client.Client) (string, string, error) {
-	ns := bucket.Spec.SAKeyNamespace
-	if ns == "" {
-		ns = "default"
-	}
 	var key sakey.StaticAccessKey
 	if err := client.Get(ctx, types.NamespacedName{
-		Namespace: ns,
+		Namespace: bucket.Namespace,
 		Name:      bucket.Spec.SAKeyName,
 	}, &key); err != nil {
 		return "", "", fmt.Errorf("unable to retrieve corresponding SAKey: %v", err)

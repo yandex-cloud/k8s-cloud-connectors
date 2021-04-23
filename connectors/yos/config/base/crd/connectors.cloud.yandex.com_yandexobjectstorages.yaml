@@ -38,9 +38,6 @@ spec:
               SAKeyName:
                 description: 'SAKeyName: specifies name of the Static Access Key that is used to authenticate this Yandex Object Storage in the cloud.'
                 type: string
-              SAKeyNamespace:
-                description: 'SAKeyNamespace: specifies namespace in which the Static Access Key for this bucket is located. Defaults to "default" if not specified.'
-                type: string
               name:
                 description: 'Name: must be unique in Yandex Cloud. Can consist of lowercase latin letters, dashes, dots and numbers and must be from 3 to 64 characters long. Must be immutable.'
                 maxLength: 64
