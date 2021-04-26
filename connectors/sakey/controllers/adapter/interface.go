@@ -10,7 +10,7 @@ import (
 
 type StaticAccessKeyAdapter interface {
 	Create(ctx context.Context, saID string, clusterName string, name string) (*awscompatibility.CreateAccessKeyResponse, error)
-	Read(ctx context.Context, keyID string, saID string, clusterName string, name string) (*awscompatibility.AccessKey, error)
-	Update() error
-	Delete(ctx context.Context, keyID string, saID string, clusterName string, name string) error
+	Read(ctx context.Context, keyID string) (*awscompatibility.AccessKey, error)
+	Delete(ctx context.Context, sakeyID string) error
+	List(ctx context.Context, saID string) ([]*awscompatibility.AccessKey, error)
 }

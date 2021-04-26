@@ -10,6 +10,7 @@ import (
 	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
 	"k8s-connectors/connectors/sakey/controllers/adapter"
 	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
+	sakeyutils "k8s-connectors/connectors/sakey/pkg/util"
 	"k8s-connectors/pkg/secrets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -20,7 +21,7 @@ type Allocator struct {
 }
 
 func (r *Allocator) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.StaticAccessKey) (bool, error) {
-	res, err := r.Sdk.Read(ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name)
+	res, err := sakeyutils.GetStaticAccessKey(ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name, r.Sdk)
 	if err != nil {
 		return false, err
 	}
@@ -63,7 +64,15 @@ func (r *Allocator) Cleanup(ctx context.Context, log logr.Logger, object *connec
 		return err
 	}
 
-	if err := r.Sdk.Delete(ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name); err != nil {
+	res, err := sakeyutils.GetStaticAccessKey(ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name, r.Sdk)
+	if err != nil {
+		return err
+	}
+	if res == nil {
+		return nil
+	}
+
+	if err := r.Sdk.Delete(ctx, res.Id); err != nil {
 		return err
 	}
 

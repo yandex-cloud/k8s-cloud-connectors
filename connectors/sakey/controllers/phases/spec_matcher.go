@@ -9,6 +9,7 @@ import (
 	"github.com/go-logr/logr"
 	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
 	"k8s-connectors/connectors/sakey/controllers/adapter"
+	sakeyutils "k8s-connectors/connectors/sakey/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -18,7 +19,7 @@ type SpecMatcher struct {
 }
 
 func (r *SpecMatcher) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.StaticAccessKey) (bool, error) {
-	res, err := r.Sdk.Read(ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name)
+	res, err := sakeyutils.GetStaticAccessKey(ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name, r.Sdk)
 	if err != nil {
 		return false, err
 	}
