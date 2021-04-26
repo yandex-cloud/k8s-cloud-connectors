@@ -22,8 +22,16 @@ func (r *ResourceAllocator) IsUpdated(ctx context.Context, resource *connectorsv
 	if err != nil {
 		return false, err
 	}
-	res, err := r.Sdk.Read(ctx, key, secret, resource.Name)
-	return res != nil, err
+	lst, err := r.Sdk.List(ctx, key, secret)
+	if err != nil {
+		return false, err
+	}
+	for _, bucket := range lst {
+		if *bucket.Name == resource.Name {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (r *ResourceAllocator) Update(ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage) error {

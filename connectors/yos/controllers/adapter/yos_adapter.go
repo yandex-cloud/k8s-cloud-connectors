@@ -31,7 +31,7 @@ func (r YandexObjectStorageAdapterSDK) Create(ctx context.Context, key string, s
 	return err
 }
 
-func (r YandexObjectStorageAdapterSDK) Read(ctx context.Context, key string, secret string, name string) (*s3.Bucket, error) {
+func (r YandexObjectStorageAdapterSDK) List(ctx context.Context, key string, secret string) ([]*s3.Bucket, error) {
 	sdk, err := r.s3provider(ctx, key, secret)
 	if err != nil {
 		return nil, err
@@ -42,12 +42,7 @@ func (r YandexObjectStorageAdapterSDK) Read(ctx context.Context, key string, sec
 		return nil, err
 	}
 
-	for _, bucket := range res.Buckets {
-		if *bucket.Name == name {
-			return bucket, nil
-		}
-	}
-	return nil, nil
+	return res.Buckets, nil
 }
 
 func (r YandexObjectStorageAdapterSDK) Update() error {
