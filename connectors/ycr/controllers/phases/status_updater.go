@@ -9,6 +9,7 @@ import (
 	"github.com/go-logr/logr"
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
 	"k8s-connectors/connectors/ycr/controllers/adapter"
+	ycrutils "k8s-connectors/connectors/ycr/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -25,7 +26,7 @@ func (r *StatusUpdater) IsUpdated(_ context.Context, _ logr.Logger, _ *connector
 }
 
 func (r *StatusUpdater) Update(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) error {
-	res, err := r.Sdk.Read(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName)
+	res, err := ycrutils.GetRegistry(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk)
 	if err != nil {
 		return err
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
 	"k8s-connectors/connectors/ycr/controllers/adapter"
+	ycrutils "k8s-connectors/connectors/ycr/pkg/util"
 	"k8s-connectors/pkg/config"
 )
 
@@ -17,12 +18,12 @@ type Allocator struct {
 }
 
 func (r *Allocator) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.YandexContainerRegistry) (bool, error) {
-	res, err := r.Sdk.Read(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName)
+	res, err := ycrutils.GetRegistry(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk)
 	return res != nil, err
 }
 
 func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) error {
-	if err := r.Sdk.Create(ctx, &containerregistry.CreateRegistryRequest{
+	if _, err := r.Sdk.Create(ctx, &containerregistry.CreateRegistryRequest{
 		FolderId: object.Spec.FolderId,
 		Name:     object.Spec.Name,
 		Labels: map[string]string{
@@ -37,7 +38,15 @@ func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connect
 }
 
 func (r *Allocator) Cleanup(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) error {
-	if err := r.Sdk.Delete(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, &containerregistry.DeleteRegistryRequest{
+	ycr, err := ycrutils.GetRegistry(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk)
+	if err != nil {
+		return err
+	}
+	if ycr == nil {
+		log.Info("registry deleted externally")
+	}
+
+	if err := r.Sdk.Delete(ctx, &containerregistry.DeleteRegistryRequest{
 		RegistryId: object.Status.Id,
 	}); err != nil {
 		return err

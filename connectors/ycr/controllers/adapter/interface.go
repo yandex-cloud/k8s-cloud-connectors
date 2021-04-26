@@ -9,8 +9,9 @@ import (
 )
 
 type YandexContainerRegistryAdapter interface {
-	Create(ctx context.Context, request *containerregistry.CreateRegistryRequest) error
-	Read(ctx context.Context, registryID string, folderID string, registryName string, clusterName string) (*containerregistry.Registry, error)
-	Update(ctx context.Context, registryID string, folderID string, registryName string, clusterName string, request *containerregistry.UpdateRegistryRequest) error
-	Delete(ctx context.Context, registryID string, folderID string, registryName string, clusterName string, request *containerregistry.DeleteRegistryRequest) error
+	Create(ctx context.Context, request *containerregistry.CreateRegistryRequest) (*containerregistry.Registry, error)
+	Read(ctx context.Context, registryID string) (*containerregistry.Registry, error)
+	List(ctx context.Context, folderID string) ([]*containerregistry.Registry, error)
+	Update(ctx context.Context, request *containerregistry.UpdateRegistryRequest) error
+	Delete(ctx context.Context, request *containerregistry.DeleteRegistryRequest) error
 }

@@ -11,6 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
 	"k8s-connectors/connectors/ycr/controllers/adapter"
+	ycrutils "k8s-connectors/connectors/ycr/pkg/util"
 )
 
 type SpecMatcher struct {
@@ -18,7 +19,7 @@ type SpecMatcher struct {
 }
 
 func (r *SpecMatcher) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.YandexContainerRegistry) (bool, error) {
-	res, err := r.Sdk.Read(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName)
+	res, err := ycrutils.GetRegistry(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk)
 	if err != nil {
 		return false, err
 	}
@@ -34,7 +35,15 @@ func (r *SpecMatcher) IsUpdated(ctx context.Context, _ logr.Logger, object *conn
 }
 
 func (r *SpecMatcher) Update(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) error {
-	if err := r.Sdk.Update(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, &containerregistry.UpdateRegistryRequest{
+	ycr, err := ycrutils.GetRegistry(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk)
+	if err != nil {
+		return err
+	}
+	if ycr == nil {
+		return fmt.Errorf("object does not exist in the cloud")
+	}
+
+	if err := r.Sdk.Update(ctx, &containerregistry.UpdateRegistryRequest{
 		RegistryId: object.Status.Id,
 		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"name"}},
 		Name:       object.Spec.Name,
