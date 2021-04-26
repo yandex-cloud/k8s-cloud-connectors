@@ -7,23 +7,21 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
-	"github.com/yandex-cloud/go-genproto/yandex/cloud/iam/v1/awscompatibility"
-	ycsdk "github.com/yandex-cloud/go-sdk"
 	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
+	"k8s-connectors/connectors/sakey/controllers/adapter"
 	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
+	sakeyutils "k8s-connectors/connectors/sakey/pkg/util"
 	"k8s-connectors/pkg/secrets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	sakeyutils "k8s-connectors/connectors/sakey/pkg/utils"
 )
 
 type Allocator struct {
-	Sdk    *ycsdk.SDK
+	Sdk    adapter.StaticAccessKeyAdapter
 	Client *client.Client
 }
 
-func (r *Allocator) IsUpdated(ctx context.Context, object *connectorsv1.StaticAccessKey) (bool, error) {
-	res, err := sakeyutils.GetStaticAccessKey(ctx, object, r.Sdk)
+func (r *Allocator) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.StaticAccessKey) (bool, error) {
+	res, err := sakeyutils.GetStaticAccessKey(ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name, r.Sdk)
 	if err != nil {
 		return false, err
 	}
@@ -33,10 +31,7 @@ func (r *Allocator) IsUpdated(ctx context.Context, object *connectorsv1.StaticAc
 }
 
 func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey) error {
-	res, err := r.Sdk.IAM().AWSCompatibility().AccessKey().Create(ctx, &awscompatibility.CreateAccessKeyRequest{
-		ServiceAccountId: object.Spec.ServiceAccountID,
-		Description:      sakeyutils.GetStaticAccessKeyDescription(object),
-	})
+	res, err := r.Sdk.Create(ctx, object.Spec.ServiceAccountID, object.ClusterName, object.Name)
 	if err != nil {
 		return fmt.Errorf("error while creating resource: %v", err)
 	}
@@ -69,14 +64,15 @@ func (r *Allocator) Cleanup(ctx context.Context, log logr.Logger, object *connec
 		return err
 	}
 
-	res, err := sakeyutils.GetStaticAccessKey(ctx, object, r.Sdk)
+	res, err := sakeyutils.GetStaticAccessKey(ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name, r.Sdk)
 	if err != nil {
 		return err
 	}
+	if res == nil {
+		return nil
+	}
 
-	if _, err := r.Sdk.IAM().AWSCompatibility().AccessKey().Delete(ctx, &awscompatibility.DeleteAccessKeyRequest{
-		AccessKeyId: res.Id,
-	}); err != nil {
+	if err := r.Sdk.Delete(ctx, res.Id); err != nil {
 		return err
 	}
 

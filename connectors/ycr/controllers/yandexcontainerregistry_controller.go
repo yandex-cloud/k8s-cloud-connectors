@@ -3,12 +3,10 @@
 
 package controllers
 
-// TODO (covariance) push events to get via (kubectl get events)
-// TODO (covariance) generalize reconciler
-
 import (
 	"context"
 	"fmt"
+	"k8s-connectors/connectors/ycr/controllers/adapter"
 	ycrconfig "k8s-connectors/connectors/ycr/pkg/config"
 	"k8s-connectors/pkg/config"
 	"k8s-connectors/pkg/utils"
@@ -19,8 +17,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/yandex-cloud/go-sdk"
-
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
 	"k8s-connectors/connectors/ycr/controllers/phases"
 )
@@ -30,7 +26,6 @@ type yandexContainerRegistryReconciler struct {
 	client.Client
 	log    logr.Logger
 	scheme *runtime.Scheme
-	sdk    *ycsdk.SDK
 
 	// phases that are to be invoked on this object
 	// IsUpdated blocks Update, and order of initializers matters,
@@ -41,9 +36,7 @@ type yandexContainerRegistryReconciler struct {
 }
 
 func NewYandexContainerRegistryReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*yandexContainerRegistryReconciler, error) {
-	sdk, err := ycsdk.Build(context.Background(), ycsdk.Config{
-		Credentials: ycsdk.InstanceServiceAccount(),
-	})
+	impl, err := adapter.NewYandexContainerRegistryAdapterSDK()
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +44,6 @@ func NewYandexContainerRegistryReconciler(client client.Client, log logr.Logger,
 		Client: client,
 		log:    log,
 		scheme: scheme,
-		sdk:    sdk,
 		phases: []phases.YandexContainerRegistryPhase{
 			// Register finalizer for the object (is blocked by allocation)
 			&phases.FinalizerRegistrar{
@@ -61,16 +53,16 @@ func NewYandexContainerRegistryReconciler(client client.Client, log logr.Logger,
 			// (is blocked by finalizer registration,
 			// because otherwise resource can leak)
 			&phases.Allocator{
-				Sdk: sdk,
+				Sdk: impl,
 			},
 			// In case spec was updated and our cloud registry does not match with
 			// spec, we need to update cloud registry (is blocked by allocation)
 			&phases.SpecMatcher{
-				Sdk: sdk,
+				Sdk: impl,
 			},
 			// Update status of the object (is blocked by everything mutating)
 			&phases.StatusUpdater{
-				Sdk:    sdk,
+				Sdk:    impl,
 				Client: &client,
 			},
 			// Entrypoint for resource update (is blocked by status update)
@@ -118,7 +110,7 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 	// Update all fragments of object, keeping track of whether
 	// all of them are initialized
 	for _, updater := range r.phases {
-		isInitialized, err := updater.IsUpdated(ctx, &registry)
+		isInitialized, err := updater.IsUpdated(ctx, log, &registry)
 		if err != nil {
 			return config.GetErroredResult(err)
 		}

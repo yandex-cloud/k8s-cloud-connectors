@@ -7,8 +7,8 @@ import (
 	"context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
-	ycrconfig "k8s-connectors/connectors/ycr/pkg/config"
+	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
+	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
 	"k8s-connectors/pkg/utils"
 	k8sfake "k8s-connectors/testing/k8s-fake"
 	logrfake "k8s-connectors/testing/logr-fake"
@@ -19,7 +19,7 @@ import (
 func TestIsUpdated(t *testing.T) {
 	t.Run("empty finalizers means not updated", func(t *testing.T) {
 		// Arrange
-		resource := connectorsv1.YandexContainerRegistry{
+		resource := connectorsv1.StaticAccessKey{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "resource",
 				Namespace:  "default",
@@ -43,7 +43,7 @@ func TestIsUpdated(t *testing.T) {
 
 	t.Run("other finalizers means not updated", func(t *testing.T) {
 		// Arrange
-		resource := connectorsv1.YandexContainerRegistry{
+		resource := connectorsv1.StaticAccessKey{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "resource",
 				Namespace:  "default",
@@ -67,11 +67,11 @@ func TestIsUpdated(t *testing.T) {
 
 	t.Run("finalizer exist means updated", func(t *testing.T) {
 		// Arrange
-		resource := connectorsv1.YandexContainerRegistry{
+		resource := connectorsv1.StaticAccessKey{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "resource",
 				Namespace:  "default",
-				Finalizers: []string{ycrconfig.FinalizerName},
+				Finalizers: []string{sakeyconfig.FinalizerName},
 			},
 		}
 		c := k8sfake.NewFakeClient()
@@ -91,11 +91,11 @@ func TestIsUpdated(t *testing.T) {
 
 	t.Run("finalizer and others exist means updated", func(t *testing.T) {
 		// Arrange
-		resource := connectorsv1.YandexContainerRegistry{
+		resource := connectorsv1.StaticAccessKey{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "resource",
 				Namespace:  "default",
-				Finalizers: []string{"not.that.finalizer", ycrconfig.FinalizerName, "yet.another.false.finalizer"},
+				Finalizers: []string{"not.that.finalizer", sakeyconfig.FinalizerName, "yet.another.false.finalizer"},
 			},
 		}
 		c := k8sfake.NewFakeClient()
@@ -117,7 +117,7 @@ func TestIsUpdated(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	t.Run("update on empty finalizer list adds finalizer", func(t *testing.T) {
 		// Arrange
-		resource := connectorsv1.YandexContainerRegistry{
+		resource := connectorsv1.StaticAccessKey{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "resource",
 				Namespace:  "default",
@@ -135,15 +135,15 @@ func TestUpdate(t *testing.T) {
 		require.NoError(t, phase.Update(context.Background(), log, &resource))
 
 		// Assert
-		var res connectorsv1.YandexContainerRegistry
+		var res connectorsv1.StaticAccessKey
 		require.NoError(t, c.Get(context.Background(), utils.NamespacedName(&resource), &res))
 		assert.Len(t, res.Finalizers, 1)
-		assert.Contains(t, res.Finalizers, ycrconfig.FinalizerName)
+		assert.Contains(t, res.Finalizers, sakeyconfig.FinalizerName)
 	})
 
 	t.Run("update on non-empty finalizer list adds finalizer", func(t *testing.T) {
 		// Arrange
-		resource := connectorsv1.YandexContainerRegistry{
+		resource := connectorsv1.StaticAccessKey{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "resource",
 				Namespace:  "default",
@@ -161,19 +161,19 @@ func TestUpdate(t *testing.T) {
 		require.NoError(t, phase.Update(context.Background(), log, &resource))
 
 		// Assert
-		var res connectorsv1.YandexContainerRegistry
+		var res connectorsv1.StaticAccessKey
 		require.NoError(t, c.Get(context.Background(), utils.NamespacedName(&resource), &res))
 		assert.Len(t, res.Finalizers, 3)
 		assert.Contains(t, res.Finalizers, "not.that.finalizer")
 		assert.Contains(t, res.Finalizers, "yet.another.finalizer")
-		assert.Contains(t, res.Finalizers, ycrconfig.FinalizerName)
+		assert.Contains(t, res.Finalizers, sakeyconfig.FinalizerName)
 	})
 }
 
 func TestCleanup(t *testing.T) {
 	t.Run("cleanup on empty finalizer list does nothing", func(t *testing.T) {
 		// Arrange
-		resource := connectorsv1.YandexContainerRegistry{
+		resource := connectorsv1.StaticAccessKey{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "resource",
 				Namespace:  "default",
@@ -191,18 +191,18 @@ func TestCleanup(t *testing.T) {
 		require.NoError(t, phase.Cleanup(context.Background(), log, &resource))
 
 		// Assert
-		var res connectorsv1.YandexContainerRegistry
+		var res connectorsv1.StaticAccessKey
 		require.NoError(t, c.Get(context.Background(), utils.NamespacedName(&resource), &res))
 		assert.Len(t, res.Finalizers, 0)
 	})
 
 	t.Run("cleanup on non-empty finalizer list removes finalizer", func(t *testing.T) {
 		// Arrange
-		resource := connectorsv1.YandexContainerRegistry{
+		resource := connectorsv1.StaticAccessKey{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "resource",
 				Namespace:  "default",
-				Finalizers: []string{"not.that.finalizer", ycrconfig.FinalizerName, "yet.another.finalizer"},
+				Finalizers: []string{"not.that.finalizer", sakeyconfig.FinalizerName, "yet.another.finalizer"},
 			},
 		}
 		c := k8sfake.NewFakeClient()
@@ -216,7 +216,7 @@ func TestCleanup(t *testing.T) {
 		require.NoError(t, phase.Cleanup(context.Background(), log, &resource))
 
 		// Assert
-		var res connectorsv1.YandexContainerRegistry
+		var res connectorsv1.StaticAccessKey
 		require.NoError(t, c.Get(context.Background(), utils.NamespacedName(&resource), &res))
 		assert.Len(t, res.Finalizers, 2)
 		assert.Contains(t, res.Finalizers, "not.that.finalizer")
@@ -225,7 +225,7 @@ func TestCleanup(t *testing.T) {
 
 	t.Run("cleanup on non-empty finalizer list without needed finalizer does nothing", func(t *testing.T) {
 		// Arrange
-		resource := connectorsv1.YandexContainerRegistry{
+		resource := connectorsv1.StaticAccessKey{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "resource",
 				Namespace:  "default",
@@ -243,7 +243,7 @@ func TestCleanup(t *testing.T) {
 		require.NoError(t, phase.Cleanup(context.Background(), log, &resource))
 
 		// Assert
-		var res connectorsv1.YandexContainerRegistry
+		var res connectorsv1.StaticAccessKey
 		require.NoError(t, c.Get(context.Background(), utils.NamespacedName(&resource), &res))
 		assert.Len(t, res.Finalizers, 2)
 		assert.Contains(t, res.Finalizers, "not.that.finalizer")

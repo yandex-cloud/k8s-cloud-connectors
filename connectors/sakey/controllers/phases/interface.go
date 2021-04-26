@@ -10,7 +10,7 @@ import (
 )
 
 type StaticAccessKeyPhase interface {
-	IsUpdated(context.Context, *connectorsv1.StaticAccessKey) (bool, error)
+	IsUpdated(context.Context, logr.Logger, *connectorsv1.StaticAccessKey) (bool, error)
 	Update(context.Context, logr.Logger, *connectorsv1.StaticAccessKey) error
 	Cleanup(context.Context, logr.Logger, *connectorsv1.StaticAccessKey) error
 }

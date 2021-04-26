@@ -9,8 +9,8 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"k8s-connectors/connectors/yos/controllers/adapter"
 	yosconfig "k8s-connectors/connectors/yos/pkg/config"
-	yosutils "k8s-connectors/connectors/yos/pkg/utils"
 	"k8s-connectors/pkg/config"
 	"k8s-connectors/pkg/utils"
 
@@ -27,9 +27,8 @@ import (
 // yandexObjectStorageReconciler reconciles a YandexContainerRegistry object
 type yandexObjectStorageReconciler struct {
 	client.Client
-	log        logr.Logger
-	scheme     *runtime.Scheme
-	s3provider yosutils.AwsSdkProvider
+	log    logr.Logger
+	scheme *runtime.Scheme
 	// phases that are to be invoked on this object
 	// IsUpdated blocks Update, and order of initializers matters,
 	// thus if one of initializers fails, subsequent won't be processed.
@@ -39,19 +38,21 @@ type yandexObjectStorageReconciler struct {
 }
 
 func NewYandexObjectStorageReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*yandexObjectStorageReconciler, error) {
-	s3provider := yosutils.NewStaticProvider()
+	sdk, err := adapter.NewYandexObjectStorageAdapterSDK()
+	if err != nil {
+		return nil, err
+	}
 	return &yandexObjectStorageReconciler{
-		Client:     client,
-		log:        log,
-		scheme:     scheme,
-		s3provider: s3provider,
+		Client: client,
+		log:    log,
+		scheme: scheme,
 		phases: []phases.YandexObjectStoragePhase{
 			&phases.FinalizerRegistrar{
 				Client: &client,
 			},
 			&phases.ResourceAllocator{
-				Client:     &client,
-				S3provider: s3provider,
+				Client: &client,
+				Sdk:    sdk,
 			},
 		},
 	}, nil

@@ -8,63 +8,52 @@ import (
 	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
-	ycsdk "github.com/yandex-cloud/go-sdk"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
-	ycrutils "k8s-connectors/connectors/ycr/pkg/utils"
+	"k8s-connectors/connectors/ycr/controllers/adapter"
+	ycrutils "k8s-connectors/connectors/ycr/pkg/util"
 )
 
 type SpecMatcher struct {
-	Sdk *ycsdk.SDK
+	Sdk adapter.YandexContainerRegistryAdapter
 }
 
-func (r *SpecMatcher) IsUpdated(ctx context.Context, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
-	ycr, err := ycrutils.GetRegistry(ctx, registry, r.Sdk)
+func (r *SpecMatcher) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.YandexContainerRegistry) (bool, error) {
+	res, err := ycrutils.GetRegistry(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk)
 	if err != nil {
-		return false, fmt.Errorf("unable to get registry: %v", err)
+		return false, err
 	}
-	if ycr == nil {
-		return false, fmt.Errorf("registry %s not found in folder %s", registry.Spec.Name, registry.Spec.FolderId)
+	if res == nil {
+		return false, fmt.Errorf("resource not found in cloud: %v", object)
 	}
 
 	// Here we will check immutable fields
-	if registry.Spec.FolderId != "" && ycr.FolderId != registry.Spec.FolderId {
-		return false, fmt.Errorf("FolderId changed, invalid state for registry")
+	if object.Spec.FolderId != "" && res.FolderId != object.Spec.FolderId {
+		return false, fmt.Errorf("FolderId changed, invalid state for object")
 	}
-	return ycr.Name == registry.Spec.Name, nil
+	return res.Name == object.Spec.Name, nil
 }
 
-func (r *SpecMatcher) Update(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
-	ycr, err := ycrutils.GetRegistry(ctx, registry, r.Sdk)
+func (r *SpecMatcher) Update(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) error {
+	ycr, err := ycrutils.GetRegistry(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk)
 	if err != nil {
-		return fmt.Errorf("unable to get registry: %v", err)
+		return err
 	}
 	if ycr == nil {
-		return fmt.Errorf("registry %s not found in folder %s", registry.Spec.Name, registry.Spec.FolderId)
+		return fmt.Errorf("object does not exist in the cloud")
 	}
 
-	op, err := r.Sdk.WrapOperation(r.Sdk.ContainerRegistry().Registry().Update(ctx, &containerregistry.UpdateRegistryRequest{
-		RegistryId: ycr.Id,
-		UpdateMask: &fieldmaskpb.FieldMask{
-			Paths: []string{"name"},
-		},
-		Name: registry.Spec.Name,
-	}))
-
-	if err != nil {
-		return fmt.Errorf("can't update registry in cloud: %v", err)
+	if err := r.Sdk.Update(ctx, &containerregistry.UpdateRegistryRequest{
+		RegistryId: object.Status.Id,
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"name"}},
+		Name:       object.Spec.Name,
+	}); err != nil {
+		return err
 	}
-	if err := op.Wait(ctx); err != nil {
-		return fmt.Errorf("can't update registry in cloud: %v", err)
-	}
-	if _, err := op.Response(); err != nil {
-		return fmt.Errorf("can't update registry in cloud: %v", err)
-	}
-
-	log.Info("registry spec matched with cloud")
+	log.Info("object spec matched with cloud")
 	return nil
 }
 
-func (r *SpecMatcher) Cleanup(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
+func (r *SpecMatcher) Cleanup(_ context.Context, _ logr.Logger, _ *connectorsv1.YandexContainerRegistry) error {
 	return nil
 }

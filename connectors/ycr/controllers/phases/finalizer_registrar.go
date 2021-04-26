@@ -17,7 +17,7 @@ type FinalizerRegistrar struct {
 	Client *client.Client
 }
 
-func (r *FinalizerRegistrar) IsUpdated(_ context.Context, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
+func (r *FinalizerRegistrar) IsUpdated(_ context.Context, _ logr.Logger, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
 	return utils.ContainsString(registry.Finalizers, ycrconfig.FinalizerName), nil
 }
 
