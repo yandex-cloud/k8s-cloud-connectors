@@ -5,9 +5,10 @@ package adapter
 
 import (
 	"context"
-	"fmt"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"strconv"
 )
 
@@ -39,7 +40,7 @@ func (r *FakeYandexContainerRegistryAdapter) Create(_ context.Context, request *
 
 func (r *FakeYandexContainerRegistryAdapter) Read(_ context.Context, registryID string) (*containerregistry.Registry, error) {
 	if _, ok := r.Storage[registryID]; !ok {
-		return nil, fmt.Errorf("registry not found")
+		return nil, status.Errorf(codes.NotFound, "registry not found: " + registryID)
 	}
 	return r.Storage[registryID], nil
 }
@@ -56,7 +57,7 @@ func (r *FakeYandexContainerRegistryAdapter) List(_ context.Context, folderID st
 
 func (r *FakeYandexContainerRegistryAdapter) Update(_ context.Context, request *containerregistry.UpdateRegistryRequest) error {
 	if _, ok := r.Storage[request.RegistryId]; !ok {
-		return fmt.Errorf("registry not found")
+		return status.Errorf(codes.NotFound, "registry not found: " + request.RegistryId)
 	}
 	for _, path := range request.UpdateMask.Paths {
 		if path == "name" {
@@ -71,7 +72,7 @@ func (r *FakeYandexContainerRegistryAdapter) Update(_ context.Context, request *
 
 func (r *FakeYandexContainerRegistryAdapter) Delete(_ context.Context, request *containerregistry.DeleteRegistryRequest) error {
 	if _, ok := r.Storage[request.RegistryId]; !ok {
-		return fmt.Errorf("registry not found")
+		return status.Errorf(codes.NotFound, "registry not found: " + request.RegistryId)
 	}
 	delete(r.Storage, request.RegistryId)
 	return nil
