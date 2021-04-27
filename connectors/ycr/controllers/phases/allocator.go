@@ -44,10 +44,11 @@ func (r *Allocator) Cleanup(ctx context.Context, log logr.Logger, object *connec
 	}
 	if ycr == nil {
 		log.Info("registry deleted externally")
+		return nil
 	}
 
 	if err := r.Sdk.Delete(ctx, &containerregistry.DeleteRegistryRequest{
-		RegistryId: object.Status.Id,
+		RegistryId: ycr.Id,
 	}); err != nil {
 		return err
 	}
