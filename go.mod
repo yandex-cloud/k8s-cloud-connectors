@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/aws/aws-sdk-go v1.38.21
 	github.com/go-logr/logr v0.3.0
+	github.com/golang/protobuf v1.4.2
 	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/jinzhu/copier v0.2.9
 	github.com/stretchr/testify v1.5.1
