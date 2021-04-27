@@ -16,7 +16,7 @@ import (
 	"testing"
 )
 
-func TestIsUpdated(t *testing.T) {
+func TestFinalizerRegistrarIsUpdated(t *testing.T) {
 	t.Run("empty finalizers means not updated", func(t *testing.T) {
 		// Arrange
 		resource := connectorsv1.YandexContainerRegistry{
@@ -114,7 +114,7 @@ func TestIsUpdated(t *testing.T) {
 	})
 }
 
-func TestUpdate(t *testing.T) {
+func TestFinalizerRegistrarUpdate(t *testing.T) {
 	t.Run("update on empty finalizer list adds finalizer", func(t *testing.T) {
 		// Arrange
 		resource := connectorsv1.YandexContainerRegistry{
@@ -170,7 +170,7 @@ func TestUpdate(t *testing.T) {
 	})
 }
 
-func TestCleanup(t *testing.T) {
+func TestFinalizerRegistrarCleanup(t *testing.T) {
 	t.Run("cleanup on empty finalizer list does nothing", func(t *testing.T) {
 		// Arrange
 		resource := connectorsv1.YandexContainerRegistry{
