@@ -13,26 +13,12 @@ import (
 	"k8s-connectors/connectors/ycr/controllers/adapter"
 	"k8s-connectors/pkg/config"
 	logrfake "k8s-connectors/testing/logr-fake"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 )
 
-func setup(t *testing.T) (context.Context, logr.Logger, adapter.YandexContainerRegistryAdapter, YandexContainerRegistryPhase) {
+func setupAllocator(t *testing.T) (context.Context, logr.Logger, adapter.YandexContainerRegistryAdapter, YandexContainerRegistryPhase) {
 	ad := adapter.NewFakeYandexContainerRegistryAdapter()
 	return context.Background(), logrfake.NewFakeLogger(t), &ad, &Allocator{Sdk: &ad}
-}
-
-func createObject(specName, folderId, metaName, namespace string) connectorsv1.YandexContainerRegistry {
-	return connectorsv1.YandexContainerRegistry{
-		Spec: connectorsv1.YandexContainerRegistrySpec{
-			Name:     specName,
-			FolderId: folderId,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      metaName,
-			Namespace: namespace,
-		},
-	}
 }
 
 func createResource(ctx context.Context, ad adapter.YandexContainerRegistryAdapter, t *testing.T, specName, folderId, metaName, clusterName string) *containerregistry.Registry {
@@ -55,8 +41,8 @@ func createResourceFromObject(ctx context.Context, ad adapter.YandexContainerReg
 func TestAllocatorIsUpdated(t *testing.T) {
 	t.Run("is not updated on empty cloud", func(t *testing.T) {
 		// Arrange
-		ctx, log, _, phase := setup(t)
-		obj := createObject("resource", "folder", "obj", "default")
+		ctx, log, _, phase := setupAllocator(t)
+		obj := CreateObject("resource", "folder", "obj", "default")
 
 		// Act
 		upd, err := phase.IsUpdated(ctx, log, &obj)
@@ -68,8 +54,8 @@ func TestAllocatorIsUpdated(t *testing.T) {
 
 	t.Run("is updated on cloud with only this registry", func(t *testing.T) {
 		// Arrange
-		ctx, log, ad, phase := setup(t)
-		obj := createObject("resource", "folder", "obj", "default")
+		ctx, log, ad, phase := setupAllocator(t)
+		obj := CreateObject("resource", "folder", "obj", "default")
 		res := createResourceFromObject(ctx, ad, t, obj)
 		obj.Status.Id = res.Id
 
@@ -83,8 +69,8 @@ func TestAllocatorIsUpdated(t *testing.T) {
 
 	t.Run("is not updated on cloud with other registries", func(t *testing.T) {
 		// Arrange
-		ctx, log, ad, phase := setup(t)
-		obj := createObject("resource", "folder", "obj", "default")
+		ctx, log, ad, phase := setupAllocator(t)
+		obj := CreateObject("resource", "folder", "obj", "default")
 
 		_ = createResource(ctx, ad, t, "resource1", "folder", "obj1", "")
 		_ = createResource(ctx, ad, t, "resource2", "other-folder", "obj2", "")
@@ -99,8 +85,8 @@ func TestAllocatorIsUpdated(t *testing.T) {
 
 	t.Run("is updated on cloud with this and other registries", func(t *testing.T) {
 		// Arrange
-		ctx, log, ad, phase := setup(t)
-		obj := createObject("resource", "folder", "obj", "default")
+		ctx, log, ad, phase := setupAllocator(t)
+		obj := CreateObject("resource", "folder", "obj", "default")
 
 		res := createResourceFromObject(ctx, ad, t, obj)
 		obj.Status.Id = res.Id
@@ -120,8 +106,8 @@ func TestAllocatorIsUpdated(t *testing.T) {
 func TestAllocatorUpdate(t *testing.T) {
 	t.Run("update on empty cloud creates resource", func(t *testing.T) {
 		// Arrange
-		ctx, log, _, phase := setup(t)
-		obj := createObject("resource", "folder", "obj", "default")
+		ctx, log, _, phase := setupAllocator(t)
+		obj := CreateObject("resource", "folder", "obj", "default")
 
 		// Act
 		require.NoError(t, phase.Update(ctx, log, &obj))
@@ -134,8 +120,8 @@ func TestAllocatorUpdate(t *testing.T) {
 
 	t.Run("update on non-empty cloud creates resource", func(t *testing.T) {
 		// Arrange
-		ctx, log, ad, phase := setup(t)
-		obj := createObject("resource", "folder", "obj", "default")
+		ctx, log, ad, phase := setupAllocator(t)
+		obj := CreateObject("resource", "folder", "obj", "default")
 
 		_ = createResource(ctx, ad, t, "resource1", "folder", "obj1", "")
 		_ = createResource(ctx, ad, t, "resource2", "other-folder", "obj2", "")
@@ -153,8 +139,8 @@ func TestAllocatorUpdate(t *testing.T) {
 func TestAllocatorCleanup(t *testing.T) {
 	t.Run("cleanup on cloud with resource deletes resource", func(t *testing.T) {
 		// Arrange
-		ctx, log, ad, phase := setup(t)
-		obj := createObject("resource", "folder", "obj", "default")
+		ctx, log, ad, phase := setupAllocator(t)
+		obj := CreateObject("resource", "folder", "obj", "default")
 
 		require.NoError(t, phase.Update(ctx, log, &obj))
 
@@ -172,11 +158,11 @@ func TestAllocatorCleanup(t *testing.T) {
 
 	t.Run("cleanup on cloud with this and other resources deletes this resource", func(t *testing.T) {
 		// Arrange
-		ctx, log, ad, phase := setup(t)
-		obj := createObject("resource", "folder", "obj", "default")
+		ctx, log, ad, phase := setupAllocator(t)
+		obj := CreateObject("resource", "folder", "obj", "default")
 
-		otherObj1 := createObject("other-resource", "folder", "otherObj1", "default")
-		otherObj2 := createObject("resource", "other-folder", "otherObj2", "default")
+		otherObj1 := CreateObject("other-resource", "folder", "otherObj1", "default")
+		otherObj2 := CreateObject("resource", "other-folder", "otherObj2", "default")
 
 		require.NoError(t, phase.Update(ctx, log, &obj))
 		require.NoError(t, phase.Update(ctx, log, &otherObj1))
@@ -199,8 +185,8 @@ func TestAllocatorCleanup(t *testing.T) {
 
 	t.Run("cleanup on cloud without resource does nothing", func(t *testing.T) {
 		// Arrange
-		ctx, log, ad, phase := setup(t)
-		obj := createObject("resource", "folder", "obj", "default")
+		ctx, log, ad, phase := setupAllocator(t)
+		obj := CreateObject("resource", "folder", "obj", "default")
 
 		// Act
 		require.NoError(t, phase.Cleanup(ctx, log, &obj))

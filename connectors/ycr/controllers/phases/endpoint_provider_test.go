@@ -5,44 +5,39 @@ package phases
 
 import (
 	"context"
+	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
 	ycrconfig "k8s-connectors/connectors/ycr/pkg/config"
 	k8sfake "k8s-connectors/testing/k8s-fake"
 	logrfake "k8s-connectors/testing/logr-fake"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"testing"
 )
+
+func setupEndpointProvider(t *testing.T) (context.Context, logr.Logger, client.Client, YandexContainerRegistryPhase) {
+	cl := k8sfake.NewFakeClient()
+	return context.Background(), logrfake.NewFakeLogger(t), cl, &EndpointProvider{Client: &cl}
+}
+
+func createConfigMap(ctx context.Context, cl client.Client, t *testing.T, objectMetaName, namespace string) {
+	require.NoError(t, cl.Create(ctx, &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      ycrconfig.ShortName + "-" + objectMetaName + "-configmap",
+			Namespace: namespace,
+		},
+	}))
+}
 
 func TestEndpointProviderIsUpdated(t *testing.T) {
 	t.Run("is updated on configmap existence", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		cl := k8sfake.NewFakeClient()
-		phase := EndpointProvider{
-			Client: &cl,
-		}
+		ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
-
-		require.NoError(t, cl.Create(ctx, &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      ycrconfig.ShortName + "-obj-configmap",
-				Namespace: "default",
-			},
-		}))
+		obj := CreateObject("resource", "folder", "obj", "default")
+		createConfigMap(ctx, cl, t, "obj", "default")
 
 		// Act
 		upd, err := phase.IsUpdated(ctx, log, &obj)
@@ -54,42 +49,13 @@ func TestEndpointProviderIsUpdated(t *testing.T) {
 
 	t.Run("is updated on many configmap existence", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		cl := k8sfake.NewFakeClient()
-		phase := EndpointProvider{
-			Client: &cl,
-		}
+		ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
+		obj := CreateObject("resource", "folder", "obj", "default")
+		createConfigMap(ctx, cl, t, "obj", "default")
 
-		require.NoError(t, cl.Create(ctx, &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      ycrconfig.ShortName + "-obj-configmap",
-				Namespace: "default",
-			},
-		}))
-		require.NoError(t, cl.Create(ctx, &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      ycrconfig.ShortName + "-obj1-configmap",
-				Namespace: "default",
-			},
-		}))
-		require.NoError(t, cl.Create(ctx, &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      ycrconfig.ShortName + "-obj-configmap",
-				Namespace: "other-namespace",
-			},
-		}))
+		createConfigMap(ctx, cl, t, "obj1", "default")
+		createConfigMap(ctx, cl, t, "obj", "other-namespace")
 
 		// Act
 		upd, err := phase.IsUpdated(ctx, log, &obj)
@@ -101,23 +67,9 @@ func TestEndpointProviderIsUpdated(t *testing.T) {
 
 	t.Run("is not updated on empty cloud", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		cl := k8sfake.NewFakeClient()
-		phase := EndpointProvider{
-			Client: &cl,
-		}
+		ctx, log, _, phase := setupEndpointProvider(t)
 
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
+		obj := CreateObject("resource", "folder", "obj", "default")
 
 		// Act
 		upd, err := phase.IsUpdated(ctx, log, &obj)
@@ -129,36 +81,12 @@ func TestEndpointProviderIsUpdated(t *testing.T) {
 
 	t.Run("is not updated on other objects existence", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		cl := k8sfake.NewFakeClient()
-		phase := EndpointProvider{
-			Client: &cl,
-		}
+		ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
+		obj := CreateObject("resource", "folder", "obj", "default")
 
-		require.NoError(t, cl.Create(ctx, &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      ycrconfig.ShortName + "-obj1-configmap",
-				Namespace: "default",
-			},
-		}))
-		require.NoError(t, cl.Create(ctx, &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      ycrconfig.ShortName + "-obj-configmap",
-				Namespace: "other-namespace",
-			},
-		}))
+		createConfigMap(ctx, cl, t, "obj1", "default")
+		createConfigMap(ctx, cl, t, "obj", "other-namespace")
 
 		// Act
 		upd, err := phase.IsUpdated(ctx, log, &obj)
@@ -172,23 +100,9 @@ func TestEndpointProviderIsUpdated(t *testing.T) {
 func TestEndpointProviderUpdate(t *testing.T) {
 	t.Run("update on empty cloud creates configmap", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		cl := k8sfake.NewFakeClient()
-		phase := EndpointProvider{
-			Client: &cl,
-		}
+		ctx, log, _, phase := setupEndpointProvider(t)
 
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
+		obj := CreateObject("resource", "folder", "obj", "default")
 
 		// Act
 		require.NoError(t, phase.Update(ctx, log, &obj))
@@ -201,36 +115,12 @@ func TestEndpointProviderUpdate(t *testing.T) {
 
 	t.Run("update on non-empty cloud creates configmap", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		cl := k8sfake.NewFakeClient()
-		phase := EndpointProvider{
-			Client: &cl,
-		}
+		ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
+		obj := CreateObject("resource", "folder", "obj", "default")
 
-		require.NoError(t, cl.Create(ctx, &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      ycrconfig.ShortName + "-obj1-configmap",
-				Namespace: "default",
-			},
-		}))
-		require.NoError(t, cl.Create(ctx, &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      ycrconfig.ShortName + "-obj-configmap",
-				Namespace: "other-namespace",
-			},
-		}))
+		createConfigMap(ctx, cl, t, "obj1", "default")
+		createConfigMap(ctx, cl, t, "obj", "other-namespace")
 
 		// Act
 		require.NoError(t, phase.Update(ctx, log, &obj))
@@ -245,152 +135,62 @@ func TestEndpointProviderUpdate(t *testing.T) {
 func TestEndpointProviderCleanup(t *testing.T) {
 	t.Run("cleanup on empty cloud does nothing", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		cl := k8sfake.NewFakeClient()
-		phase := EndpointProvider{
-			Client: &cl,
-		}
+		ctx, log, _, phase := setupEndpointProvider(t)
 
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
+		obj := CreateObject("resource", "folder", "obj", "default")
 
 		// Act
 		require.NoError(t, phase.Cleanup(ctx, log, &obj))
 		upd, err := phase.IsUpdated(ctx, log, &obj)
 		require.NoError(t, err)
 
-		// TODO (covariance) implement fake List method
-		// var lst v1.ConfigMapList
-		// require.NoError(t, cl.List(ctx, &lst))
-
 		// Assert
 		assert.False(t, upd)
-		// assert.Len(t, lst.Items, 0)
 	})
 
 	t.Run("cleanup on cloud with other configmaps does nothing", func(t *testing.T) {
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		cl := k8sfake.NewFakeClient()
-		phase := EndpointProvider{
-			Client: &cl,
-		}
+		// Arrange
+		ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
+		obj := CreateObject("resource", "folder", "obj", "default")
 
-		require.NoError(t, cl.Create(ctx, &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      ycrconfig.ShortName + "-obj1-configmap",
-				Namespace: "default",
-			},
-		}))
-		require.NoError(t, cl.Create(ctx, &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      ycrconfig.ShortName + "-obj-configmap",
-				Namespace: "other-namespace",
-			},
-		}))
+		createConfigMap(ctx, cl, t, "obj1", "default")
+		createConfigMap(ctx, cl, t, "obj", "other-namespace")
 
 		// Act
 		require.NoError(t, phase.Cleanup(ctx, log, &obj))
 		upd, err := phase.IsUpdated(ctx, log, &obj)
 		require.NoError(t, err)
 
-		// TODO (covariance) implement fake List method
-		// var lst v1.ConfigMapList
-		// require.NoError(t, cl.List(ctx, &lst))
-
 		// Assert
 		assert.False(t, upd)
-		// assert.Len(t, lst.Items, 2)
 	})
 
 	t.Run("cleanup on cloud with this and other configmaps deletes this configmap", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		cl := k8sfake.NewFakeClient()
-		phase := EndpointProvider{
-			Client: &cl,
-		}
+		ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
+		obj := CreateObject("resource", "folder", "obj", "default")
 
 		require.NoError(t, phase.Update(ctx, log, &obj))
 
-		require.NoError(t, cl.Create(ctx, &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      ycrconfig.ShortName + "-obj1-configmap",
-				Namespace: "default",
-			},
-		}))
-		require.NoError(t, cl.Create(ctx, &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      ycrconfig.ShortName + "-obj-configmap",
-				Namespace: "other-namespace",
-			},
-		}))
+		createConfigMap(ctx, cl, t, "obj1", "default")
+		createConfigMap(ctx, cl, t, "obj", "other-namespace")
 
 		// Act
 		require.NoError(t, phase.Cleanup(ctx, log, &obj))
 		upd, err := phase.IsUpdated(ctx, log, &obj)
 		require.NoError(t, err)
 
-		// TODO (covariance) implement fake List method
-		// var lst v1.ConfigMapList
-		// require.NoError(t, cl.List(ctx, &lst))
-
 		// Assert
 		assert.False(t, upd)
-		// assert.Len(t, lst.Items, 2)
 	})
 
 	t.Run("cleanup on cloud with this configmap deletes this configmap", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		cl := k8sfake.NewFakeClient()
-		phase := EndpointProvider{
-			Client: &cl,
-		}
+		ctx, log, _, phase := setupEndpointProvider(t)
 
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
+		obj := CreateObject("resource", "folder", "obj", "default")
 
 		require.NoError(t, phase.Update(ctx, log, &obj))
 
@@ -399,12 +199,7 @@ func TestEndpointProviderCleanup(t *testing.T) {
 		upd, err := phase.IsUpdated(ctx, log, &obj)
 		require.NoError(t, err)
 
-		// TODO (covariance) implement fake List method
-		// var lst v1.ConfigMapList
-		// require.NoError(t, cl.List(ctx, &lst))
-
 		// Assert
 		assert.False(t, upd)
-		// assert.Len(t, lst.Items, 0)
 	})
 }
