@@ -5,6 +5,7 @@ package phases
 
 import (
 	"context"
+	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
@@ -16,21 +17,46 @@ import (
 	"testing"
 )
 
+func setup(t *testing.T) (context.Context, logr.Logger, adapter.YandexContainerRegistryAdapter, YandexContainerRegistryPhase) {
+	ad := adapter.NewFakeYandexContainerRegistryAdapter()
+	return context.Background(), logrfake.NewFakeLogger(t), &ad, &Allocator{Sdk: &ad}
+}
+
+func createObject(specName, folderId, metaName, namespace string) connectorsv1.YandexContainerRegistry {
+	return connectorsv1.YandexContainerRegistry{
+		Spec: connectorsv1.YandexContainerRegistrySpec{
+			Name:     specName,
+			FolderId: folderId,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      metaName,
+			Namespace: namespace,
+		},
+	}
+}
+
+func createResource(ctx context.Context, ad adapter.YandexContainerRegistryAdapter, t *testing.T, specName, folderId, metaName, clusterName string) *containerregistry.Registry {
+	res, err := ad.Create(ctx, &containerregistry.CreateRegistryRequest{
+		FolderId: folderId,
+		Name:     specName,
+		Labels: map[string]string{
+			config.CloudClusterLabel: clusterName,
+			config.CloudNameLabel:    metaName,
+		},
+	})
+	require.NoError(t, err)
+	return res
+}
+
+func createResourceFromObject(ctx context.Context, ad adapter.YandexContainerRegistryAdapter, t *testing.T, object connectorsv1.YandexContainerRegistry) *containerregistry.Registry {
+	return createResource(ctx, ad, t, object.Spec.Name, object.Spec.FolderId, object.Name, object.ClusterName)
+}
+
 func TestAllocatorIsUpdated(t *testing.T) {
 	t.Run("is not updated on empty cloud", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		ad := adapter.NewFakeYandexContainerRegistryAdapter()
-		phase := Allocator{
-			Sdk: &ad,
-		}
-		obj := connectorsv1.YandexContainerRegistry{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
+		ctx, log, _, phase := setup(t)
+		obj := createObject("resource", "folder", "obj", "default")
 
 		// Act
 		upd, err := phase.IsUpdated(ctx, log, &obj)
@@ -42,31 +68,9 @@ func TestAllocatorIsUpdated(t *testing.T) {
 
 	t.Run("is updated on cloud with only this registry", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		ad := adapter.NewFakeYandexContainerRegistryAdapter()
-		phase := Allocator{
-			Sdk: &ad,
-		}
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
-		res, err := ad.Create(ctx, &containerregistry.CreateRegistryRequest{
-			FolderId: obj.Spec.FolderId,
-			Name:     obj.Spec.Name,
-			Labels: map[string]string{
-				config.CloudClusterLabel: "",
-				config.CloudNameLabel:    "obj",
-			},
-		})
-		require.NoError(t, err)
+		ctx, log, ad, phase := setup(t)
+		obj := createObject("resource", "folder", "obj", "default")
+		res := createResourceFromObject(ctx, ad, t, obj)
 		obj.Status.Id = res.Id
 
 		// Act
@@ -79,40 +83,11 @@ func TestAllocatorIsUpdated(t *testing.T) {
 
 	t.Run("is not updated on cloud with other registries", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		ad := adapter.NewFakeYandexContainerRegistryAdapter()
-		phase := Allocator{
-			Sdk: &ad,
-		}
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
-		_, err := ad.Create(ctx, &containerregistry.CreateRegistryRequest{
-			FolderId: "folder",
-			Name:     "resource1",
-			Labels: map[string]string{
-				config.CloudClusterLabel: "",
-				config.CloudNameLabel:    "obj1",
-			},
-		})
-		require.NoError(t, err)
-		_, err = ad.Create(ctx, &containerregistry.CreateRegistryRequest{
-			FolderId: "other-folder",
-			Name:     "resource2",
-			Labels: map[string]string{
-				config.CloudClusterLabel: "",
-				config.CloudNameLabel:    "obj2",
-			},
-		})
-		require.NoError(t, err)
+		ctx, log, ad, phase := setup(t)
+		obj := createObject("resource", "folder", "obj", "default")
+
+		_ = createResource(ctx, ad, t, "resource1", "folder", "obj1", "")
+		_ = createResource(ctx, ad, t, "resource2", "other-folder", "obj2", "")
 
 		// Act
 		upd, err := phase.IsUpdated(ctx, log, &obj)
@@ -124,50 +99,14 @@ func TestAllocatorIsUpdated(t *testing.T) {
 
 	t.Run("is updated on cloud with this and other registries", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		ad := adapter.NewFakeYandexContainerRegistryAdapter()
-		phase := Allocator{
-			Sdk: &ad,
-		}
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
-		res, err := ad.Create(ctx, &containerregistry.CreateRegistryRequest{
-			FolderId: obj.Spec.FolderId,
-			Name:     obj.Spec.Name,
-			Labels: map[string]string{
-				config.CloudClusterLabel: "",
-				config.CloudNameLabel:    "obj",
-			},
-		})
-		require.NoError(t, err)
+		ctx, log, ad, phase := setup(t)
+		obj := createObject("resource", "folder", "obj", "default")
+
+		res := createResourceFromObject(ctx, ad, t, obj)
 		obj.Status.Id = res.Id
-		_, err = ad.Create(ctx, &containerregistry.CreateRegistryRequest{
-			FolderId: "folder",
-			Name:     "resource1",
-			Labels: map[string]string{
-				config.CloudClusterLabel: "",
-				config.CloudNameLabel:    "obj1",
-			},
-		})
-		require.NoError(t, err)
-		_, err = ad.Create(ctx, &containerregistry.CreateRegistryRequest{
-			FolderId: "other-folder",
-			Name:     "resource2",
-			Labels: map[string]string{
-				config.CloudClusterLabel: "",
-				config.CloudNameLabel:    "obj2",
-			},
-		})
-		require.NoError(t, err)
+
+		_ = createResource(ctx, ad, t, "resource1", "folder", "obj1", "")
+		_ = createResource(ctx, ad, t, "resource2", "other-folder", "obj2", "")
 
 		// Act
 		upd, err := phase.IsUpdated(ctx, log, &obj)
@@ -181,22 +120,8 @@ func TestAllocatorIsUpdated(t *testing.T) {
 func TestAllocatorUpdate(t *testing.T) {
 	t.Run("update on empty cloud creates resource", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		ad := adapter.NewFakeYandexContainerRegistryAdapter()
-		phase := Allocator{
-			Sdk: &ad,
-		}
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
+		ctx, log, _, phase := setup(t)
+		obj := createObject("resource", "folder", "obj", "default")
 
 		// Act
 		require.NoError(t, phase.Update(ctx, log, &obj))
@@ -209,31 +134,11 @@ func TestAllocatorUpdate(t *testing.T) {
 
 	t.Run("update on non-empty cloud creates resource", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		ad := adapter.NewFakeYandexContainerRegistryAdapter()
-		phase := Allocator{
-			Sdk: &ad,
-		}
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
-		_, err := ad.Create(ctx, &containerregistry.CreateRegistryRequest{
-			FolderId: "folder",
-			Name:     "resource1",
-			Labels: map[string]string{
-				config.CloudClusterLabel: "",
-				config.CloudNameLabel:    "obj1",
-			},
-		})
-		require.NoError(t, err)
+		ctx, log, ad, phase := setup(t)
+		obj := createObject("resource", "folder", "obj", "default")
+
+		_ = createResource(ctx, ad, t, "resource1", "folder", "obj1", "")
+		_ = createResource(ctx, ad, t, "resource2", "other-folder", "obj2", "")
 
 		// Act
 		require.NoError(t, phase.Update(ctx, log, &obj))
@@ -248,22 +153,9 @@ func TestAllocatorUpdate(t *testing.T) {
 func TestAllocatorCleanup(t *testing.T) {
 	t.Run("cleanup on cloud with resource deletes resource", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		ad := adapter.NewFakeYandexContainerRegistryAdapter()
-		phase := Allocator{
-			Sdk: &ad,
-		}
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
+		ctx, log, ad, phase := setup(t)
+		obj := createObject("resource", "folder", "obj", "default")
+
 		require.NoError(t, phase.Update(ctx, log, &obj))
 
 		// Act
@@ -280,42 +172,12 @@ func TestAllocatorCleanup(t *testing.T) {
 
 	t.Run("cleanup on cloud with this and other resources deletes this resource", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		ad := adapter.NewFakeYandexContainerRegistryAdapter()
-		phase := Allocator{
-			Sdk: &ad,
-		}
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
-		otherObj1 := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "other-resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "otherObj1",
-				Namespace: "default",
-			},
-		}
-		otherObj2 := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "other-folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "otherObj2",
-				Namespace: "default",
-			},
-		}
+		ctx, log, ad, phase := setup(t)
+		obj := createObject("resource", "folder", "obj", "default")
+
+		otherObj1 := createObject("other-resource", "folder", "otherObj1", "default")
+		otherObj2 := createObject("resource", "other-folder", "otherObj2", "default")
+
 		require.NoError(t, phase.Update(ctx, log, &obj))
 		require.NoError(t, phase.Update(ctx, log, &otherObj1))
 		require.NoError(t, phase.Update(ctx, log, &otherObj2))
@@ -337,22 +199,8 @@ func TestAllocatorCleanup(t *testing.T) {
 
 	t.Run("cleanup on cloud without resource does nothing", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		ad := adapter.NewFakeYandexContainerRegistryAdapter()
-		phase := Allocator{
-			Sdk: &ad,
-		}
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
+		ctx, log, ad, phase := setup(t)
+		obj := createObject("resource", "folder", "obj", "default")
 
 		// Act
 		require.NoError(t, phase.Cleanup(ctx, log, &obj))
