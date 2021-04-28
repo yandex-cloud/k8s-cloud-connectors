@@ -39,7 +39,7 @@ func TestFinalizerRegistrarIsUpdated(t *testing.T) {
 	t.Run("empty finalizers means not updated", func(t *testing.T) {
 		// Arrange
 		ctx, log, cl, phase := setupFinalizerRegistrar(t)
-		obj := createObjectWithFinalizers(ctx, cl, t,"obj", "default", []string{})
+		obj := createObjectWithFinalizers(ctx, cl, t, "obj", "default", []string{})
 
 		// Act
 		updated, err := phase.IsUpdated(context.Background(), log, obj)
@@ -52,7 +52,7 @@ func TestFinalizerRegistrarIsUpdated(t *testing.T) {
 	t.Run("other finalizers means not updated", func(t *testing.T) {
 		// Arrange
 		ctx, log, cl, phase := setupFinalizerRegistrar(t)
-		obj := createObjectWithFinalizers(ctx, cl, t,"obj", "default", []string{"not.that.finalizer", "yet.another.false.finalizer"})
+		obj := createObjectWithFinalizers(ctx, cl, t, "obj", "default", []string{"not.that.finalizer", "yet.another.false.finalizer"})
 
 		// Act
 		updated, err := phase.IsUpdated(context.Background(), log, obj)
@@ -65,7 +65,7 @@ func TestFinalizerRegistrarIsUpdated(t *testing.T) {
 	t.Run("finalizer exist means updated", func(t *testing.T) {
 		// Arrange
 		ctx, log, cl, phase := setupFinalizerRegistrar(t)
-		obj := createObjectWithFinalizers(ctx, cl, t,"obj", "default", []string{ycrconfig.FinalizerName})
+		obj := createObjectWithFinalizers(ctx, cl, t, "obj", "default", []string{ycrconfig.FinalizerName})
 
 		// Act
 		updated, err := phase.IsUpdated(context.Background(), log, obj)
@@ -78,7 +78,7 @@ func TestFinalizerRegistrarIsUpdated(t *testing.T) {
 	t.Run("finalizer and others exist means updated", func(t *testing.T) {
 		// Arrange
 		ctx, log, cl, phase := setupFinalizerRegistrar(t)
-		obj := createObjectWithFinalizers(ctx, cl, t,"obj", "default", []string{"not.that.finalizer", ycrconfig.FinalizerName, "yet.another.false.finalizer"})
+		obj := createObjectWithFinalizers(ctx, cl, t, "obj", "default", []string{"not.that.finalizer", ycrconfig.FinalizerName, "yet.another.false.finalizer"})
 
 		// Act
 		updated, err := phase.IsUpdated(context.Background(), log, obj)
@@ -93,7 +93,7 @@ func TestFinalizerRegistrarUpdate(t *testing.T) {
 	t.Run("update on empty finalizer list adds finalizer", func(t *testing.T) {
 		// Arrange
 		ctx, log, cl, phase := setupFinalizerRegistrar(t)
-		obj := createObjectWithFinalizers(ctx, cl, t,"obj", "default", []string{})
+		obj := createObjectWithFinalizers(ctx, cl, t, "obj", "default", []string{})
 
 		// Act
 		require.NoError(t, phase.Update(context.Background(), log, obj))
@@ -108,7 +108,7 @@ func TestFinalizerRegistrarUpdate(t *testing.T) {
 	t.Run("update on non-empty finalizer list adds finalizer", func(t *testing.T) {
 		// Arrange
 		ctx, log, cl, phase := setupFinalizerRegistrar(t)
-		obj := createObjectWithFinalizers(ctx, cl, t,"obj", "default", []string{"not.that.finalizer", "yet.another.finalizer"})
+		obj := createObjectWithFinalizers(ctx, cl, t, "obj", "default", []string{"not.that.finalizer", "yet.another.finalizer"})
 
 		// Act
 		require.NoError(t, phase.Update(context.Background(), log, obj))
@@ -127,7 +127,7 @@ func TestFinalizerRegistrarCleanup(t *testing.T) {
 	t.Run("cleanup on empty finalizer list does nothing", func(t *testing.T) {
 		// Arrange
 		ctx, log, cl, phase := setupFinalizerRegistrar(t)
-		obj := createObjectWithFinalizers(ctx, cl, t,"obj", "default", []string{})
+		obj := createObjectWithFinalizers(ctx, cl, t, "obj", "default", []string{})
 
 		// Act
 		require.NoError(t, phase.Cleanup(context.Background(), log, obj))
@@ -141,7 +141,7 @@ func TestFinalizerRegistrarCleanup(t *testing.T) {
 	t.Run("cleanup on non-empty finalizer list removes finalizer", func(t *testing.T) {
 		// Arrange
 		ctx, log, cl, phase := setupFinalizerRegistrar(t)
-		obj := createObjectWithFinalizers(ctx, cl, t,"obj", "default", []string{"not.that.finalizer", ycrconfig.FinalizerName, "yet.another.finalizer"})
+		obj := createObjectWithFinalizers(ctx, cl, t, "obj", "default", []string{"not.that.finalizer", ycrconfig.FinalizerName, "yet.another.finalizer"})
 
 		// Act
 		require.NoError(t, phase.Cleanup(context.Background(), log, obj))
@@ -157,7 +157,7 @@ func TestFinalizerRegistrarCleanup(t *testing.T) {
 	t.Run("cleanup on non-empty finalizer list without needed finalizer does nothing", func(t *testing.T) {
 		// Arrange
 		ctx, log, cl, phase := setupFinalizerRegistrar(t)
-		obj := createObjectWithFinalizers(ctx, cl, t,"obj", "default", []string{"not.that.finalizer", "yet.another.finalizer"})
+		obj := createObjectWithFinalizers(ctx, cl, t, "obj", "default", []string{"not.that.finalizer", "yet.another.finalizer"})
 
 		// Act
 		require.NoError(t, phase.Cleanup(context.Background(), log, obj))
