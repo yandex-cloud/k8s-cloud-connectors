@@ -5,37 +5,24 @@ package phases
 
 import (
 	"context"
+	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
 	"k8s-connectors/connectors/ycr/controllers/adapter"
 	logrfake "k8s-connectors/testing/logr-fake"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 )
+
+func setupSpecMatcher(t *testing.T) (context.Context, logr.Logger, adapter.YandexContainerRegistryAdapter, YandexContainerRegistryPhase, Allocator) {
+	ad := adapter.NewFakeYandexContainerRegistryAdapter()
+	return context.Background(), logrfake.NewFakeLogger(t), &ad, &SpecMatcher{Sdk: &ad}, Allocator{Sdk: &ad}
+}
 
 func TestSpecMatcherIsUpdated(t *testing.T) {
 	t.Run("is updated on matching spec", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		ad := adapter.NewFakeYandexContainerRegistryAdapter()
-		phase := SpecMatcher{
-			Sdk: &ad,
-		}
-		allocator := Allocator{
-			Sdk: &ad,
-		}
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
+		ctx, log, _, phase, allocator := setupSpecMatcher(t)
+		obj := CreateObject("resource", "folder", "obj", "default")
 		require.NoError(t, allocator.Update(ctx, log, &obj))
 
 		// Act
@@ -48,25 +35,8 @@ func TestSpecMatcherIsUpdated(t *testing.T) {
 
 	t.Run("is not updated on not matching spec", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		ad := adapter.NewFakeYandexContainerRegistryAdapter()
-		phase := SpecMatcher{
-			Sdk: &ad,
-		}
-		allocator := Allocator{
-			Sdk: &ad,
-		}
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
+		ctx, log, _, phase, allocator := setupSpecMatcher(t)
+		obj := CreateObject("resource", "folder", "obj", "default")
 		require.NoError(t, allocator.Update(ctx, log, &obj))
 
 		// Act
@@ -80,25 +50,8 @@ func TestSpecMatcherIsUpdated(t *testing.T) {
 
 	t.Run("attempt to change immutable field fails", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		ad := adapter.NewFakeYandexContainerRegistryAdapter()
-		phase := SpecMatcher{
-			Sdk: &ad,
-		}
-		allocator := Allocator{
-			Sdk: &ad,
-		}
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
+		ctx, log, _, phase, allocator := setupSpecMatcher(t)
+		obj := CreateObject("resource", "folder", "obj", "default")
 		require.NoError(t, allocator.Update(ctx, log, &obj))
 
 		// Act
@@ -113,25 +66,8 @@ func TestSpecMatcherIsUpdated(t *testing.T) {
 func TestSpecMatcherUpdate(t *testing.T) {
 	t.Run("update matches cloud object with spec of resource", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
-		log := logrfake.NewFakeLogger(t)
-		ad := adapter.NewFakeYandexContainerRegistryAdapter()
-		phase := SpecMatcher{
-			Sdk: &ad,
-		}
-		allocator := Allocator{
-			Sdk: &ad,
-		}
-		obj := connectorsv1.YandexContainerRegistry{
-			Spec: connectorsv1.YandexContainerRegistrySpec{
-				Name:     "resource",
-				FolderId: "folder",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "obj",
-				Namespace: "default",
-			},
-		}
+		ctx, log, _, phase, allocator := setupSpecMatcher(t)
+		obj := CreateObject("resource", "folder", "obj", "default")
 		require.NoError(t, allocator.Update(ctx, log, &obj))
 
 		// Act
