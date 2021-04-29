@@ -18,11 +18,11 @@ type EndpointProvider struct {
 }
 
 func (r *EndpointProvider) IsUpdated(ctx context.Context, _ logr.Logger, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
-	return configmaps.Exists(ctx, r.Client, registry.Name, registry.Namespace, "ycr")
+	return configmaps.Exists(ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName)
 }
 
 func (r *EndpointProvider) Update(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
-	if err := configmaps.Put(ctx, r.Client, registry.Name, registry.Namespace, "ycr", map[string]string{
+	if err := configmaps.Put(ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName, map[string]string{
 		"ID": registry.Status.Id,
 	}); err != nil {
 		return fmt.Errorf("unable to update endpoint: %v", err)

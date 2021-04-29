@@ -44,7 +44,7 @@ func (r *SpecMatcher) Update(ctx context.Context, log logr.Logger, object *conne
 	}
 
 	if err := r.Sdk.Update(ctx, &containerregistry.UpdateRegistryRequest{
-		RegistryId: object.Status.Id,
+		RegistryId: ycr.Id,
 		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"name"}},
 		Name:       object.Spec.Name,
 	}); err != nil {
