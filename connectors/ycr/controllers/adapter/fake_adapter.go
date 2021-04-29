@@ -46,7 +46,7 @@ func (r *FakeYandexContainerRegistryAdapter) Read(_ context.Context, registryID 
 }
 
 func (r *FakeYandexContainerRegistryAdapter) List(_ context.Context, folderID string) ([]*containerregistry.Registry, error) {
-	result := []*containerregistry.Registry{}
+	var result []*containerregistry.Registry
 	for _, registry := range r.Storage {
 		if registry.FolderId == folderID {
 			result = append(result, registry)

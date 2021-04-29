@@ -13,17 +13,17 @@ import (
 	"testing"
 )
 
-func setupSpecMatcher(t *testing.T) (context.Context, logr.Logger, adapter.YandexContainerRegistryAdapter, YandexContainerRegistryPhase, Allocator) {
+func setupSpecMatcher(t *testing.T) (context.Context, logr.Logger, adapter.YandexContainerRegistryAdapter, YandexContainerRegistryPhase) {
 	ad := adapter.NewFakeYandexContainerRegistryAdapter()
-	return context.Background(), logrfake.NewFakeLogger(t), &ad, &SpecMatcher{Sdk: &ad}, Allocator{Sdk: &ad}
+	return context.Background(), logrfake.NewFakeLogger(t), &ad, &SpecMatcher{Sdk: &ad}
 }
 
 func TestSpecMatcherIsUpdated(t *testing.T) {
 	t.Run("is updated on matching spec", func(t *testing.T) {
 		// Arrange
-		ctx, log, _, phase, allocator := setupSpecMatcher(t)
-		obj := CreateObject("resource", "folder", "obj", "default")
-		require.NoError(t, allocator.Update(ctx, log, &obj))
+		ctx, log, ad, phase := setupSpecMatcher(t)
+		obj := createObject("resource", "folder", "obj", "default")
+		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderId, obj.Name, obj.ClusterName)
 
 		// Act
 		upd, err := phase.IsUpdated(ctx, log, &obj)
@@ -35,9 +35,9 @@ func TestSpecMatcherIsUpdated(t *testing.T) {
 
 	t.Run("is not updated on not matching spec", func(t *testing.T) {
 		// Arrange
-		ctx, log, _, phase, allocator := setupSpecMatcher(t)
-		obj := CreateObject("resource", "folder", "obj", "default")
-		require.NoError(t, allocator.Update(ctx, log, &obj))
+		ctx, log, ad, phase := setupSpecMatcher(t)
+		obj := createObject("resource", "folder", "obj", "default")
+		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderId, obj.Name, obj.ClusterName)
 
 		// Act
 		obj.Spec.Name = "resource-upd"
@@ -50,9 +50,9 @@ func TestSpecMatcherIsUpdated(t *testing.T) {
 
 	t.Run("attempt to change immutable field fails", func(t *testing.T) {
 		// Arrange
-		ctx, log, _, phase, allocator := setupSpecMatcher(t)
-		obj := CreateObject("resource", "folder", "obj", "default")
-		require.NoError(t, allocator.Update(ctx, log, &obj))
+		ctx, log, ad, phase := setupSpecMatcher(t)
+		obj := createObject("resource", "folder", "obj", "default")
+		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderId, obj.Name, obj.ClusterName)
 
 		// Act
 		obj.Spec.FolderId = "other-folder"
@@ -66,9 +66,9 @@ func TestSpecMatcherIsUpdated(t *testing.T) {
 func TestSpecMatcherUpdate(t *testing.T) {
 	t.Run("update matches cloud object with spec of resource", func(t *testing.T) {
 		// Arrange
-		ctx, log, _, phase, allocator := setupSpecMatcher(t)
-		obj := CreateObject("resource", "folder", "obj", "default")
-		require.NoError(t, allocator.Update(ctx, log, &obj))
+		ctx, log, ad, phase := setupSpecMatcher(t)
+		obj := createObject("resource", "folder", "obj", "default")
+		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderId, obj.Name, obj.ClusterName)
 
 		// Act
 		obj.Spec.Name = "resource-upd"
@@ -79,8 +79,4 @@ func TestSpecMatcherUpdate(t *testing.T) {
 		// Assert
 		assert.True(t, upd)
 	})
-}
-
-func TestSpecMatcherCleanup(t *testing.T) {
-	// There's nothing to do in cleanup for this phase
 }

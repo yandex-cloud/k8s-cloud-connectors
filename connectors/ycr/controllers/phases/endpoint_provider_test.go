@@ -36,7 +36,7 @@ func TestEndpointProviderIsUpdated(t *testing.T) {
 		// Arrange
 		ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := CreateObject("resource", "folder", "obj", "default")
+		obj := createObject("resource", "folder", "obj", "default")
 		createConfigMap(ctx, cl, t, "obj", "default")
 
 		// Act
@@ -51,7 +51,7 @@ func TestEndpointProviderIsUpdated(t *testing.T) {
 		// Arrange
 		ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := CreateObject("resource", "folder", "obj", "default")
+		obj := createObject("resource", "folder", "obj", "default")
 		createConfigMap(ctx, cl, t, "obj", "default")
 
 		createConfigMap(ctx, cl, t, "obj1", "default")
@@ -69,7 +69,7 @@ func TestEndpointProviderIsUpdated(t *testing.T) {
 		// Arrange
 		ctx, log, _, phase := setupEndpointProvider(t)
 
-		obj := CreateObject("resource", "folder", "obj", "default")
+		obj := createObject("resource", "folder", "obj", "default")
 
 		// Act
 		upd, err := phase.IsUpdated(ctx, log, &obj)
@@ -83,7 +83,7 @@ func TestEndpointProviderIsUpdated(t *testing.T) {
 		// Arrange
 		ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := CreateObject("resource", "folder", "obj", "default")
+		obj := createObject("resource", "folder", "obj", "default")
 
 		createConfigMap(ctx, cl, t, "obj1", "default")
 		createConfigMap(ctx, cl, t, "obj", "other-namespace")
@@ -102,7 +102,7 @@ func TestEndpointProviderUpdate(t *testing.T) {
 		// Arrange
 		ctx, log, _, phase := setupEndpointProvider(t)
 
-		obj := CreateObject("resource", "folder", "obj", "default")
+		obj := createObject("resource", "folder", "obj", "default")
 
 		// Act
 		require.NoError(t, phase.Update(ctx, log, &obj))
@@ -117,7 +117,7 @@ func TestEndpointProviderUpdate(t *testing.T) {
 		// Arrange
 		ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := CreateObject("resource", "folder", "obj", "default")
+		obj := createObject("resource", "folder", "obj", "default")
 
 		createConfigMap(ctx, cl, t, "obj1", "default")
 		createConfigMap(ctx, cl, t, "obj", "other-namespace")
@@ -137,7 +137,7 @@ func TestEndpointProviderCleanup(t *testing.T) {
 		// Arrange
 		ctx, log, _, phase := setupEndpointProvider(t)
 
-		obj := CreateObject("resource", "folder", "obj", "default")
+		obj := createObject("resource", "folder", "obj", "default")
 
 		// Act
 		require.NoError(t, phase.Cleanup(ctx, log, &obj))
@@ -152,7 +152,7 @@ func TestEndpointProviderCleanup(t *testing.T) {
 		// Arrange
 		ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := CreateObject("resource", "folder", "obj", "default")
+		obj := createObject("resource", "folder", "obj", "default")
 
 		createConfigMap(ctx, cl, t, "obj1", "default")
 		createConfigMap(ctx, cl, t, "obj", "other-namespace")
@@ -170,7 +170,7 @@ func TestEndpointProviderCleanup(t *testing.T) {
 		// Arrange
 		ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := CreateObject("resource", "folder", "obj", "default")
+		obj := createObject("resource", "folder", "obj", "default")
 
 		require.NoError(t, phase.Update(ctx, log, &obj))
 
@@ -190,7 +190,7 @@ func TestEndpointProviderCleanup(t *testing.T) {
 		// Arrange
 		ctx, log, _, phase := setupEndpointProvider(t)
 
-		obj := CreateObject("resource", "folder", "obj", "default")
+		obj := createObject("resource", "folder", "obj", "default")
 
 		require.NoError(t, phase.Update(ctx, log, &obj))
 
