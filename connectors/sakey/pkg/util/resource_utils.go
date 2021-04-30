@@ -19,15 +19,13 @@ func GetStaticAccessKey(ctx context.Context, keyID string, saID string, clusterN
 			// If resource was not found then it does not exist,
 			// but this error is not fatal, just a mismatch between
 			// out status and real world state.
-			if errors.CheckRPCErrorNotFound(err) {
-				return nil, nil
+			if !errors.CheckRPCErrorNotFound(err) {
+				return nil, fmt.Errorf("cannot get resource from cloud: %v", err)
 			}
-			// Otherwise, it is fatal
-			return nil, fmt.Errorf("cannot get resource from cloud: %v", err)
+		} else {
+			// Everything is fine, we have found it
+			return res, nil
 		}
-
-		// Everything is fine, we have found it
-		return res, nil
 	}
 
 	// We may have not yet written this key into status,
