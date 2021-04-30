@@ -23,6 +23,9 @@ func (r *SpecMatcher) IsUpdated(ctx context.Context, _ logr.Logger, object *conn
 	if err != nil {
 		return false, err
 	}
+	if res == nil {
+		return false, fmt.Errorf("key cannot be found in the cloud: %v", object)
+	}
 
 	return res.ServiceAccountId == object.Spec.ServiceAccountID, nil
 }
