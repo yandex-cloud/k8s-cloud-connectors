@@ -15,7 +15,8 @@ import (
 )
 
 func setup() (context.Context, StaticAccessKeyAdapter) {
-	return context.Background(), NewFakeStaticAccessKeyAdapter()
+	ad := NewFakeStaticAccessKeyAdapter()
+	return context.Background(), &ad
 }
 
 func createSakey(metaName, namespace, saID string) *connectorsv1.StaticAccessKey {

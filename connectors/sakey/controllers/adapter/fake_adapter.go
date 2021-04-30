@@ -17,8 +17,8 @@ type FakeStaticAccessKeyAdapter struct {
 	FreeId  int
 }
 
-func NewFakeStaticAccessKeyAdapter() StaticAccessKeyAdapter {
-	return &FakeStaticAccessKeyAdapter{
+func NewFakeStaticAccessKeyAdapter() FakeStaticAccessKeyAdapter {
+	return FakeStaticAccessKeyAdapter{
 		Storage: map[string]*awscompatibility.AccessKey{},
 		FreeId:  0,
 	}
