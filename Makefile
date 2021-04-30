@@ -51,8 +51,11 @@ lint: ensure-linter ## Run golangci-lint (https://golangci-lint.run/) against co
 
 test: manifests generate fmt vet lint ## Run tests for this connector and common packages.
 	go test ./connectors/$(CONNECTOR)/... -coverprofile ./connectors/$(CONNECTOR)/cover.out
-	go test ./pkg/... -coverprofile ./pkg/cover.out
-	go test ./testing/... -coverprofile ./testing/cover.out
+
+test-all:
+	go fmt ./connectors/...
+	go vet ./connectors/...
+	go test ./connectors/... -coverprofile ./cover.out
 
 ##@ Build
 

@@ -47,9 +47,7 @@ func (r *Allocator) Cleanup(ctx context.Context, log logr.Logger, object *connec
 		return nil
 	}
 
-	if err := r.Sdk.Delete(ctx, &containerregistry.DeleteRegistryRequest{
-		RegistryId: ycr.Id,
-	}); err != nil {
+	if err := r.Sdk.Delete(ctx, ycr.Id); err != nil {
 		return err
 	}
 	log.Info("registry deleted successfully")

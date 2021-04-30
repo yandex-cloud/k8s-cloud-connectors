@@ -31,7 +31,7 @@ func (r *Allocator) IsUpdated(ctx context.Context, _ logr.Logger, object *connec
 }
 
 func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey) error {
-	res, err := r.Sdk.Create(ctx, object.Spec.ServiceAccountID, object.ClusterName, object.Name)
+	res, err := r.Sdk.Create(ctx, object.Spec.ServiceAccountID, sakeyconfig.GetStaticAccessKeyDescription(object.ClusterName, object.Name))
 	if err != nil {
 		return fmt.Errorf("error while creating resource: %v", err)
 	}
