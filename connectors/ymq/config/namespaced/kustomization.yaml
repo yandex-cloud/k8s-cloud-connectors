@@ -1,0 +1,12 @@
+resources:
+  - ../../../../config/deploy/
+
+namePrefix: ymq-
+namespace: yandex-cloud-connectors
+images:
+  - name: controller
+    newName: ymq-controller
+    newTag: latest
+
+patchesStrategicMerge:
+  - role.yaml
