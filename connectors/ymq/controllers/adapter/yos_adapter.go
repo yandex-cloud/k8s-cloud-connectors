@@ -5,7 +5,7 @@ package adapter
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"k8s-connectors/connectors/yos/pkg/utils"
 )
 
@@ -19,43 +19,48 @@ func NewYandexMessageQueueAdapterSDK() (YandexMessageQueueAdapter, error) {
 	}, nil
 }
 
-func (r YandexMessageQueueAdapterSDK) Create(ctx context.Context, key string, secret string, name string) error {
+func (r YandexMessageQueueAdapterSDK) Create(ctx context.Context, key string, secret string, attributes map[string]*string, name string) (string, error) {
 	sdk, err := r.s3provider(ctx, key, secret)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	_, err = sdk.CreateBucket(&s3.CreateBucketInput{
-		Bucket: &name,
+	res, err := sdk.CreateQueue(&sqs.CreateQueueInput{
+		Attributes: attributes,
+		QueueName:  &name,
 	})
-	return err
+	if err != nil {
+		return "", err
+	}
+
+	return *res.QueueUrl, nil
 }
 
-func (r YandexMessageQueueAdapterSDK) List(ctx context.Context, key string, secret string) ([]*s3.Bucket, error) {
+func (r YandexMessageQueueAdapterSDK) List(ctx context.Context, key string, secret string) ([]*string, error) {
 	sdk, err := r.s3provider(ctx, key, secret)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := sdk.ListBuckets(&s3.ListBucketsInput{})
+	res, err := sdk.ListQueues(&sqs.ListQueuesInput{})
 	if err != nil {
 		return nil, err
 	}
 
-	return res.Buckets, nil
+	return res.QueueUrls, nil
 }
 
 func (r YandexMessageQueueAdapterSDK) Update() error {
 	return nil
 }
-func (r YandexMessageQueueAdapterSDK) Delete(ctx context.Context, key string, secret string, name string) error {
+func (r YandexMessageQueueAdapterSDK) Delete(ctx context.Context, key string, secret string, queueUrl string) error {
 	sdk, err := r.s3provider(ctx, key, secret)
 	if err != nil {
 		return err
 	}
 
-	_, err = sdk.DeleteBucket(&s3.DeleteBucketInput{
-		Bucket: &name,
+	_, err = sdk.DeleteQueue(&sqs.DeleteQueueInput{
+		QueueUrl: &queueUrl,
 	})
 	return err
 }

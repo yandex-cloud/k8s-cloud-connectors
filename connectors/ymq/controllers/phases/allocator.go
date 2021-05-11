@@ -26,8 +26,8 @@ func (r *ResourceAllocator) IsUpdated(ctx context.Context, resource *connectorsv
 	if err != nil {
 		return false, err
 	}
-	for _, bucket := range lst {
-		if *bucket.Name == resource.Name {
+	for _, queue := range lst {
+		if *queue == resource.Status.QueueURL {
 			return true, nil
 		}
 	}
@@ -39,10 +39,17 @@ func (r *ResourceAllocator) Update(ctx context.Context, log logr.Logger, resourc
 	if err != nil {
 		return err
 	}
-	err = r.Sdk.Create(ctx, key, secret, resource.Spec.Name)
+	attributes := make(map[string]*string)
+	res, err := r.Sdk.Create(ctx, key, secret, attributes, resource.Spec.Name)
 	if err != nil {
 		return err
 	}
+
+	resource.Status.QueueURL = res
+	if err = (*r.Client).Update(ctx, resource); err != nil {
+		return err
+	}
+
 	log.Info("resource successfully allocated")
 	return nil
 }
@@ -53,7 +60,7 @@ func (r *ResourceAllocator) Cleanup(ctx context.Context, log logr.Logger, resour
 		return err
 	}
 
-	err = r.Sdk.Delete(ctx, key, secret, resource.Spec.Name)
+	err = r.Sdk.Delete(ctx, key, secret, resource.Status.QueueURL)
 	if err != nil {
 		return err
 	}
