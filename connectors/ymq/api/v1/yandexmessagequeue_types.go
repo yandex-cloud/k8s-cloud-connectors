@@ -34,7 +34,7 @@ type YandexMessageQueueSpec struct {
 
 	// MaximumMessageSize: maximal size of message in bytes. Can vary from 1024 (1 KiB) to 262144 bytes (256 KiB).
 	// Defaults to 262144 (256 KiB).
-	// +kubebuilder:default=0
+	// +kubebuilder:default=262144
 	// +kubebuilder:validation:Optional
 	MaximumMessageSize int `json:"maximumMessageSize"`
 

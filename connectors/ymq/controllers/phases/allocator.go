@@ -11,6 +11,7 @@ import (
 	"k8s-connectors/connectors/ymq/controllers/adapter"
 	ymqutils "k8s-connectors/connectors/ymq/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strconv"
 )
 
 type ResourceAllocator struct {
@@ -40,7 +41,28 @@ func (r *ResourceAllocator) Update(ctx context.Context, log logr.Logger, resourc
 	if err != nil {
 		return err
 	}
-	attributes := make(map[string]*string)
+
+	delaySeconds := strconv.Itoa(resource.Spec.DelaySeconds)
+	maximumMessageSize := strconv.Itoa(resource.Spec.MaximumMessageSize)
+	messageRetentionPeriod := strconv.Itoa(resource.Spec.MessageRetentionPeriod)
+	receiveMessageWaitTimeSeconds := strconv.Itoa(resource.Spec.ReceiveMessageWaitTimeSeconds)
+	visibilityTimeout := strconv.Itoa(resource.Spec.VisibilityTimeout)
+
+	attributes := map[string]*string{
+		"DelaySeconds":                  &delaySeconds,
+		"MaximumMessageSize":            &maximumMessageSize,
+		"MessageRetentionPeriod":        &messageRetentionPeriod,
+		"ReceiveMessageWaitTimeSeconds": &receiveMessageWaitTimeSeconds,
+		"VisibilityTimeout":             &visibilityTimeout,
+	}
+
+	if resource.Spec.FifoQueue {
+		fifoQueue := "true"
+		contentBasedDeduplication := strconv.FormatBool(resource.Spec.ContentBasedDeduplication)
+		attributes["FifoQueue"] = &fifoQueue
+		attributes["ContentBasedDeduplication"] = &contentBasedDeduplication
+	}
+
 	res, err := r.Sdk.Create(ctx, key, secret, attributes, resource.Spec.Name)
 	if err != nil {
 		return err

@@ -48,7 +48,7 @@ spec:
                 description: 'FifoQueue: flag that states whether queue is FIFO or not.'
                 type: boolean
               maximumMessageSize:
-                default: 0
+                default: 262144
                 description: 'MaximumMessageSize: maximal size of message in bytes. Can vary from 1024 (1 KiB) to 262144 bytes (256 KiB). Defaults to 262144 (256 KiB).'
                 type: integer
               messageRetentionPeriod:
