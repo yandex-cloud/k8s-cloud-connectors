@@ -53,6 +53,7 @@ func (r YandexMessageQueueAdapterSDK) List(ctx context.Context, key string, secr
 func (r YandexMessageQueueAdapterSDK) Update() error {
 	return nil
 }
+
 func (r YandexMessageQueueAdapterSDK) Delete(ctx context.Context, key string, secret string, queueUrl string) error {
 	sdk, err := r.s3provider(ctx, key, secret)
 	if err != nil {

@@ -56,7 +56,7 @@ spec:
                 description: 'MessageRetentionPeriod: duration of message storing. Can vary from 60 seconds (1 minute) to 1209600 seconds (14 days). Defaults to: 345600 (4 days).'
                 type: integer
               name:
-                description: 'Name: must be unique in Yandex Cloud. Can consist of lowercase latin letters, dashes, dots and numbers and must be up to 64 characters long. Name of FIFO queue must end with ".fifo". Must be immutable.'
+                description: 'Name: must be unique in Yandex Cloud. Can consist of lowercase latin letters, dashes, dots and numbers and must be up to 80 characters long. Name of FIFO queue must end with ".fifo". Must be immutable.'
                 maxLength: 80
                 pattern: '[a-z0-9][a-z0-9-_]*[a-z0-9]'
                 type: string
@@ -70,14 +70,7 @@ spec:
                 type: integer
             required:
             - SAKeyName
-            - contentBasedDeduplication
-            - delaySeconds
-            - fifoQueue
-            - maximumMessageSize
-            - messageRetentionPeriod
             - name
-            - receiveMessageWaitTimeSeconds
-            - visibilityTimeout
             type: object
           status:
             description: 'YandexMessageQueueStatus: defines the observed state of YandexMessageQueue'
