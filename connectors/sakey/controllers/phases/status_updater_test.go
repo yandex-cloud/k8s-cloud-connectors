@@ -69,7 +69,7 @@ func TestStatusUpdaterUpdate(t *testing.T) {
 		assert.Equal(t, resp.AccessKey.Id, current.Status.KeyID)
 	})
 
-	t.Run("update matches incorrect status", func(t *testing.T) {
+	t.Run("update updates incorrect status", func(t *testing.T) {
 		// Arrange
 		ctx, log, cl, ad, phase := setupStatusUpdater(t)
 		obj := createObject("sukhov", "obj", "default")

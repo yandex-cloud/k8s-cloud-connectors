@@ -62,7 +62,7 @@ func TestSpecMatcherIsUpdated(t *testing.T) {
 }
 
 func TestSpecMatcherUpdate(t *testing.T) {
-	t.Run("update throws on non-nil input", func(t *testing.T) {
+	t.Run("update always fails", func(t *testing.T) {
 		// Arrange
 		ctx, log, cl, ad, phase := setupSpecMatcher(t)
 		obj := createObject("sukhov", "obj", "default")
@@ -72,17 +72,6 @@ func TestSpecMatcherUpdate(t *testing.T) {
 
 		// Act
 		err = phase.Update(ctx, log, &obj)
-
-		// Assert
-		assert.Error(t, err)
-	})
-
-	t.Run("update throws on nil input", func(t *testing.T) {
-		// Arrange
-		ctx, log, _, _, phase := setupSpecMatcher(t)
-
-		// Act
-		err := phase.Update(ctx, log, nil)
 
 		// Assert
 		assert.Error(t, err)
