@@ -68,7 +68,7 @@ type YandexMessageQueueSpec struct {
 // YandexMessageQueueStatus: defines the observed state of YandexMessageQueue
 type YandexMessageQueueStatus struct {
 	// URL of created queue
-	QueueURL string `json:"queueUrl"`
+	QueueURL string `json:"queueUrl,omitempty"`
 }
 
 // YandexMessageQueue: is the Schema for the yandex object storage API

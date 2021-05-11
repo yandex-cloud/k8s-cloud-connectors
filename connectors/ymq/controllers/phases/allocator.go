@@ -5,6 +5,7 @@ package phases
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-logr/logr"
 	connectorsv1 "k8s-connectors/connectors/ymq/api/v1"
 	"k8s-connectors/connectors/ymq/controllers/adapter"
@@ -46,8 +47,8 @@ func (r *ResourceAllocator) Update(ctx context.Context, log logr.Logger, resourc
 	}
 
 	resource.Status.QueueURL = res
-	if err = (*r.Client).Update(ctx, resource); err != nil {
-		return err
+	if err := (*r.Client).Status().Update(ctx, resource); err != nil {
+		return fmt.Errorf("error while creating resource: %v", err)
 	}
 
 	log.Info("resource successfully allocated")

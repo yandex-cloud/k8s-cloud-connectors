@@ -78,8 +78,6 @@ spec:
               queueUrl:
                 description: URL of created queue
                 type: string
-            required:
-            - queueUrl
             type: object
         type: object
     served: true

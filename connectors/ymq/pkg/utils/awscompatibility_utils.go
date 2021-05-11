@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	sakey "k8s-connectors/connectors/sakey/api/v1"
 	connectorsv1 "k8s-connectors/connectors/ymq/api/v1"
 	"k8s-connectors/connectors/ymq/pkg/config"
@@ -19,10 +19,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type AwsSdkProvider = func(ctx context.Context, key string, secret string) (*s3.S3, error)
+type AwsSdkProvider = func(ctx context.Context, key string, secret string) (*sqs.SQS, error)
 
 func NewStaticProvider() AwsSdkProvider {
-	return func(_ context.Context, key string, secret string) (*s3.S3, error) {
+	return func(_ context.Context, key string, secret string) (*sqs.SQS, error) {
 		ses, err := session.NewSession(&aws.Config{
 			Credentials: credentials.NewStaticCredentials(key, secret, ""),
 			Endpoint:    aws.String(config.Endpoint),
@@ -38,7 +38,7 @@ func NewStaticProvider() AwsSdkProvider {
 			return nil, fmt.Errorf("unable to get ymq sdk: %v", err)
 		}
 
-		return s3.New(ses), nil
+		return sqs.New(ses), nil
 	}
 }
 

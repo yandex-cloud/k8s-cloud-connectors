@@ -6,21 +6,21 @@ package adapter
 import (
 	"context"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"k8s-connectors/connectors/yos/pkg/utils"
+	"k8s-connectors/connectors/ymq/pkg/utils"
 )
 
 type YandexMessageQueueAdapterSDK struct {
-	s3provider utils.AwsSdkProvider
+	sqsProvider utils.AwsSdkProvider
 }
 
 func NewYandexMessageQueueAdapterSDK() (YandexMessageQueueAdapter, error) {
 	return &YandexMessageQueueAdapterSDK{
-		s3provider: utils.NewStaticProvider(),
+		sqsProvider: utils.NewStaticProvider(),
 	}, nil
 }
 
 func (r YandexMessageQueueAdapterSDK) Create(ctx context.Context, key string, secret string, attributes map[string]*string, name string) (string, error) {
-	sdk, err := r.s3provider(ctx, key, secret)
+	sdk, err := r.sqsProvider(ctx, key, secret)
 	if err != nil {
 		return "", err
 	}
@@ -37,7 +37,7 @@ func (r YandexMessageQueueAdapterSDK) Create(ctx context.Context, key string, se
 }
 
 func (r YandexMessageQueueAdapterSDK) List(ctx context.Context, key string, secret string) ([]*string, error) {
-	sdk, err := r.s3provider(ctx, key, secret)
+	sdk, err := r.sqsProvider(ctx, key, secret)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (r YandexMessageQueueAdapterSDK) Update() error {
 }
 
 func (r YandexMessageQueueAdapterSDK) Delete(ctx context.Context, key string, secret string, queueUrl string) error {
-	sdk, err := r.s3provider(ctx, key, secret)
+	sdk, err := r.sqsProvider(ctx, key, secret)
 	if err != nil {
 		return err
 	}
