@@ -1,0 +1,14 @@
+apiVersion: connectors.cloud.yandex.com/v1
+kind: StaticAccessKey
+metadata:
+  name: test-key-1
+spec:
+  serviceAccountId: "$serviceAccountId"
+---
+apiVersion: connectors.cloud.yandex.com/v1
+kind: YandexMessageQueue
+metadata:
+  name: test-s3-1
+spec:
+  name: test-s3-1
+  SAKeyName: test-key-1
