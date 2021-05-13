@@ -4,9 +4,9 @@
 package config
 
 const (
-	AwsRegion     string = "ru-central1"
-	Endpoint      string = "message-queue.api.cloud.yandex.net"
-	FinalizerName string = "finalizer.ymq.connectors.cloud.yandex.com"
-	LongName      string = "YandexMessageQueue"
-	ShortName     string = "ymq"
+	AwsRegion     = "ru-central1"
+	Endpoint      = "message-queue.api.cloud.yandex.net"
+	FinalizerName = "finalizer.ymq.connectors.cloud.yandex.com"
+	LongName      = "YandexMessageQueue"
+	ShortName     = "ymq"
 )
