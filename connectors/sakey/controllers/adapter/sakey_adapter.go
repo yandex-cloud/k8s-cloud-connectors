@@ -7,7 +7,6 @@ import (
 	"context"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/iam/v1/awscompatibility"
 	ycsdk "github.com/yandex-cloud/go-sdk"
-	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
 )
 
 type StaticAccessKeyAdapterSDK struct {
@@ -26,10 +25,10 @@ func NewStaticAccessKeyAdapter() (StaticAccessKeyAdapter, error) {
 	}, nil
 }
 
-func (r StaticAccessKeyAdapterSDK) Create(ctx context.Context, saID string, clusterName string, name string) (*awscompatibility.CreateAccessKeyResponse, error) {
+func (r StaticAccessKeyAdapterSDK) Create(ctx context.Context, saID string, description string) (*awscompatibility.CreateAccessKeyResponse, error) {
 	return r.sdk.IAM().AWSCompatibility().AccessKey().Create(ctx, &awscompatibility.CreateAccessKeyRequest{
 		ServiceAccountId: saID,
-		Description:      sakeyconfig.GetStaticAccessKeyDescription(clusterName, name),
+		Description:      description,
 	})
 }
 

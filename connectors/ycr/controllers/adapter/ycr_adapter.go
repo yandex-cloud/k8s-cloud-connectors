@@ -76,8 +76,10 @@ func (r YandexContainerRegistryAdapterSDK) Update(ctx context.Context, request *
 	return nil
 }
 
-func (r YandexContainerRegistryAdapterSDK) Delete(ctx context.Context, request *containerregistry.DeleteRegistryRequest) error {
-	op, err := r.sdk.WrapOperation(r.sdk.ContainerRegistry().Registry().Delete(ctx, request))
+func (r YandexContainerRegistryAdapterSDK) Delete(ctx context.Context, registryId string) error {
+	op, err := r.sdk.WrapOperation(r.sdk.ContainerRegistry().Registry().Delete(ctx, &containerregistry.DeleteRegistryRequest{
+		RegistryId: registryId,
+	}))
 	if err != nil {
 		return err
 	}

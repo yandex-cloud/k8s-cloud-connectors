@@ -70,10 +70,10 @@ func (r *FakeYandexContainerRegistryAdapter) Update(_ context.Context, request *
 	return nil
 }
 
-func (r *FakeYandexContainerRegistryAdapter) Delete(_ context.Context, request *containerregistry.DeleteRegistryRequest) error {
-	if _, ok := r.Storage[request.RegistryId]; !ok {
-		return status.Errorf(codes.NotFound, "registry not found: "+request.RegistryId)
+func (r *FakeYandexContainerRegistryAdapter) Delete(_ context.Context, registryId string) error {
+	if _, ok := r.Storage[registryId]; !ok {
+		return status.Errorf(codes.NotFound, "registry not found: "+registryId)
 	}
-	delete(r.Storage, request.RegistryId)
+	delete(r.Storage, registryId)
 	return nil
 }

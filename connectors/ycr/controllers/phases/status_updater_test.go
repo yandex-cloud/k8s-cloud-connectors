@@ -8,10 +8,12 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
 	"k8s-connectors/connectors/ycr/controllers/adapter"
 	ycrutils "k8s-connectors/connectors/ycr/pkg/util"
 	k8sfake "k8s-connectors/testing/k8s-fake"
 	logrfake "k8s-connectors/testing/logr-fake"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"testing"
 )
@@ -42,11 +44,16 @@ func TestStatusUpdaterUpdate(t *testing.T) {
 
 		// Act
 		require.NoError(t, phase.Update(ctx, log, &obj))
+		var current connectorsv1.YandexContainerRegistry
+		require.NoError(t, cl.Get(ctx, types.NamespacedName{
+			Namespace: "default",
+			Name:      "obj",
+		}, &current))
 
 		// Assert
-		assert.Equal(t, res1.Id, obj.Status.Id)
-		assert.Equal(t, res1.Labels, obj.Status.Labels)
-		assert.Equal(t, res1.CreatedAt.String(), obj.Status.CreatedAt)
+		assert.Equal(t, res1.Id, current.Status.Id)
+		assert.Equal(t, res1.Labels, current.Status.Labels)
+		assert.Equal(t, res1.CreatedAt.String(), current.Status.CreatedAt)
 	})
 
 	t.Run("update matches empty status", func(t *testing.T) {
@@ -61,11 +68,16 @@ func TestStatusUpdaterUpdate(t *testing.T) {
 
 		// Act
 		require.NoError(t, phase.Update(ctx, log, &obj))
+		var current connectorsv1.YandexContainerRegistry
+		require.NoError(t, cl.Get(ctx, types.NamespacedName{
+			Namespace: "default",
+			Name:      "obj",
+		}, &current))
 
 		// Assert
-		assert.Equal(t, res1.Id, obj.Status.Id)
-		assert.Equal(t, res1.Labels, obj.Status.Labels)
-		assert.Equal(t, res1.CreatedAt.String(), obj.Status.CreatedAt)
+		assert.Equal(t, res1.Id, current.Status.Id)
+		assert.Equal(t, res1.Labels, current.Status.Labels)
+		assert.Equal(t, res1.CreatedAt.String(), current.Status.CreatedAt)
 	})
 
 	t.Run("update matches non-matching status", func(t *testing.T) {
@@ -82,10 +94,15 @@ func TestStatusUpdaterUpdate(t *testing.T) {
 
 		// Act
 		require.NoError(t, phase.Update(ctx, log, &obj))
+		var current connectorsv1.YandexContainerRegistry
+		require.NoError(t, cl.Get(ctx, types.NamespacedName{
+			Namespace: "default",
+			Name:      "obj",
+		}, &current))
 
 		// Assert
-		assert.Equal(t, res1.Id, obj.Status.Id)
-		assert.Equal(t, res1.Labels, obj.Status.Labels)
-		assert.Equal(t, res1.CreatedAt.String(), obj.Status.CreatedAt)
+		assert.Equal(t, res1.Id, current.Status.Id)
+		assert.Equal(t, res1.Labels, current.Status.Labels)
+		assert.Equal(t, res1.CreatedAt.String(), current.Status.CreatedAt)
 	})
 }

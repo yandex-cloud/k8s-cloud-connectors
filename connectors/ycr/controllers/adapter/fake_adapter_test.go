@@ -307,9 +307,7 @@ func TestDelete(t *testing.T) {
 		require.NoError(t, err)
 
 		// Act
-		require.NoError(t, ad.Delete(ctx, &containerregistry.DeleteRegistryRequest{
-			RegistryId: res.Id,
-		}))
+		require.NoError(t, ad.Delete(ctx, res.Id))
 		lst, err := ad.List(ctx, res.FolderId)
 		require.NoError(t, err)
 
@@ -344,9 +342,7 @@ func TestDelete(t *testing.T) {
 		require.NoError(t, err)
 
 		// Act
-		require.NoError(t, ad.Delete(ctx, &containerregistry.DeleteRegistryRequest{
-			RegistryId: res.Id,
-		}))
+		require.NoError(t, ad.Delete(ctx, res.Id))
 		lst, err := ad.List(ctx, res.FolderId)
 		require.NoError(t, err)
 
@@ -367,9 +363,7 @@ func TestDelete(t *testing.T) {
 		require.NoError(t, err)
 
 		// Act
-		err = ad.Delete(ctx, &containerregistry.DeleteRegistryRequest{
-			RegistryId: "reg-non-existent-id",
-		})
+		err = ad.Delete(ctx, "reg-non-existent-id")
 		lst, err2 := ad.List(ctx, res.FolderId)
 		require.NoError(t, err2)
 
