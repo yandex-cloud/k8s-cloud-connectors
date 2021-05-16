@@ -58,11 +58,12 @@ func NewYandexMessageQueueReconciler(client client.Client, log logr.Logger, sche
 	}, nil
 }
 
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=YandexMessageQueues,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=YandexMessageQueues/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=YandexMessageQueues/finalizers,verbs=update
+//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexmessagequeues,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexmessagequeues/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexmessagequeues/finalizers,verbs=update
 //+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=staticaccesskeys,verbs=get
-//+kubebuilder:rbac:groups="",resources:secrets,verbs=get
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=get
+
 func (r *YandexMessageQueueReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.log.WithValues(ymqconfig.LongName, req.NamespacedName)
 

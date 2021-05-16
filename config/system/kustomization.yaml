@@ -1,4 +1,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+images:
+  - newTag: latest
 resources:
-  - controllers-namespace.yaml
+  - system-namespace.yaml
+  - deployment.yaml
+  - role.yaml
+  - role-binding.yaml

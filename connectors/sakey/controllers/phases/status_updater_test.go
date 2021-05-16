@@ -22,7 +22,7 @@ func setupStatusUpdater(t *testing.T) (context.Context, logr.Logger, client.Clie
 	ad := adapter.NewFakeStaticAccessKeyAdapter()
 	cl := k8sfake.NewFakeClient()
 	return context.Background(), logrfake.NewFakeLogger(t), cl, &ad, &StatusUpdater{
-		Sdk: &ad,
+		Sdk:    &ad,
 		Client: &cl,
 	}
 }

@@ -10,17 +10,17 @@ import (
 
 type FakeLogger struct {
 	Level int
-	Name string
-	KV []interface{}
-	T *testing.T
+	Name  string
+	KV    []interface{}
+	T     *testing.T
 }
 
 func NewFakeLogger(t *testing.T) logr.Logger {
 	return FakeLogger{
 		Level: 0,
-		Name: "",
-		KV: []interface{}{},
-		T : t,
+		Name:  "",
+		KV:    []interface{}{},
+		T:     t,
 	}
 }
 
@@ -67,8 +67,8 @@ func (r FakeLogger) Error(err error, msg string, keysAndValues ...interface{}) {
 func (r FakeLogger) V(level int) logr.Logger {
 	return FakeLogger{
 		Level: r.Level + level,
-		Name: r.Name,
-		KV: r.KV,
+		Name:  r.Name,
+		KV:    r.KV,
 		T:     r.T,
 	}
 }
@@ -78,7 +78,7 @@ func (r FakeLogger) V(level int) logr.Logger {
 func (r FakeLogger) WithValues(keysAndValues ...interface{}) logr.Logger {
 	return FakeLogger{
 		Level: r.Level,
-		Name: r.Name,
+		Name:  r.Name,
 		KV:    append(r.KV, keysAndValues...),
 		T:     r.T,
 	}

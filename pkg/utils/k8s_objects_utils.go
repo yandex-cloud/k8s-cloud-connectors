@@ -11,6 +11,6 @@ import (
 func NamespacedName(obj client.Object) types.NamespacedName {
 	return types.NamespacedName{
 		Namespace: obj.GetNamespace(),
-		Name: obj.GetName(),
+		Name:      obj.GetName(),
 	}
 }

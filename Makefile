@@ -1,11 +1,7 @@
-# ==================================================================== #
-# Before you run this script be wary to set up your CONNECTOR variable #
-# ==================================================================== #
-
-# Image URL to use all building/pushing image targets
-IMG ?= "$(CONNECTOR)-controller:latest"
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
+# Project directory
+ROOT := $(shell pwd)
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -30,76 +26,88 @@ all: build
 # http://linuxcommand.org/lc3_adv_awk.php
 
 help: ## Display this help.
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	@awk 'BEGIN { \
+		FS = ":.*##";\
+		printf "Usage:\n  make \033[36m<target>\033[0m\n" \
+		} \
+		/^[a-zA-Z_0-9-]+:.*?##/ \
+		{ \
+		printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 \
+		} \
+		/^##@/ \
+		{ \
+		printf "\n\033[1m%s\033[0m\n", substr($$0, 5) \
+		}' $(MAKEFILE_LIST)
 
 ##@ Development
 
-manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./connectors/$(CONNECTOR)/..." output:crd:artifacts:config=./connectors/$(CONNECTOR)/config/base/crd
+manifests: ensure-controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects via controller-gen tool.
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=connector-manager-role paths="./..." \
+			output:crd:artifacts:config=./config/base/crd \
+			output:rbac:artifacts:config=./config/system
 
-generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
-	$(CONTROLLER_GEN) object:headerFile="LICENSE" paths="./connectors/$(CONNECTOR)/..."
+generate: ensure-controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+	$(CONTROLLER_GEN) object:headerFile="LICENSE" paths="./..."
 
 fmt: ## Run go fmt against code.
-	go fmt ./connectors/$(CONNECTOR)/...
+	go fmt ./...
 
 vet: ## Run go vet against code.
-	go vet ./connectors/$(CONNECTOR)/...
+	go vet ./...
 
 lint: ensure-linter ## Run golangci-lint (https://golangci-lint.run/) against code.
-	$(GOLANGCI-LINT) run ./connectors/$(CONNECTOR)/...
+	$(GOLANGCI-LINT) run ./...
 
-test: manifests generate fmt vet lint ## Run tests for this connector and common packages.
-	go test ./connectors/$(CONNECTOR)/... -coverprofile ./connectors/$(CONNECTOR)/cover.out
-
-test-all:
-	go fmt ./connectors/...
-	go vet ./connectors/...
-	go test ./connectors/... -coverprofile ./cover.out
+test: generate fmt vet lint ## Run tests for this connector and common packages.
+	go test ./... -coverprofile cover.out
 
 ##@ Build
 
 build: manifests generate test ## Build manager binary.
-	go build -o ./connectors/$(CONNECTOR)/bin/manager ./connectors/$(CONNECTOR)/cmd/$(CONNECTOR)-controller/main.go
+	go build -o ./bin/manager ./cmd/yc-connector-manager/main.go
 
-run: manifests generate test ## Run a controller from your host.
-	go run ./connectors/$(CONNECTOR)/main.go
-
+## Image name of a manager binary
+IMG_NAME := yc-connector-manager
+## Version of a manager binary, can be set up externally
+IMG_TAG ?= latest
+## Resulting tag of a manager binary
+IMG := $(IMG_NAME):$(IMG_TAG)
 docker-build: build ## test Build docker image with the manager.
-	docker build -t ${IMG} . --build-arg connector=$(CONNECTOR)
+	docker build -t $(IMG) .
 
 docker-push: docker-build ## Push docker image with the manager.
-	docker push ${IMG}
+ifndef REGISTRY
+	$(error "You must set REGISTRY in order to push")
+endif
+	docker tag $(IMG) $(REGISTRY)/$(IMG)
+	docker push $(REGISTRY)/$(IMG)
 
 ##@ Deployment
 
-install: build kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build ./connectors/$(CONNECTOR)/config/base | kubectl apply -f -
+install: build ensure-kustomize ## Deploy controller to the k8s cluster specified in ~/.kube/config.
+	$(KUSTOMIZE) build ./config/base | kubectl apply -f -
 
-uninstall: build kustomize ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build ./connectors/$(CONNECTOR)/config/base | kubectl delete -f -
+uninstall: build ensure-kustomize ## Undeploy controller from the k8s cluster specified in ~/.kube/config.
+	$(KUSTOMIZE) build ./config/base | kubectl delete -f -
 
 ##@ Dependencies
 
-GOLANGCI-LINT = $(shell pwd)/bin/golangci-lint
-GOLANGCI-LINT-DOWNLOAD = $(shell pwd)/bin
+GOLANGCI-LINT := $(ROOT)/bin/golangci-lint ## Location of golangci-lint binary
 ensure-linter: ## Download golangci-lint if necessary.
-	if [ ! -x "$(command -v golangci-lint)" ] && [ ! -x $(GOLANGCI-LINT) ]; \
+	@if [ ! -x "$(command -v golangci-lint)" ] && [ ! -x $(GOLANGCI-LINT) ]; \
  	then \
   		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
-                         | sh -s -- -b $(GOLANGCI-LINT-DOWNLOAD) v1.39.0; \
+                         | sh -s -- -b $(ROOT)/bin v1.39.0; \
   	fi
 
-CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
-controller-gen: ## Download controller-gen locally if necessary.
+CONTROLLER_GEN := $(ROOT)/bin/controller-gen ## Location of controller-gen binary
+ensure-controller-gen: ## Download controller-gen locally if necessary.
 	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.5.0)
 
-KUSTOMIZE = $(shell pwd)/bin/kustomize
-kustomize: ## Download kustomize locally if necessary.
+KUSTOMIZE := $(ROOT)/bin/kustomize ## Location of kustomize binary
+ensure-kustomize: ## Download kustomize locally if necessary.
 	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.0.5)
 
-# go-get-tool will 'go get' any package $2 and install it to $1.
-PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 define go-get-tool
 @[ -f $(1) ] || { \
 set -e ;\
@@ -107,7 +115,7 @@ TMP_DIR=$$(mktemp -d) ;\
 cd $$TMP_DIR ;\
 go mod init tmp ;\
 echo "Downloading $(2)" ;\
-GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
+GOBIN=$(ROOT)/bin go get $(2) ;\
 rm -rf $$TMP_DIR ;\
 }
-endef
+endef ## go-get-tool will 'go get' any package $2 and install it to $1
