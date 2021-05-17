@@ -6,9 +6,9 @@ package config
 import "k8s-connectors/pkg/config"
 
 const (
-	FinalizerName string = "finalizer.sakey.connectors.cloud.yandex.com"
-	LongName      string = "StaticAccessKey"
-	ShortName     string = "sakey"
+	FinalizerName = "finalizer.sakey.connectors.cloud.yandex.com"
+	LongName      = "StaticAccessKey"
+	ShortName     = "sakey"
 )
 
 func GetStaticAccessKeyDescription(clusterName, name string) string {

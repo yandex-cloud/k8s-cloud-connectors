@@ -4,9 +4,9 @@
 package config
 
 const (
-	AWSRegion     string = "ru-central1"
-	Endpoint      string = "storage.yandexcloud.net"
-	FinalizerName string = "finalizer.yos.connectors.cloud.yandex.com"
-	LongName      string = "YandexObjectStorage"
-	ShortName     string = "yos"
+	AWSRegion     = "ru-central1"
+	Endpoint      = "storage.yandexcloud.net"
+	FinalizerName = "finalizer.yos.connectors.cloud.yandex.com"
+	LongName      = "YandexObjectStorage"
+	ShortName     = "yos"
 )
