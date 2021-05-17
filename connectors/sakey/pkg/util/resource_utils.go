@@ -9,9 +9,9 @@ import (
 
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/iam/v1/awscompatibility"
 
-	"k8s-connectors/connectors/sakey/controllers/adapter"
+	"k8s-connectors/connectors/sakey/controller/adapter"
 	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
-	"k8s-connectors/pkg/errors"
+	"k8s-connectors/pkg/errorhandling"
 )
 
 func GetStaticAccessKey(
@@ -23,7 +23,7 @@ func GetStaticAccessKey(
 			// If resource was not found then it does not exist,
 			// but this error is not fatal, just a mismatch between
 			// out status and real world state.
-			if !errors.CheckRPCErrorNotFound(err) {
+			if !errorhandling.CheckRPCErrorNotFound(err) {
 				return nil, fmt.Errorf("cannot get resource from cloud: %v", err)
 			}
 		} else {

@@ -9,9 +9,9 @@ import (
 
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
 
-	"k8s-connectors/connectors/ycr/controllers/adapter"
+	"k8s-connectors/connectors/ycr/controller/adapter"
 	"k8s-connectors/pkg/config"
-	"k8s-connectors/pkg/errors"
+	"k8s-connectors/pkg/errorhandling"
 )
 
 func checkRegistryMatchWithYcr(ycr *containerregistry.Registry, registryName, clusterName string) bool {
@@ -32,7 +32,7 @@ func GetRegistry(
 			// If registry was not found then it does not exist,
 			// but this error is not fatal, just a mismatch between
 			// out status and real world state.
-			if !errors.CheckRPCErrorNotFound(err) {
+			if !errorhandling.CheckRPCErrorNotFound(err) {
 				return nil, fmt.Errorf("cannot get registry from cloud: %v", err)
 			}
 		} else if checkRegistryMatchWithYcr(ycr, registryName, clusterName) {

@@ -28,10 +28,10 @@ import (
 	ymqconfig "k8s-connectors/connectors/ymq/pkg/config"
 	yosconfig "k8s-connectors/connectors/yos/pkg/config"
 
-	sakeyconnector "k8s-connectors/connectors/sakey/controllers"
-	ycrconnector "k8s-connectors/connectors/ycr/controllers"
-	ymqconnector "k8s-connectors/connectors/ymq/controllers"
-	yosconnector "k8s-connectors/connectors/yos/controllers"
+	sakeyconnector "k8s-connectors/connectors/sakey/controller"
+	ycrconnector "k8s-connectors/connectors/ycr/controller"
+	ymqconnector "k8s-connectors/connectors/ymq/controller"
+	yosconnector "k8s-connectors/connectors/yos/controller"
 	// +kubebuilder:scaffold:imports
 )
 
