@@ -5,17 +5,19 @@ package phases
 
 import (
 	"context"
+	"testing"
+
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
 	ycrconfig "k8s-connectors/connectors/ycr/pkg/config"
 	"k8s-connectors/pkg/utils"
 	k8sfake "k8s-connectors/testing/k8s-fake"
 	logrfake "k8s-connectors/testing/logr-fake"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
 )
 
 func setupFinalizerRegistrar(t *testing.T) (context.Context, logr.Logger, client.Client, YandexContainerRegistryPhase) {

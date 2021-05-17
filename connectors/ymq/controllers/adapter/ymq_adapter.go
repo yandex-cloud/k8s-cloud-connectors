@@ -5,7 +5,9 @@ package adapter
 
 import (
 	"context"
+
 	"github.com/aws/aws-sdk-go/service/sqs"
+
 	"k8s-connectors/connectors/ymq/pkg/utils"
 )
 
@@ -19,7 +21,7 @@ func NewYandexMessageQueueAdapterSDK() (YandexMessageQueueAdapter, error) {
 	}, nil
 }
 
-func (r YandexMessageQueueAdapterSDK) Create(ctx context.Context, key string, secret string, attributes map[string]*string, name string) (string, error) {
+func (r YandexMessageQueueAdapterSDK) Create(ctx context.Context, key, secret string, attributes map[string]*string, name string) (string, error) {
 	sdk, err := r.sqsProvider(ctx, key, secret)
 	if err != nil {
 		return "", err
@@ -36,7 +38,7 @@ func (r YandexMessageQueueAdapterSDK) Create(ctx context.Context, key string, se
 	return *res.QueueUrl, nil
 }
 
-func (r YandexMessageQueueAdapterSDK) List(ctx context.Context, key string, secret string) ([]*string, error) {
+func (r YandexMessageQueueAdapterSDK) List(ctx context.Context, key, secret string) ([]*string, error) {
 	sdk, err := r.sqsProvider(ctx, key, secret)
 	if err != nil {
 		return nil, err
@@ -54,14 +56,14 @@ func (r YandexMessageQueueAdapterSDK) Update() error {
 	return nil
 }
 
-func (r YandexMessageQueueAdapterSDK) Delete(ctx context.Context, key string, secret string, queueUrl string) error {
+func (r YandexMessageQueueAdapterSDK) Delete(ctx context.Context, key, secret, queueURL string) error {
 	sdk, err := r.sqsProvider(ctx, key, secret)
 	if err != nil {
 		return err
 	}
 
 	_, err = sdk.DeleteQueue(&sqs.DeleteQueueInput{
-		QueueUrl: &queueUrl,
+		QueueUrl: &queueURL,
 	})
 	return err
 }

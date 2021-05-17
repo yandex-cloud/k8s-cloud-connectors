@@ -6,18 +6,20 @@ package phases
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
 	"k8s-connectors/connectors/sakey/controllers/adapter"
 	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
 	sakeyutils "k8s-connectors/connectors/sakey/pkg/util"
 	"k8s-connectors/pkg/secrets"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Allocator struct {
 	Sdk    adapter.StaticAccessKeyAdapter
-	Client *client.Client
+	Client client.Client
 }
 
 func (r *Allocator) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.StaticAccessKey) (bool, error) {
@@ -37,7 +39,7 @@ func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connect
 	}
 
 	// Now we need to create a secret with the key
-	if err := secrets.Put(ctx, r.Client, object.ObjectMeta, sakeyconfig.ShortName, map[string]string{
+	if err = secrets.Put(ctx, r.Client, &object.ObjectMeta, sakeyconfig.ShortName, map[string]string{
 		"key":    res.AccessKey.KeyId,
 		"secret": res.Secret,
 	}); err != nil {
@@ -49,8 +51,8 @@ func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connect
 	}
 
 	// And we need to update status
-	object.Status.SecretName = secrets.SecretName(object.ObjectMeta, sakeyconfig.ShortName)
-	if err := (*r.Client).Update(ctx, object); err != nil {
+	object.Status.SecretName = secrets.SecretName(&object.ObjectMeta, sakeyconfig.ShortName)
+	if err = r.Client.Update(ctx, object); err != nil {
 		return fmt.Errorf("error while creating resource: %v", err)
 	}
 
@@ -59,8 +61,7 @@ func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connect
 }
 
 func (r *Allocator) Cleanup(ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey) error {
-
-	if err := secrets.Remove(ctx, r.Client, object.ObjectMeta, sakeyconfig.ShortName); err != nil {
+	if err := secrets.Remove(ctx, r.Client, &object.ObjectMeta, sakeyconfig.ShortName); err != nil {
 		return err
 	}
 
@@ -72,7 +73,7 @@ func (r *Allocator) Cleanup(ctx context.Context, log logr.Logger, object *connec
 		return nil
 	}
 
-	if err := r.Sdk.Delete(ctx, res.Id); err != nil {
+	if err = r.Sdk.Delete(ctx, res.Id); err != nil {
 		return err
 	}
 

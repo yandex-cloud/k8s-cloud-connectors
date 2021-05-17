@@ -9,10 +9,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"k8s-connectors/connectors/yos/controllers/adapter"
-	yosconfig "k8s-connectors/connectors/yos/pkg/config"
-	"k8s-connectors/pkg/config"
-	"k8s-connectors/pkg/utils"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -21,7 +17,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	connectorsv1 "k8s-connectors/connectors/yos/api/v1"
+	"k8s-connectors/connectors/yos/controllers/adapter"
 	"k8s-connectors/connectors/yos/controllers/phases"
+	yosconfig "k8s-connectors/connectors/yos/pkg/config"
+	"k8s-connectors/pkg/config"
+	"k8s-connectors/pkg/utils"
 )
 
 // yandexObjectStorageReconciler reconciles a YandexContainerRegistry object
@@ -37,21 +37,21 @@ type yandexObjectStorageReconciler struct {
 	phases []phases.YandexObjectStoragePhase
 }
 
-func NewYandexObjectStorageReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*yandexObjectStorageReconciler, error) {
+func NewYandexObjectStorageReconciler(cl client.Client, log logr.Logger, scheme *runtime.Scheme) (*yandexObjectStorageReconciler, error) {
 	sdk, err := adapter.NewYandexObjectStorageAdapterSDK()
 	if err != nil {
 		return nil, err
 	}
 	return &yandexObjectStorageReconciler{
-		Client: client,
+		Client: cl,
 		log:    log,
 		scheme: scheme,
 		phases: []phases.YandexObjectStoragePhase{
 			&phases.FinalizerRegistrar{
-				Client: &client,
+				Client: &cl,
 			},
 			&phases.ResourceAllocator{
-				Client: &client,
+				Client: &cl,
 				Sdk:    sdk,
 			},
 		},

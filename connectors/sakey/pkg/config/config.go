@@ -11,6 +11,6 @@ const (
 	ShortName     string = "sakey"
 )
 
-func GetStaticAccessKeyDescription(clusterName string, name string) string {
+func GetStaticAccessKeyDescription(clusterName, name string) string {
 	return config.CloudClusterLabel + ":" + clusterName + "\n" + config.CloudNameLabel + ":" + name
 }

@@ -5,14 +5,16 @@ package phases
 
 import (
 	"context"
+	"testing"
+
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
+
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
 	"k8s-connectors/connectors/ycr/controllers/adapter"
 	logrfake "k8s-connectors/testing/logr-fake"
-	"testing"
 )
 
 func setupAllocator(t *testing.T) (context.Context, logr.Logger, adapter.YandexContainerRegistryAdapter, YandexContainerRegistryPhase) {
@@ -20,8 +22,8 @@ func setupAllocator(t *testing.T) (context.Context, logr.Logger, adapter.YandexC
 	return context.Background(), logrfake.NewFakeLogger(t), &ad, &Allocator{Sdk: &ad}
 }
 
-func createResourceFromObject(ctx context.Context, ad adapter.YandexContainerRegistryAdapter, t *testing.T, object connectorsv1.YandexContainerRegistry) *containerregistry.Registry {
-	return createResourceRequireNoError(ctx, ad, t, object.Spec.Name, object.Spec.FolderId, object.Name, object.ClusterName)
+func createResourceFromObject(ctx context.Context, ad adapter.YandexContainerRegistryAdapter, t *testing.T, object *connectorsv1.YandexContainerRegistry) *containerregistry.Registry {
+	return createResourceRequireNoError(ctx, ad, t, object.Spec.Name, object.Spec.FolderID, object.Name, object.ClusterName)
 }
 
 func TestAllocatorIsUpdated(t *testing.T) {
@@ -42,8 +44,8 @@ func TestAllocatorIsUpdated(t *testing.T) {
 		// Arrange
 		ctx, log, ad, phase := setupAllocator(t)
 		obj := createObject("resource", "folder", "obj", "default")
-		res := createResourceFromObject(ctx, ad, t, obj)
-		obj.Status.Id = res.Id
+		res := createResourceFromObject(ctx, ad, t, &obj)
+		obj.Status.ID = res.Id
 
 		// Act
 		upd, err := phase.IsUpdated(ctx, log, &obj)
@@ -74,8 +76,8 @@ func TestAllocatorIsUpdated(t *testing.T) {
 		ctx, log, ad, phase := setupAllocator(t)
 		obj := createObject("resource", "folder", "obj", "default")
 
-		res := createResourceFromObject(ctx, ad, t, obj)
-		obj.Status.Id = res.Id
+		res := createResourceFromObject(ctx, ad, t, &obj)
+		obj.Status.ID = res.Id
 
 		_ = createResourceRequireNoError(ctx, ad, t, "resource1", "folder", "obj1", "")
 		_ = createResourceRequireNoError(ctx, ad, t, "resource2", "other-folder", "obj2", "")

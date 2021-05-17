@@ -6,11 +6,13 @@ package phases
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
 	"k8s-connectors/connectors/sakey/controllers/adapter"
 	sakeyutils "k8s-connectors/connectors/sakey/pkg/util"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type StatusUpdater struct {

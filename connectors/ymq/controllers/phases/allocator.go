@@ -6,12 +6,14 @@ package phases
 import (
 	"context"
 	"fmt"
+	"strconv"
+
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	connectorsv1 "k8s-connectors/connectors/ymq/api/v1"
 	"k8s-connectors/connectors/ymq/controllers/adapter"
 	ymqutils "k8s-connectors/connectors/ymq/pkg/utils"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strconv"
 )
 
 type ResourceAllocator struct {

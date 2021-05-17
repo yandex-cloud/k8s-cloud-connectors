@@ -5,7 +5,9 @@ package adapter
 
 import (
 	"context"
+
 	"github.com/aws/aws-sdk-go/service/s3"
+
 	"k8s-connectors/connectors/yos/pkg/utils"
 )
 
@@ -19,7 +21,7 @@ func NewYandexObjectStorageAdapterSDK() (YandexObjectStorageAdapter, error) {
 	}, nil
 }
 
-func (r YandexObjectStorageAdapterSDK) Create(ctx context.Context, key string, secret string, name string) error {
+func (r YandexObjectStorageAdapterSDK) Create(ctx context.Context, key, secret, name string) error {
 	sdk, err := r.s3provider(ctx, key, secret)
 	if err != nil {
 		return err
@@ -31,7 +33,7 @@ func (r YandexObjectStorageAdapterSDK) Create(ctx context.Context, key string, s
 	return err
 }
 
-func (r YandexObjectStorageAdapterSDK) List(ctx context.Context, key string, secret string) ([]*s3.Bucket, error) {
+func (r YandexObjectStorageAdapterSDK) List(ctx context.Context, key, secret string) ([]*s3.Bucket, error) {
 	sdk, err := r.s3provider(ctx, key, secret)
 	if err != nil {
 		return nil, err
@@ -48,7 +50,7 @@ func (r YandexObjectStorageAdapterSDK) List(ctx context.Context, key string, sec
 func (r YandexObjectStorageAdapterSDK) Update() error {
 	return nil
 }
-func (r YandexObjectStorageAdapterSDK) Delete(ctx context.Context, key string, secret string, name string) error {
+func (r YandexObjectStorageAdapterSDK) Delete(ctx context.Context, key, secret, name string) error {
 	sdk, err := r.s3provider(ctx, key, secret)
 	if err != nil {
 		return err

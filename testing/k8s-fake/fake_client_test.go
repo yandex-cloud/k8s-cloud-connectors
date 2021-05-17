@@ -1,17 +1,18 @@
 // Copyright (c) 2021 Yandex LLC. All rights reserved.
 // Author: Martynov Pavel <covariance@yandex-team.ru>
 
-package k8s_fake
+package k8sfake
 
 import (
 	"context"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
 )
 
 func TestCreate(t *testing.T) {

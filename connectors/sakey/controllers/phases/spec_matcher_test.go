@@ -5,15 +5,17 @@ package phases
 
 import (
 	"context"
+	"testing"
+
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"k8s-connectors/connectors/sakey/controllers/adapter"
 	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
 	k8sfake "k8s-connectors/testing/k8s-fake"
 	logrfake "k8s-connectors/testing/logr-fake"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
 )
 
 func setupSpecMatcher(t *testing.T) (context.Context, logr.Logger, client.Client, adapter.StaticAccessKeyAdapter, StaticAccessKeyPhase) {

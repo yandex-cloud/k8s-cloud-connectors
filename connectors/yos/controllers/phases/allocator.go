@@ -5,11 +5,13 @@ package phases
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	connectorsv1 "k8s-connectors/connectors/yos/api/v1"
 	"k8s-connectors/connectors/yos/controllers/adapter"
 	yosutils "k8s-connectors/connectors/yos/pkg/utils"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ResourceAllocator struct {

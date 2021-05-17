@@ -5,6 +5,7 @@ package adapter
 
 import (
 	"context"
+
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
 	ycsdk "github.com/yandex-cloud/go-sdk"
 )
@@ -33,7 +34,7 @@ func (r YandexContainerRegistryAdapterSDK) Create(ctx context.Context, request *
 		return nil, err
 	}
 
-	if err := op.Wait(ctx); err != nil {
+	if err = op.Wait(ctx); err != nil {
 		return nil, err
 	}
 
@@ -76,9 +77,9 @@ func (r YandexContainerRegistryAdapterSDK) Update(ctx context.Context, request *
 	return nil
 }
 
-func (r YandexContainerRegistryAdapterSDK) Delete(ctx context.Context, registryId string) error {
+func (r YandexContainerRegistryAdapterSDK) Delete(ctx context.Context, registryID string) error {
 	op, err := r.sdk.WrapOperation(r.sdk.ContainerRegistry().Registry().Delete(ctx, &containerregistry.DeleteRegistryRequest{
-		RegistryId: registryId,
+		RegistryId: registryID,
 	}))
 	if err != nil {
 		return err

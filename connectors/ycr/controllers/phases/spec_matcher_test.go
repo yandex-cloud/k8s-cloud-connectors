@@ -5,12 +5,14 @@ package phases
 
 import (
 	"context"
+	"testing"
+
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"k8s-connectors/connectors/ycr/controllers/adapter"
 	logrfake "k8s-connectors/testing/logr-fake"
-	"testing"
 )
 
 func setupSpecMatcher(t *testing.T) (context.Context, logr.Logger, adapter.YandexContainerRegistryAdapter, YandexContainerRegistryPhase) {
@@ -23,7 +25,7 @@ func TestSpecMatcherIsUpdated(t *testing.T) {
 		// Arrange
 		ctx, log, ad, phase := setupSpecMatcher(t)
 		obj := createObject("resource", "folder", "obj", "default")
-		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderId, obj.Name, obj.ClusterName)
+		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderID, obj.Name, obj.ClusterName)
 
 		// Act
 		upd, err := phase.IsUpdated(ctx, log, &obj)
@@ -37,7 +39,7 @@ func TestSpecMatcherIsUpdated(t *testing.T) {
 		// Arrange
 		ctx, log, ad, phase := setupSpecMatcher(t)
 		obj := createObject("resource", "folder", "obj", "default")
-		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderId, obj.Name, obj.ClusterName)
+		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderID, obj.Name, obj.ClusterName)
 
 		// Act
 		obj.Spec.Name = "resource-upd"
@@ -52,10 +54,10 @@ func TestSpecMatcherIsUpdated(t *testing.T) {
 		// Arrange
 		ctx, log, ad, phase := setupSpecMatcher(t)
 		obj := createObject("resource", "folder", "obj", "default")
-		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderId, obj.Name, obj.ClusterName)
+		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderID, obj.Name, obj.ClusterName)
 
 		// Act
-		obj.Spec.FolderId = "other-folder"
+		obj.Spec.FolderID = "other-folder"
 		_, err := phase.IsUpdated(ctx, log, &obj)
 
 		// Assert
@@ -68,7 +70,7 @@ func TestSpecMatcherUpdate(t *testing.T) {
 		// Arrange
 		ctx, log, ad, phase := setupSpecMatcher(t)
 		obj := createObject("resource", "folder", "obj", "default")
-		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderId, obj.Name, obj.ClusterName)
+		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderID, obj.Name, obj.ClusterName)
 
 		// Act
 		obj.Spec.Name = "resource-upd"

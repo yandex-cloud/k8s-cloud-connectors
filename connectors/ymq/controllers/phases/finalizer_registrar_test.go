@@ -5,15 +5,17 @@ package phases
 
 import (
 	"context"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	connectorsv1 "k8s-connectors/connectors/ymq/api/v1"
 	ymqconfig "k8s-connectors/connectors/ymq/pkg/config"
 	"k8s-connectors/pkg/utils"
 	k8sfake "k8s-connectors/testing/k8s-fake"
 	logrfake "k8s-connectors/testing/logr-fake"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 )
 
 func TestIsUpdated(t *testing.T) {

@@ -5,6 +5,7 @@ package adapter
 
 import (
 	"context"
+
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 

@@ -5,17 +5,19 @@ package phases
 
 import (
 	"context"
+	"testing"
+
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
 	"k8s-connectors/connectors/ycr/controllers/adapter"
 	ycrutils "k8s-connectors/connectors/ycr/pkg/util"
 	k8sfake "k8s-connectors/testing/k8s-fake"
 	logrfake "k8s-connectors/testing/logr-fake"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
 )
 
 func setupStatusUpdater(t *testing.T) (context.Context, logr.Logger, client.Client, adapter.YandexContainerRegistryAdapter, YandexContainerRegistryPhase) {
@@ -32,11 +34,11 @@ func TestStatusUpdaterUpdate(t *testing.T) {
 		// Arrange
 		ctx, log, cl, ad, phase := setupStatusUpdater(t)
 		obj := createObject("resource", "folder", "obj", "default")
-		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderId, obj.Name, obj.ClusterName)
+		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderID, obj.Name, obj.ClusterName)
 
 		res1, err := ycrutils.GetRegistry(ctx, "", "folder", "obj", "", ad)
 		require.NoError(t, err)
-		obj.Status.Id = res1.Id
+		obj.Status.ID = res1.Id
 		obj.Status.Labels = res1.Labels
 		obj.Status.CreatedAt = res1.CreatedAt.String()
 
@@ -51,7 +53,7 @@ func TestStatusUpdaterUpdate(t *testing.T) {
 		}, &current))
 
 		// Assert
-		assert.Equal(t, res1.Id, current.Status.Id)
+		assert.Equal(t, res1.Id, current.Status.ID)
 		assert.Equal(t, res1.Labels, current.Status.Labels)
 		assert.Equal(t, res1.CreatedAt.String(), current.Status.CreatedAt)
 	})
@@ -60,7 +62,7 @@ func TestStatusUpdaterUpdate(t *testing.T) {
 		// Arrange
 		ctx, log, cl, ad, phase := setupStatusUpdater(t)
 		obj := createObject("resource", "folder", "obj", "default")
-		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderId, obj.Name, obj.ClusterName)
+		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderID, obj.Name, obj.ClusterName)
 
 		res1, err := ycrutils.GetRegistry(ctx, "", "folder", "obj", "", ad)
 		require.NoError(t, err)
@@ -75,7 +77,7 @@ func TestStatusUpdaterUpdate(t *testing.T) {
 		}, &current))
 
 		// Assert
-		assert.Equal(t, res1.Id, current.Status.Id)
+		assert.Equal(t, res1.Id, current.Status.ID)
 		assert.Equal(t, res1.Labels, current.Status.Labels)
 		assert.Equal(t, res1.CreatedAt.String(), current.Status.CreatedAt)
 	})
@@ -84,11 +86,11 @@ func TestStatusUpdaterUpdate(t *testing.T) {
 		// Arrange
 		ctx, log, cl, ad, phase := setupStatusUpdater(t)
 		obj := createObject("resource", "folder", "obj", "default")
-		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderId, obj.Name, obj.ClusterName)
+		createResourceRequireNoError(ctx, ad, t, obj.Spec.Name, obj.Spec.FolderID, obj.Name, obj.ClusterName)
 
 		res1, err := ycrutils.GetRegistry(ctx, "", "folder", "obj", "", ad)
 		require.NoError(t, err)
-		obj.Status.Id = "definitely-not-id"
+		obj.Status.ID = "definitely-not-id"
 		obj.Status.Labels = map[string]string{"key": "label"}
 		require.NoError(t, cl.Create(ctx, &obj))
 
@@ -101,7 +103,7 @@ func TestStatusUpdaterUpdate(t *testing.T) {
 		}, &current))
 
 		// Assert
-		assert.Equal(t, res1.Id, current.Status.Id)
+		assert.Equal(t, res1.Id, current.Status.ID)
 		assert.Equal(t, res1.Labels, current.Status.Labels)
 		assert.Equal(t, res1.CreatedAt.String(), current.Status.CreatedAt)
 	})

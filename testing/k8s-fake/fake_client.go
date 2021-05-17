@@ -1,18 +1,20 @@
 // Copyright (c) 2021 Yandex LLC. All rights reserved.
 // Author: Martynov Pavel <covariance@yandex-team.ru>
 
-package k8s_fake
+package k8sfake
 
 import (
 	"context"
+
 	"github.com/jinzhu/copier"
-	"k8s-connectors/pkg/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"k8s-connectors/pkg/utils"
 )
 
 type FakeClient struct {
@@ -54,7 +56,7 @@ func (r *FakeClient) Get(_ context.Context, key client.ObjectKey, obj client.Obj
 		}, key.String())
 	}
 
-	// TODO (covariance) check type mismatch behaviour
+	// TODO (covariance) check type mismatch behavior
 	return copier.Copy(obj, r.objects[key])
 }
 

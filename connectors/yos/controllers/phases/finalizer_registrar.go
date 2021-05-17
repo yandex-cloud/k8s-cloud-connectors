@@ -6,11 +6,13 @@ package phases
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	connectorsv1 "k8s-connectors/connectors/yos/api/v1"
 	yosconfig "k8s-connectors/connectors/yos/pkg/config"
 	"k8s-connectors/pkg/utils"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type FinalizerRegistrar struct {

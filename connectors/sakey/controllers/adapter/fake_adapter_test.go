@@ -5,13 +5,15 @@ package adapter
 
 import (
 	"context"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
 	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
 	"k8s-connectors/pkg/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 )
 
 func setup() (context.Context, StaticAccessKeyAdapter) {

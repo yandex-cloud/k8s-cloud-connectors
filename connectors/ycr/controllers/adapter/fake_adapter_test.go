@@ -5,11 +5,12 @@ package adapter
 
 import (
 	"context"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
-	"testing"
 )
 
 func TestRead(t *testing.T) {

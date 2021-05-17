@@ -96,7 +96,7 @@ func main() {
 	if err != nil {
 		controllerCreationErrorExit(err, sakeyconfig.LongName)
 	}
-	if err := sakeyReconciler.SetupWithManager(mgr); err != nil {
+	if err = sakeyReconciler.SetupWithManager(mgr); err != nil {
 		controllerCreationErrorExit(err, sakeyconfig.LongName)
 	}
 
@@ -108,7 +108,7 @@ func main() {
 	if err != nil {
 		controllerCreationErrorExit(err, ycrconfig.LongName)
 	}
-	if err := ycrReconciler.SetupWithManager(mgr); err != nil {
+	if err = ycrReconciler.SetupWithManager(mgr); err != nil {
 		controllerCreationErrorExit(err, ycrconfig.LongName)
 	}
 
@@ -120,7 +120,7 @@ func main() {
 	if err != nil {
 		controllerCreationErrorExit(err, ymqconfig.LongName)
 	}
-	if err := ymqReconciler.SetupWithManager(mgr); err != nil {
+	if err = ymqReconciler.SetupWithManager(mgr); err != nil {
 		controllerCreationErrorExit(err, ymqconfig.LongName)
 	}
 
@@ -132,20 +132,20 @@ func main() {
 	if err != nil {
 		controllerCreationErrorExit(err, yosconfig.LongName)
 	}
-	if err := yosReconciler.SetupWithManager(mgr); err != nil {
+	if err = yosReconciler.SetupWithManager(mgr); err != nil {
 		controllerCreationErrorExit(err, yosconfig.LongName)
 	}
 	//+kubebuilder:scaffold:builder
 
-	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupErrorExit(err, "health check")
 	}
-	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+	if err = mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupErrorExit(err, "readiness check")
 	}
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err = mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}

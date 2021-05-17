@@ -1,11 +1,12 @@
 // Copyright (c) 2021 Yandex LLC. All rights reserved.
 // Author: Martynov Pavel <covariance@yandex-team.ru>
 
-package logr_fake
+package logrfake
 
 import (
-	"github.com/go-logr/logr"
 	"testing"
+
+	"github.com/go-logr/logr"
 )
 
 type FakeLogger struct {

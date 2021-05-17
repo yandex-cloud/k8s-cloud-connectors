@@ -9,10 +9,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"k8s-connectors/connectors/ymq/controllers/adapter"
-	ymqconfig "k8s-connectors/connectors/ymq/pkg/config"
-	"k8s-connectors/pkg/config"
-	"k8s-connectors/pkg/utils"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -21,7 +17,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	connectorsv1 "k8s-connectors/connectors/ymq/api/v1"
+	"k8s-connectors/connectors/ymq/controllers/adapter"
 	"k8s-connectors/connectors/ymq/controllers/phases"
+	ymqconfig "k8s-connectors/connectors/ymq/pkg/config"
+	"k8s-connectors/pkg/config"
+	"k8s-connectors/pkg/utils"
 )
 
 // YandexMessageQueueReconciler reconciles a YandexContainerRegistry object
@@ -37,21 +37,21 @@ type YandexMessageQueueReconciler struct {
 	phases []phases.YandexMessageQueuePhase
 }
 
-func NewYandexMessageQueueReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*YandexMessageQueueReconciler, error) {
+func NewYandexMessageQueueReconciler(cl client.Client, log logr.Logger, scheme *runtime.Scheme) (*YandexMessageQueueReconciler, error) {
 	sdk, err := adapter.NewYandexMessageQueueAdapterSDK()
 	if err != nil {
 		return nil, err
 	}
 	return &YandexMessageQueueReconciler{
-		Client: client,
+		Client: cl,
 		log:    log,
 		scheme: scheme,
 		phases: []phases.YandexMessageQueuePhase{
 			&phases.FinalizerRegistrar{
-				Client: &client,
+				Client: &cl,
 			},
 			&phases.ResourceAllocator{
-				Client: &client,
+				Client: &cl,
 				Sdk:    sdk,
 			},
 		},

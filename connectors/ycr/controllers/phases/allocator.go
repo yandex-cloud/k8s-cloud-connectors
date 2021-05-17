@@ -5,8 +5,10 @@ package phases
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
+
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
 	"k8s-connectors/connectors/ycr/controllers/adapter"
 	ycrutils "k8s-connectors/connectors/ycr/pkg/util"
@@ -18,13 +20,13 @@ type Allocator struct {
 }
 
 func (r *Allocator) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.YandexContainerRegistry) (bool, error) {
-	res, err := ycrutils.GetRegistry(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk)
+	res, err := ycrutils.GetRegistry(ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk)
 	return res != nil, err
 }
 
 func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) error {
 	if _, err := r.Sdk.Create(ctx, &containerregistry.CreateRegistryRequest{
-		FolderId: object.Spec.FolderId,
+		FolderId: object.Spec.FolderID,
 		Name:     object.Spec.Name,
 		Labels: map[string]string{
 			config.CloudClusterLabel: object.ClusterName,
@@ -38,7 +40,7 @@ func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connect
 }
 
 func (r *Allocator) Cleanup(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) error {
-	ycr, err := ycrutils.GetRegistry(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk)
+	ycr, err := ycrutils.GetRegistry(ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk)
 	if err != nil {
 		return err
 	}

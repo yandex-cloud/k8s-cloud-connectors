@@ -6,10 +6,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"k8s-connectors/connectors/ycr/controllers/adapter"
-	ycrconfig "k8s-connectors/connectors/ycr/pkg/config"
-	"k8s-connectors/pkg/config"
-	"k8s-connectors/pkg/utils"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -18,7 +14,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
+	"k8s-connectors/connectors/ycr/controllers/adapter"
 	"k8s-connectors/connectors/ycr/controllers/phases"
+	ycrconfig "k8s-connectors/connectors/ycr/pkg/config"
+	"k8s-connectors/pkg/config"
+	"k8s-connectors/pkg/utils"
 )
 
 // yandexContainerRegistryReconciler reconciles a YandexContainerRegistry object
@@ -35,19 +35,19 @@ type yandexContainerRegistryReconciler struct {
 	phases []phases.YandexContainerRegistryPhase
 }
 
-func NewYandexContainerRegistryReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*yandexContainerRegistryReconciler, error) {
+func NewYandexContainerRegistryReconciler(cl client.Client, log logr.Logger, scheme *runtime.Scheme) (*yandexContainerRegistryReconciler, error) {
 	impl, err := adapter.NewYandexContainerRegistryAdapterSDK()
 	if err != nil {
 		return nil, err
 	}
 	return &yandexContainerRegistryReconciler{
-		Client: client,
+		Client: cl,
 		log:    log,
 		scheme: scheme,
 		phases: []phases.YandexContainerRegistryPhase{
 			// Register finalizer for the object (is blocked by allocation)
 			&phases.FinalizerRegistrar{
-				Client: &client,
+				Client: &cl,
 			},
 			// Allocate corresponding resource in cloud
 			// (is blocked by finalizer registration,
@@ -63,11 +63,11 @@ func NewYandexContainerRegistryReconciler(client client.Client, log logr.Logger,
 			// Update status of the object (is blocked by everything mutating)
 			&phases.StatusUpdater{
 				Sdk:    impl,
-				Client: &client,
+				Client: &cl,
 			},
 			// Entrypoint for resource update (is blocked by status update)
 			&phases.EndpointProvider{
-				Client: &client,
+				Client: cl,
 			},
 		},
 	}, nil

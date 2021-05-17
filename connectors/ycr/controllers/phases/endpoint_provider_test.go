@@ -5,21 +5,23 @@ package phases
 
 import (
 	"context"
+	"testing"
+
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	ycrconfig "k8s-connectors/connectors/ycr/pkg/config"
-	k8sfake "k8s-connectors/testing/k8s-fake"
-	logrfake "k8s-connectors/testing/logr-fake"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
+
+	ycrconfig "k8s-connectors/connectors/ycr/pkg/config"
+	k8sfake "k8s-connectors/testing/k8s-fake"
+	logrfake "k8s-connectors/testing/logr-fake"
 )
 
 func setupEndpointProvider(t *testing.T) (context.Context, logr.Logger, client.Client, YandexContainerRegistryPhase) {
 	cl := k8sfake.NewFakeClient()
-	return context.Background(), logrfake.NewFakeLogger(t), cl, &EndpointProvider{Client: &cl}
+	return context.Background(), logrfake.NewFakeLogger(t), cl, &EndpointProvider{Client: cl}
 }
 
 func createConfigMap(ctx context.Context, cl client.Client, t *testing.T, objectMetaName, namespace string) {
