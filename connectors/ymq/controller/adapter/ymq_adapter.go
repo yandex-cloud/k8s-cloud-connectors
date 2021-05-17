@@ -12,7 +12,7 @@ import (
 )
 
 type YandexMessageQueueAdapterSDK struct {
-	sqsProvider util.AwsSdkProvider
+	sqsProvider util.SQSProvider
 }
 
 func NewYandexMessageQueueAdapterSDK() (YandexMessageQueueAdapter, error) {

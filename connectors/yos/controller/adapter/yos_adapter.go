@@ -12,7 +12,7 @@ import (
 )
 
 type YandexObjectStorageAdapterSDK struct {
-	s3provider util.AwsSdkProvider
+	s3provider util.S3Provider
 }
 
 func NewYandexObjectStorageAdapterSDK() (YandexObjectStorageAdapter, error) {

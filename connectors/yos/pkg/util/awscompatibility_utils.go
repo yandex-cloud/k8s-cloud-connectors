@@ -21,9 +21,9 @@ import (
 	"k8s-connectors/connectors/yos/pkg/config"
 )
 
-type AwsSdkProvider = func(ctx context.Context, key string, secret string) (*s3.S3, error)
+type S3Provider = func(ctx context.Context, key string, secret string) (*s3.S3, error)
 
-func NewStaticProvider() AwsSdkProvider {
+func NewStaticProvider() S3Provider {
 	return func(_ context.Context, key string, secret string) (*s3.S3, error) {
 		ses, err := session.NewSession(
 			&aws.Config{
@@ -34,7 +34,7 @@ func NewStaticProvider() AwsSdkProvider {
 						return endpoints.ResolvedEndpoint{URL: config.Endpoint}, nil
 					},
 				),
-				Region:           aws.String(config.AwsRegion),
+				Region:           aws.String(config.AWSRegion),
 				S3ForcePathStyle: aws.Bool(true),
 			},
 		)

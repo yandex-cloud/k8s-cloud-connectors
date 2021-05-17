@@ -4,7 +4,7 @@
 package config
 
 const (
-	AwsRegion     = "ru-central1"
+	AWSRegion     = "ru-central1"
 	Endpoint      = "message-queue.api.cloud.yandex.net"
 	FinalizerName = "finalizer.ymq.connectors.cloud.yandex.com"
 	LongName      = "YandexMessageQueue"
