@@ -27,7 +27,7 @@ func setupStatusUpdater(t *testing.T) (
 	cl := k8sfake.NewFakeClient()
 	return context.Background(), logrfake.NewFakeLogger(t), cl, &ad, &StatusUpdater{
 		Sdk:    &ad,
-		Client: &cl,
+		Client: cl,
 	}
 }
 

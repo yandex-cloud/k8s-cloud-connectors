@@ -16,7 +16,7 @@ import (
 )
 
 type FinalizerRegistrar struct {
-	Client *client.Client
+	Client client.Client
 }
 
 func (r *FinalizerRegistrar) IsUpdated(
@@ -29,7 +29,7 @@ func (r *FinalizerRegistrar) Update(
 	ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry,
 ) error {
 	registry.Finalizers = append(registry.Finalizers, ycrconfig.FinalizerName)
-	if err := (*r.Client).Update(ctx, registry); err != nil {
+	if err := r.Client.Update(ctx, registry); err != nil {
 		return fmt.Errorf("unable to update registry status: %v", err)
 	}
 	log.Info("finalizer registered successfully")
@@ -40,7 +40,7 @@ func (r *FinalizerRegistrar) Cleanup(
 	ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry,
 ) error {
 	registry.Finalizers = util.RemoveString(registry.Finalizers, ycrconfig.FinalizerName)
-	if err := (*r.Client).Update(ctx, registry); err != nil {
+	if err := r.Client.Update(ctx, registry); err != nil {
 		return fmt.Errorf("unable to remove finalizer: %v", err)
 	}
 

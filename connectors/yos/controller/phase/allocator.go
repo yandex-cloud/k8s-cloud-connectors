@@ -15,12 +15,12 @@ import (
 )
 
 type ResourceAllocator struct {
-	Client *client.Client
+	Client client.Client
 	Sdk    adapter.YandexObjectStorageAdapter
 }
 
 func (r *ResourceAllocator) IsUpdated(ctx context.Context, resource *connectorsv1.YandexObjectStorage) (bool, error) {
-	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, resource, *r.Client)
+	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, resource, r.Client)
 	if err != nil {
 		return false, err
 	}
@@ -39,7 +39,7 @@ func (r *ResourceAllocator) IsUpdated(ctx context.Context, resource *connectorsv
 func (r *ResourceAllocator) Update(
 	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage,
 ) error {
-	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, resource, *r.Client)
+	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, resource, r.Client)
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (r *ResourceAllocator) Update(
 func (r *ResourceAllocator) Cleanup(
 	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage,
 ) error {
-	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, resource, *r.Client)
+	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, resource, r.Client)
 	if err != nil {
 		return err
 	}

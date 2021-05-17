@@ -46,7 +46,7 @@ func NewStaticAccessKeyReconciler(
 		phases: []phase.StaticAccessKeyPhase{
 			// Register finalizer for the object (is blocked by allocation)
 			&phase.FinalizerRegistrar{
-				Client: &cl,
+				Client: cl,
 			},
 			// Allocate corresponding resource in cloud
 			// (is blocked by finalizer registration,
@@ -58,13 +58,12 @@ func NewStaticAccessKeyReconciler(
 			// In case spec was updated and our cloud resource does not match with
 			// spec, we need to update cloud resource (is blocked by allocation)
 			&phase.SpecMatcher{
-				Sdk:    impl,
-				Client: &cl,
+				Sdk: impl,
 			},
 			// Update status of the object (is blocked by everything mutating)
 			&phase.StatusUpdater{
 				Sdk:    impl,
-				Client: &cl,
+				Client: cl,
 			},
 		},
 	}, nil

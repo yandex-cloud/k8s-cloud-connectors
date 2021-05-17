@@ -24,8 +24,7 @@ func setupSpecMatcher(t *testing.T) (
 	ad := adapter.NewFakeStaticAccessKeyAdapter()
 	cl := k8sfake.NewFakeClient()
 	return context.Background(), logrfake.NewFakeLogger(t), cl, &ad, &SpecMatcher{
-		Sdk:    &ad,
-		Client: &cl,
+		Sdk: &ad,
 	}
 }
 

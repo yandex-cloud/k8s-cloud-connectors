@@ -17,7 +17,7 @@ import (
 
 type StatusUpdater struct {
 	Sdk    adapter.YandexContainerRegistryAdapter
-	Client *client.Client
+	Client client.Client
 }
 
 func (r *StatusUpdater) IsUpdated(_ context.Context, _ logr.Logger, _ *connectorsv1.YandexContainerRegistry) (
@@ -48,7 +48,7 @@ func (r *StatusUpdater) Update(
 	object.Status.CreatedAt = res.CreatedAt.String()
 	object.Status.Labels = res.Labels
 
-	if err := (*r.Client).Update(ctx, object); err != nil {
+	if err := r.Client.Update(ctx, object); err != nil {
 		return fmt.Errorf("unable to update object status: %v", err)
 	}
 

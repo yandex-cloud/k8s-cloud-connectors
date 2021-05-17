@@ -16,7 +16,7 @@ import (
 )
 
 type FinalizerRegistrar struct {
-	Client *client.Client
+	Client client.Client
 }
 
 func (r *FinalizerRegistrar) IsUpdated(_ context.Context, resource *connectorsv1.YandexObjectStorage) (bool, error) {
@@ -27,7 +27,7 @@ func (r *FinalizerRegistrar) Update(
 	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage,
 ) error {
 	resource.Finalizers = append(resource.Finalizers, yosconfig.FinalizerName)
-	if err := (*r.Client).Update(ctx, resource); err != nil {
+	if err := r.Client.Update(ctx, resource); err != nil {
 		return fmt.Errorf("unable to update resource status: %v", err)
 	}
 	log.Info("finalizer registered successfully")
@@ -38,7 +38,7 @@ func (r *FinalizerRegistrar) Cleanup(
 	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage,
 ) error {
 	resource.Finalizers = util.RemoveString(resource.Finalizers, yosconfig.FinalizerName)
-	if err := (*r.Client).Update(ctx, resource); err != nil {
+	if err := r.Client.Update(ctx, resource); err != nil {
 		return fmt.Errorf("unable to remove finalizer: %v", err)
 	}
 

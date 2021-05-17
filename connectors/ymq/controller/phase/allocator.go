@@ -17,12 +17,12 @@ import (
 )
 
 type ResourceAllocator struct {
-	Client *client.Client
+	Client client.Client
 	Sdk    adapter.YandexMessageQueueAdapter
 }
 
 func (r *ResourceAllocator) IsUpdated(ctx context.Context, resource *connectorsv1.YandexMessageQueue) (bool, error) {
-	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, resource, *r.Client)
+	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, resource, r.Client)
 	if err != nil {
 		return false, err
 	}
@@ -41,7 +41,7 @@ func (r *ResourceAllocator) IsUpdated(ctx context.Context, resource *connectorsv
 func (r *ResourceAllocator) Update(
 	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue,
 ) error {
-	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, resource, *r.Client)
+	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, resource, r.Client)
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func (r *ResourceAllocator) Update(
 	}
 
 	resource.Status.QueueURL = res
-	if err := (*r.Client).Status().Update(ctx, resource); err != nil {
+	if err := r.Client.Status().Update(ctx, resource); err != nil {
 		return fmt.Errorf("error while creating resource: %v", err)
 	}
 
@@ -84,7 +84,7 @@ func (r *ResourceAllocator) Update(
 func (r *ResourceAllocator) Cleanup(
 	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue,
 ) error {
-	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, resource, *r.Client)
+	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, resource, r.Client)
 	if err != nil {
 		return err
 	}

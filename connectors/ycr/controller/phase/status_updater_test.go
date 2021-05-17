@@ -27,7 +27,7 @@ func setupStatusUpdater(t *testing.T) (
 	ad := adapter.NewFakeYandexContainerRegistryAdapter()
 	return context.Background(), logrfake.NewFakeLogger(t), cl, &ad, &StatusUpdater{
 		Sdk:    &ad,
-		Client: &cl,
+		Client: cl,
 	}
 }
 

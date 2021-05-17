@@ -44,10 +44,10 @@ func NewYandexObjectStorageReconciler(
 		log:    log,
 		phases: []phase.YandexObjectStoragePhase{
 			&phase.FinalizerRegistrar{
-				Client: &cl,
+				Client: cl,
 			},
 			&phase.ResourceAllocator{
-				Client: &cl,
+				Client: cl,
 				Sdk:    sdk,
 			},
 		},

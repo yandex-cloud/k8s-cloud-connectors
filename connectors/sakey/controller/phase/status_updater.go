@@ -17,7 +17,7 @@ import (
 
 type StatusUpdater struct {
 	Sdk    adapter.StaticAccessKeyAdapter
-	Client *client.Client
+	Client client.Client
 }
 
 func (r *StatusUpdater) IsUpdated(_ context.Context, _ logr.Logger, _ *connectorsv1.StaticAccessKey) (bool, error) {
@@ -46,7 +46,7 @@ func (r *StatusUpdater) Update(ctx context.Context, log logr.Logger, object *con
 	// another entity.
 	object.Status.KeyID = res.Id
 
-	if err := (*r.Client).Update(ctx, object); err != nil {
+	if err := r.Client.Update(ctx, object); err != nil {
 		return err
 	}
 

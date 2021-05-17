@@ -46,7 +46,7 @@ func NewYandexContainerRegistryReconciler(
 		phases: []phase.YandexContainerRegistryPhase{
 			// Register finalizer for the object (is blocked by allocation)
 			&phase.FinalizerRegistrar{
-				Client: &cl,
+				Client: cl,
 			},
 			// Allocate corresponding resource in cloud
 			// (is blocked by finalizer registration,
@@ -62,7 +62,7 @@ func NewYandexContainerRegistryReconciler(
 			// Update status of the object (is blocked by everything mutating)
 			&phase.StatusUpdater{
 				Sdk:    impl,
-				Client: &cl,
+				Client: cl,
 			},
 			// Entrypoint for resource update (is blocked by status update)
 			&phase.EndpointProvider{

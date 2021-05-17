@@ -32,7 +32,7 @@ func TestFinalizerRegistrarIsUpdated(t *testing.T) {
 			c := k8sfake.NewFakeClient()
 			log := logrfake.NewFakeLogger(t)
 			phase := FinalizerRegistrar{
-				Client: &c,
+				Client: c,
 			}
 			require.NoError(t, c.Create(context.Background(), &resource))
 
@@ -58,7 +58,7 @@ func TestFinalizerRegistrarIsUpdated(t *testing.T) {
 			c := k8sfake.NewFakeClient()
 			log := logrfake.NewFakeLogger(t)
 			phase := FinalizerRegistrar{
-				Client: &c,
+				Client: c,
 			}
 			require.NoError(t, c.Create(context.Background(), &resource))
 
@@ -84,7 +84,7 @@ func TestFinalizerRegistrarIsUpdated(t *testing.T) {
 			c := k8sfake.NewFakeClient()
 			log := logrfake.NewFakeLogger(t)
 			phase := FinalizerRegistrar{
-				Client: &c,
+				Client: c,
 			}
 			require.NoError(t, c.Create(context.Background(), &resource))
 
@@ -112,7 +112,7 @@ func TestFinalizerRegistrarIsUpdated(t *testing.T) {
 			c := k8sfake.NewFakeClient()
 			log := logrfake.NewFakeLogger(t)
 			phase := FinalizerRegistrar{
-				Client: &c,
+				Client: c,
 			}
 			require.NoError(t, c.Create(context.Background(), &resource))
 
@@ -140,7 +140,7 @@ func TestFinalizerRegistrarUpdate(t *testing.T) {
 			c := k8sfake.NewFakeClient()
 			log := logrfake.NewFakeLogger(t)
 			phase := FinalizerRegistrar{
-				Client: &c,
+				Client: c,
 			}
 			require.NoError(t, c.Create(context.Background(), &resource))
 
@@ -168,7 +168,7 @@ func TestFinalizerRegistrarUpdate(t *testing.T) {
 			c := k8sfake.NewFakeClient()
 			log := logrfake.NewFakeLogger(t)
 			phase := FinalizerRegistrar{
-				Client: &c,
+				Client: c,
 			}
 			require.NoError(t, c.Create(context.Background(), &resource))
 
@@ -200,7 +200,7 @@ func TestFinalizerRegistrarCleanup(t *testing.T) {
 			c := k8sfake.NewFakeClient()
 			log := logrfake.NewFakeLogger(t)
 			phase := FinalizerRegistrar{
-				Client: &c,
+				Client: c,
 			}
 			require.NoError(t, c.Create(context.Background(), &resource))
 
@@ -227,7 +227,7 @@ func TestFinalizerRegistrarCleanup(t *testing.T) {
 			c := k8sfake.NewFakeClient()
 			log := logrfake.NewFakeLogger(t)
 			phase := FinalizerRegistrar{
-				Client: &c,
+				Client: c,
 			}
 			require.NoError(t, c.Create(context.Background(), &resource))
 
@@ -256,7 +256,7 @@ func TestFinalizerRegistrarCleanup(t *testing.T) {
 			c := k8sfake.NewFakeClient()
 			log := logrfake.NewFakeLogger(t)
 			phase := FinalizerRegistrar{
-				Client: &c,
+				Client: c,
 			}
 			require.NoError(t, c.Create(context.Background(), &resource))
 

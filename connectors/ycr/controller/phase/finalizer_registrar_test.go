@@ -22,7 +22,7 @@ import (
 
 func setupFinalizerRegistrar(t *testing.T) (context.Context, logr.Logger, client.Client, YandexContainerRegistryPhase) {
 	cl := k8sfake.NewFakeClient()
-	return context.Background(), logrfake.NewFakeLogger(t), cl, &FinalizerRegistrar{Client: &cl}
+	return context.Background(), logrfake.NewFakeLogger(t), cl, &FinalizerRegistrar{Client: cl}
 }
 
 func createObjectWithFinalizers(

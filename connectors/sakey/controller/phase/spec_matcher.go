@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
 	"k8s-connectors/connectors/sakey/controller/adapter"
@@ -16,8 +15,7 @@ import (
 )
 
 type SpecMatcher struct {
-	Sdk    adapter.StaticAccessKeyAdapter
-	Client *client.Client
+	Sdk adapter.StaticAccessKeyAdapter
 }
 
 func (r *SpecMatcher) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.StaticAccessKey) (
