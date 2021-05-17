@@ -29,15 +29,20 @@ func createObject(specName, folderID, metaName, namespace string) connectorsv1.Y
 	}
 }
 
-func createResourceRequireNoError(ctx context.Context, ad adapter.YandexContainerRegistryAdapter, t *testing.T, specName, folderID, metaName, clusterName string) *containerregistry.Registry {
-	res, err := ad.Create(ctx, &containerregistry.CreateRegistryRequest{
-		FolderId: folderID,
-		Name:     specName,
-		Labels: map[string]string{
-			config.CloudClusterLabel: clusterName,
-			config.CloudNameLabel:    metaName,
+func createResourceRequireNoError(
+	ctx context.Context, ad adapter.YandexContainerRegistryAdapter, t *testing.T,
+	specName, folderID, metaName, clusterName string,
+) *containerregistry.Registry {
+	res, err := ad.Create(
+		ctx, &containerregistry.CreateRegistryRequest{
+			FolderId: folderID,
+			Name:     specName,
+			Labels: map[string]string{
+				config.CloudClusterLabel: clusterName,
+				config.CloudNameLabel:    metaName,
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
 	return res
 }

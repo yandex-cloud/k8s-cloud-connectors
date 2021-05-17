@@ -2,7 +2,7 @@
 
 run:
   # Timeout for analysis that is efficiently infinite
-  timeout: 100m
+  timeout: 15m
 
   # We don't want to analyse vendor dependencies
   skip-dirs-use-default: true
@@ -49,6 +49,9 @@ linters:
     - whitespace
 
 issues:
+  exclude-use-default: false
+  max-per-linter: 0
+  max-same-issues: 0
   exclude-rules:
     - path: _test\.go
       linters:
@@ -58,6 +61,13 @@ issues:
         - dupl
         - gosec
         - gomnd
+    # Included for now, because packages are uncommented
+    - linters:
+        - stylecheck
+      text: "ST1000:"
+    - linters:
+        - lll
+      source: "^// "
 
 linters-settings:
   dupl:
@@ -98,8 +108,7 @@ linters-settings:
   govet:
     check-shadowing: true
   lll:
-    # Infinite for now
-    line-length: 1000
+    line-length: 120
   maligned:
     suggest-new: true
   misspell:
@@ -109,3 +118,7 @@ linters-settings:
     allow-unused: false # report any unused nolint directives
     require-explanation: false # don't require an explanation for nolint directives
     require-specific: false # don't require nolint directives to be specific about which linter is being skipped
+  staticcheck:
+    go: "1.15"
+  stylecheck:
+    go: "1.15"

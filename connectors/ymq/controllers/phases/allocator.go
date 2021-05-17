@@ -38,7 +38,9 @@ func (r *ResourceAllocator) IsUpdated(ctx context.Context, resource *connectorsv
 	return false, nil
 }
 
-func (r *ResourceAllocator) Update(ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue) error {
+func (r *ResourceAllocator) Update(
+	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue,
+) error {
 	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, resource, *r.Client)
 	if err != nil {
 		return err
@@ -79,7 +81,9 @@ func (r *ResourceAllocator) Update(ctx context.Context, log logr.Logger, resourc
 	return nil
 }
 
-func (r *ResourceAllocator) Cleanup(ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue) error {
+func (r *ResourceAllocator) Cleanup(
+	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue,
+) error {
 	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, resource, *r.Client)
 	if err != nil {
 		return err

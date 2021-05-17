@@ -28,7 +28,9 @@ func Exists(ctx context.Context, client rtcl.Client, object *metav1.ObjectMeta, 
 	return true, fmt.Errorf("cannot get secret: %v", err)
 }
 
-func Put(ctx context.Context, client rtcl.Client, object *metav1.ObjectMeta, kind string, data map[string]string) error {
+func Put(
+	ctx context.Context, client rtcl.Client, object *metav1.ObjectMeta, kind string, data map[string]string,
+) error {
 	secretName := SecretName(object, kind)
 
 	var secretObj v1.Secret

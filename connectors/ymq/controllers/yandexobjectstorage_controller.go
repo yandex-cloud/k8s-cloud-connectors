@@ -37,7 +37,9 @@ type YandexMessageQueueReconciler struct {
 	phases []phases.YandexMessageQueuePhase
 }
 
-func NewYandexMessageQueueReconciler(cl client.Client, log logr.Logger, scheme *runtime.Scheme) (*YandexMessageQueueReconciler, error) {
+func NewYandexMessageQueueReconciler(
+	cl client.Client, log logr.Logger, scheme *runtime.Scheme,
+) (*YandexMessageQueueReconciler, error) {
 	sdk, err := adapter.NewYandexMessageQueueAdapterSDK()
 	if err != nil {
 		return nil, err
@@ -58,11 +60,11 @@ func NewYandexMessageQueueReconciler(cl client.Client, log logr.Logger, scheme *
 	}, nil
 }
 
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexmessagequeues,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexmessagequeues/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexmessagequeues/finalizers,verbs=update
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=staticaccesskeys,verbs=get
-//+kubebuilder:rbac:groups="",resources=secrets,verbs=get
+// +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexmessagequeues,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexmessagequeues/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexmessagequeues/finalizers,verbs=update
+// +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=staticaccesskeys,verbs=get
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get
 
 func (r *YandexMessageQueueReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.log.WithValues(ymqconfig.LongName, req.NamespacedName)
@@ -112,10 +114,14 @@ func (r *YandexMessageQueueReconciler) Reconcile(ctx context.Context, req ctrl.R
 }
 
 func (r *YandexMessageQueueReconciler) mustBeFinalized(registry *connectorsv1.YandexMessageQueue) (bool, error) {
-	return !registry.DeletionTimestamp.IsZero() && utils.ContainsString(registry.Finalizers, ymqconfig.FinalizerName), nil
+	return !registry.DeletionTimestamp.IsZero() && utils.ContainsString(
+		registry.Finalizers, ymqconfig.FinalizerName,
+	), nil
 }
 
-func (r *YandexMessageQueueReconciler) finalize(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexMessageQueue) error {
+func (r *YandexMessageQueueReconciler) finalize(
+	ctx context.Context, log logr.Logger, registry *connectorsv1.YandexMessageQueue,
+) error {
 	for i := len(r.phases); i != 0; i-- {
 		if err := r.phases[i-1].Cleanup(ctx, log, registry); err != nil {
 			return fmt.Errorf("error during finalization: %v", err)

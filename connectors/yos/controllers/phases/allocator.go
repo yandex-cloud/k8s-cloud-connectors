@@ -36,7 +36,9 @@ func (r *ResourceAllocator) IsUpdated(ctx context.Context, resource *connectorsv
 	return false, nil
 }
 
-func (r *ResourceAllocator) Update(ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage) error {
+func (r *ResourceAllocator) Update(
+	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage,
+) error {
 	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, resource, *r.Client)
 	if err != nil {
 		return err
@@ -49,7 +51,9 @@ func (r *ResourceAllocator) Update(ctx context.Context, log logr.Logger, resourc
 	return nil
 }
 
-func (r *ResourceAllocator) Cleanup(ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage) error {
+func (r *ResourceAllocator) Cleanup(
+	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage,
+) error {
 	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, resource, *r.Client)
 	if err != nil {
 		return err

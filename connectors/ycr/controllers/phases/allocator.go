@@ -19,20 +19,26 @@ type Allocator struct {
 	Sdk adapter.YandexContainerRegistryAdapter
 }
 
-func (r *Allocator) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.YandexContainerRegistry) (bool, error) {
-	res, err := ycrutils.GetRegistry(ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk)
+func (r *Allocator) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.YandexContainerRegistry) (
+	bool, error,
+) {
+	res, err := ycrutils.GetRegistry(
+		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk,
+	)
 	return res != nil, err
 }
 
 func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) error {
-	if _, err := r.Sdk.Create(ctx, &containerregistry.CreateRegistryRequest{
-		FolderId: object.Spec.FolderID,
-		Name:     object.Spec.Name,
-		Labels: map[string]string{
-			config.CloudClusterLabel: object.ClusterName,
-			config.CloudNameLabel:    object.Name,
+	if _, err := r.Sdk.Create(
+		ctx, &containerregistry.CreateRegistryRequest{
+			FolderId: object.Spec.FolderID,
+			Name:     object.Spec.Name,
+			Labels: map[string]string{
+				config.CloudClusterLabel: object.ClusterName,
+				config.CloudNameLabel:    object.Name,
+			},
 		},
-	}); err != nil {
+	); err != nil {
 		return err
 	}
 	log.Info("resource allocated successfully")
@@ -40,7 +46,9 @@ func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connect
 }
 
 func (r *Allocator) Cleanup(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) error {
-	ycr, err := ycrutils.GetRegistry(ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk)
+	ycr, err := ycrutils.GetRegistry(
+		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk,
+	)
 	if err != nil {
 		return err
 	}

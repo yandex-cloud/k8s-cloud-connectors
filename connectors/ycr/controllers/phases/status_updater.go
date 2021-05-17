@@ -20,15 +20,21 @@ type StatusUpdater struct {
 	Client *client.Client
 }
 
-func (r *StatusUpdater) IsUpdated(_ context.Context, _ logr.Logger, _ *connectorsv1.YandexContainerRegistry) (bool, error) {
+func (r *StatusUpdater) IsUpdated(_ context.Context, _ logr.Logger, _ *connectorsv1.YandexContainerRegistry) (
+	bool, error,
+) {
 	// In every reconciliation we need to update
 	// status. Therefore, this updater is never
 	// marked as updated.
 	return false, nil
 }
 
-func (r *StatusUpdater) Update(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) error {
-	res, err := ycrutils.GetRegistry(ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk)
+func (r *StatusUpdater) Update(
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry,
+) error {
+	res, err := ycrutils.GetRegistry(
+		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk,
+	)
 	if err != nil {
 		return err
 	}

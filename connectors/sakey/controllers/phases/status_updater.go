@@ -32,7 +32,9 @@ func (r *StatusUpdater) Update(ctx context.Context, log logr.Logger, object *con
 	// managed by another phase and therefore only
 	// thing we do is update key cloud id.
 
-	res, err := sakeyutils.GetStaticAccessKey(ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name, r.Sdk)
+	res, err := sakeyutils.GetStaticAccessKey(
+		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name, r.Sdk,
+	)
 	if err != nil {
 		return err
 	}

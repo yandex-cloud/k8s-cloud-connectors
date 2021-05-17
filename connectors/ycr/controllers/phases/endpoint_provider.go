@@ -19,21 +19,29 @@ type EndpointProvider struct {
 	Client client.Client
 }
 
-func (r *EndpointProvider) IsUpdated(ctx context.Context, _ logr.Logger, registry *connectorsv1.YandexContainerRegistry) (bool, error) {
+func (r *EndpointProvider) IsUpdated(
+	ctx context.Context, _ logr.Logger, registry *connectorsv1.YandexContainerRegistry,
+) (bool, error) {
 	return configmaps.Exists(ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName)
 }
 
-func (r *EndpointProvider) Update(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
-	if err := configmaps.Put(ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName, map[string]string{
-		"ID": registry.Status.ID,
-	}); err != nil {
+func (r *EndpointProvider) Update(
+	ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry,
+) error {
+	if err := configmaps.Put(
+		ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName, map[string]string{
+			"ID": registry.Status.ID,
+		},
+	); err != nil {
 		return fmt.Errorf("unable to update endpoint: %v", err)
 	}
 	log.Info("endpoint successfully provided")
 	return nil
 }
 
-func (r *EndpointProvider) Cleanup(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
+func (r *EndpointProvider) Cleanup(
+	ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry,
+) error {
 	if err := configmaps.Remove(ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName); err != nil {
 		return fmt.Errorf("unable to remove endpoint: %v", err)
 	}

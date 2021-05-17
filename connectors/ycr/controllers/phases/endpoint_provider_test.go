@@ -25,183 +25,207 @@ func setupEndpointProvider(t *testing.T) (context.Context, logr.Logger, client.C
 }
 
 func createConfigMap(ctx context.Context, cl client.Client, t *testing.T, objectMetaName, namespace string) {
-	require.NoError(t, cl.Create(ctx, &v1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      ycrconfig.ShortName + "-" + objectMetaName + "-configmap",
-			Namespace: namespace,
-		},
-	}))
+	require.NoError(
+		t, cl.Create(
+			ctx, &v1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      ycrconfig.ShortName + "-" + objectMetaName + "-configmap",
+					Namespace: namespace,
+				},
+			},
+		),
+	)
 }
 
 func TestEndpointProviderIsUpdated(t *testing.T) {
-	t.Run("is updated on configmap existence", func(t *testing.T) {
-		// Arrange
-		ctx, log, cl, phase := setupEndpointProvider(t)
+	t.Run(
+		"is updated on configmap existence", func(t *testing.T) {
+			// Arrange
+			ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := createObject("resource", "folder", "obj", "default")
-		createConfigMap(ctx, cl, t, "obj", "default")
+			obj := createObject("resource", "folder", "obj", "default")
+			createConfigMap(ctx, cl, t, "obj", "default")
 
-		// Act
-		upd, err := phase.IsUpdated(ctx, log, &obj)
-		require.NoError(t, err)
+			// Act
+			upd, err := phase.IsUpdated(ctx, log, &obj)
+			require.NoError(t, err)
 
-		// Assert
-		assert.True(t, upd)
-	})
+			// Assert
+			assert.True(t, upd)
+		},
+	)
 
-	t.Run("is updated on many configmap existence", func(t *testing.T) {
-		// Arrange
-		ctx, log, cl, phase := setupEndpointProvider(t)
+	t.Run(
+		"is updated on many configmap existence", func(t *testing.T) {
+			// Arrange
+			ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := createObject("resource", "folder", "obj", "default")
-		createConfigMap(ctx, cl, t, "obj", "default")
+			obj := createObject("resource", "folder", "obj", "default")
+			createConfigMap(ctx, cl, t, "obj", "default")
 
-		createConfigMap(ctx, cl, t, "obj1", "default")
-		createConfigMap(ctx, cl, t, "obj", "other-namespace")
+			createConfigMap(ctx, cl, t, "obj1", "default")
+			createConfigMap(ctx, cl, t, "obj", "other-namespace")
 
-		// Act
-		upd, err := phase.IsUpdated(ctx, log, &obj)
-		require.NoError(t, err)
+			// Act
+			upd, err := phase.IsUpdated(ctx, log, &obj)
+			require.NoError(t, err)
 
-		// Assert
-		assert.True(t, upd)
-	})
+			// Assert
+			assert.True(t, upd)
+		},
+	)
 
-	t.Run("is not updated on empty cloud", func(t *testing.T) {
-		// Arrange
-		ctx, log, _, phase := setupEndpointProvider(t)
+	t.Run(
+		"is not updated on empty cloud", func(t *testing.T) {
+			// Arrange
+			ctx, log, _, phase := setupEndpointProvider(t)
 
-		obj := createObject("resource", "folder", "obj", "default")
+			obj := createObject("resource", "folder", "obj", "default")
 
-		// Act
-		upd, err := phase.IsUpdated(ctx, log, &obj)
-		require.NoError(t, err)
+			// Act
+			upd, err := phase.IsUpdated(ctx, log, &obj)
+			require.NoError(t, err)
 
-		// Assert
-		assert.False(t, upd)
-	})
+			// Assert
+			assert.False(t, upd)
+		},
+	)
 
-	t.Run("is not updated on other objects existence", func(t *testing.T) {
-		// Arrange
-		ctx, log, cl, phase := setupEndpointProvider(t)
+	t.Run(
+		"is not updated on other objects existence", func(t *testing.T) {
+			// Arrange
+			ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := createObject("resource", "folder", "obj", "default")
+			obj := createObject("resource", "folder", "obj", "default")
 
-		createConfigMap(ctx, cl, t, "obj1", "default")
-		createConfigMap(ctx, cl, t, "obj", "other-namespace")
+			createConfigMap(ctx, cl, t, "obj1", "default")
+			createConfigMap(ctx, cl, t, "obj", "other-namespace")
 
-		// Act
-		upd, err := phase.IsUpdated(ctx, log, &obj)
-		require.NoError(t, err)
+			// Act
+			upd, err := phase.IsUpdated(ctx, log, &obj)
+			require.NoError(t, err)
 
-		// Assert
-		assert.False(t, upd)
-	})
+			// Assert
+			assert.False(t, upd)
+		},
+	)
 }
 
 func TestEndpointProviderUpdate(t *testing.T) {
-	t.Run("update on empty cloud creates configmap", func(t *testing.T) {
-		// Arrange
-		ctx, log, _, phase := setupEndpointProvider(t)
+	t.Run(
+		"update on empty cloud creates configmap", func(t *testing.T) {
+			// Arrange
+			ctx, log, _, phase := setupEndpointProvider(t)
 
-		obj := createObject("resource", "folder", "obj", "default")
+			obj := createObject("resource", "folder", "obj", "default")
 
-		// Act
-		require.NoError(t, phase.Update(ctx, log, &obj))
-		upd, err := phase.IsUpdated(ctx, log, &obj)
-		require.NoError(t, err)
+			// Act
+			require.NoError(t, phase.Update(ctx, log, &obj))
+			upd, err := phase.IsUpdated(ctx, log, &obj)
+			require.NoError(t, err)
 
-		// Assert
-		assert.True(t, upd)
-	})
+			// Assert
+			assert.True(t, upd)
+		},
+	)
 
-	t.Run("update on non-empty cloud creates configmap", func(t *testing.T) {
-		// Arrange
-		ctx, log, cl, phase := setupEndpointProvider(t)
+	t.Run(
+		"update on non-empty cloud creates configmap", func(t *testing.T) {
+			// Arrange
+			ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := createObject("resource", "folder", "obj", "default")
+			obj := createObject("resource", "folder", "obj", "default")
 
-		createConfigMap(ctx, cl, t, "obj1", "default")
-		createConfigMap(ctx, cl, t, "obj", "other-namespace")
+			createConfigMap(ctx, cl, t, "obj1", "default")
+			createConfigMap(ctx, cl, t, "obj", "other-namespace")
 
-		// Act
-		require.NoError(t, phase.Update(ctx, log, &obj))
-		upd, err := phase.IsUpdated(ctx, log, &obj)
-		require.NoError(t, err)
+			// Act
+			require.NoError(t, phase.Update(ctx, log, &obj))
+			upd, err := phase.IsUpdated(ctx, log, &obj)
+			require.NoError(t, err)
 
-		// Assert
-		assert.True(t, upd)
-	})
+			// Assert
+			assert.True(t, upd)
+		},
+	)
 }
 
 func TestEndpointProviderCleanup(t *testing.T) {
-	t.Run("cleanup on empty cloud does nothing", func(t *testing.T) {
-		// Arrange
-		ctx, log, _, phase := setupEndpointProvider(t)
+	t.Run(
+		"cleanup on empty cloud does nothing", func(t *testing.T) {
+			// Arrange
+			ctx, log, _, phase := setupEndpointProvider(t)
 
-		obj := createObject("resource", "folder", "obj", "default")
+			obj := createObject("resource", "folder", "obj", "default")
 
-		// Act
-		require.NoError(t, phase.Cleanup(ctx, log, &obj))
-		upd, err := phase.IsUpdated(ctx, log, &obj)
-		require.NoError(t, err)
+			// Act
+			require.NoError(t, phase.Cleanup(ctx, log, &obj))
+			upd, err := phase.IsUpdated(ctx, log, &obj)
+			require.NoError(t, err)
 
-		// Assert
-		assert.False(t, upd)
-	})
+			// Assert
+			assert.False(t, upd)
+		},
+	)
 
-	t.Run("cleanup on cloud with other configmaps does nothing", func(t *testing.T) {
-		// Arrange
-		ctx, log, cl, phase := setupEndpointProvider(t)
+	t.Run(
+		"cleanup on cloud with other configmaps does nothing", func(t *testing.T) {
+			// Arrange
+			ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := createObject("resource", "folder", "obj", "default")
+			obj := createObject("resource", "folder", "obj", "default")
 
-		createConfigMap(ctx, cl, t, "obj1", "default")
-		createConfigMap(ctx, cl, t, "obj", "other-namespace")
+			createConfigMap(ctx, cl, t, "obj1", "default")
+			createConfigMap(ctx, cl, t, "obj", "other-namespace")
 
-		// Act
-		require.NoError(t, phase.Cleanup(ctx, log, &obj))
-		upd, err := phase.IsUpdated(ctx, log, &obj)
-		require.NoError(t, err)
+			// Act
+			require.NoError(t, phase.Cleanup(ctx, log, &obj))
+			upd, err := phase.IsUpdated(ctx, log, &obj)
+			require.NoError(t, err)
 
-		// Assert
-		assert.False(t, upd)
-	})
+			// Assert
+			assert.False(t, upd)
+		},
+	)
 
-	t.Run("cleanup on cloud with this and other configmaps deletes this configmap", func(t *testing.T) {
-		// Arrange
-		ctx, log, cl, phase := setupEndpointProvider(t)
+	t.Run(
+		"cleanup on cloud with this and other configmaps deletes this configmap", func(t *testing.T) {
+			// Arrange
+			ctx, log, cl, phase := setupEndpointProvider(t)
 
-		obj := createObject("resource", "folder", "obj", "default")
+			obj := createObject("resource", "folder", "obj", "default")
 
-		require.NoError(t, phase.Update(ctx, log, &obj))
+			require.NoError(t, phase.Update(ctx, log, &obj))
 
-		createConfigMap(ctx, cl, t, "obj1", "default")
-		createConfigMap(ctx, cl, t, "obj", "other-namespace")
+			createConfigMap(ctx, cl, t, "obj1", "default")
+			createConfigMap(ctx, cl, t, "obj", "other-namespace")
 
-		// Act
-		require.NoError(t, phase.Cleanup(ctx, log, &obj))
-		upd, err := phase.IsUpdated(ctx, log, &obj)
-		require.NoError(t, err)
+			// Act
+			require.NoError(t, phase.Cleanup(ctx, log, &obj))
+			upd, err := phase.IsUpdated(ctx, log, &obj)
+			require.NoError(t, err)
 
-		// Assert
-		assert.False(t, upd)
-	})
+			// Assert
+			assert.False(t, upd)
+		},
+	)
 
-	t.Run("cleanup on cloud with this configmap deletes this configmap", func(t *testing.T) {
-		// Arrange
-		ctx, log, _, phase := setupEndpointProvider(t)
+	t.Run(
+		"cleanup on cloud with this configmap deletes this configmap", func(t *testing.T) {
+			// Arrange
+			ctx, log, _, phase := setupEndpointProvider(t)
 
-		obj := createObject("resource", "folder", "obj", "default")
+			obj := createObject("resource", "folder", "obj", "default")
 
-		require.NoError(t, phase.Update(ctx, log, &obj))
+			require.NoError(t, phase.Update(ctx, log, &obj))
 
-		// Act
-		require.NoError(t, phase.Cleanup(ctx, log, &obj))
-		upd, err := phase.IsUpdated(ctx, log, &obj)
-		require.NoError(t, err)
+			// Act
+			require.NoError(t, phase.Cleanup(ctx, log, &obj))
+			upd, err := phase.IsUpdated(ctx, log, &obj)
+			require.NoError(t, err)
 
-		// Assert
-		assert.False(t, upd)
-	})
+			// Assert
+			assert.False(t, upd)
+		},
+	)
 }

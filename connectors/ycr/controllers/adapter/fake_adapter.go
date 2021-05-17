@@ -25,7 +25,9 @@ func NewFakeYandexContainerRegistryAdapter() FakeYandexContainerRegistryAdapter 
 	}
 }
 
-func (r *FakeYandexContainerRegistryAdapter) Create(_ context.Context, request *containerregistry.CreateRegistryRequest) (*containerregistry.Registry, error) {
+func (r *FakeYandexContainerRegistryAdapter) Create(
+	_ context.Context, request *containerregistry.CreateRegistryRequest,
+) (*containerregistry.Registry, error) {
 	// TODO (covariance) Remember that this is not intended behavior and in future YCR must be checked for name uniqueness
 	registry := containerregistry.Registry{
 		Id:        strconv.Itoa(r.FreeID),
@@ -39,14 +41,18 @@ func (r *FakeYandexContainerRegistryAdapter) Create(_ context.Context, request *
 	return &registry, nil
 }
 
-func (r *FakeYandexContainerRegistryAdapter) Read(_ context.Context, registryID string) (*containerregistry.Registry, error) {
+func (r *FakeYandexContainerRegistryAdapter) Read(_ context.Context, registryID string) (
+	*containerregistry.Registry, error,
+) {
 	if _, ok := r.Storage[registryID]; !ok {
 		return nil, status.Errorf(codes.NotFound, "registry not found: "+registryID)
 	}
 	return r.Storage[registryID], nil
 }
 
-func (r *FakeYandexContainerRegistryAdapter) List(_ context.Context, folderID string) ([]*containerregistry.Registry, error) {
+func (r *FakeYandexContainerRegistryAdapter) List(_ context.Context, folderID string) (
+	[]*containerregistry.Registry, error,
+) {
 	var result []*containerregistry.Registry
 	for _, registry := range r.Storage {
 		if registry.FolderId == folderID {
@@ -56,7 +62,9 @@ func (r *FakeYandexContainerRegistryAdapter) List(_ context.Context, folderID st
 	return result, nil
 }
 
-func (r *FakeYandexContainerRegistryAdapter) Update(_ context.Context, request *containerregistry.UpdateRegistryRequest) error {
+func (r *FakeYandexContainerRegistryAdapter) Update(
+	_ context.Context, request *containerregistry.UpdateRegistryRequest,
+) error {
 	if _, ok := r.Storage[request.RegistryId]; !ok {
 		return status.Errorf(codes.NotFound, "registry not found: "+request.RegistryId)
 	}

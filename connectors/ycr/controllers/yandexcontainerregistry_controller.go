@@ -35,7 +35,9 @@ type yandexContainerRegistryReconciler struct {
 	phases []phases.YandexContainerRegistryPhase
 }
 
-func NewYandexContainerRegistryReconciler(cl client.Client, log logr.Logger, scheme *runtime.Scheme) (*yandexContainerRegistryReconciler, error) {
+func NewYandexContainerRegistryReconciler(
+	cl client.Client, log logr.Logger, scheme *runtime.Scheme,
+) (*yandexContainerRegistryReconciler, error) {
 	impl, err := adapter.NewYandexContainerRegistryAdapterSDK()
 	if err != nil {
 		return nil, err
@@ -73,10 +75,10 @@ func NewYandexContainerRegistryReconciler(cl client.Client, log logr.Logger, sch
 	}, nil
 }
 
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexcontainerregistries,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexcontainerregistries/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexcontainerregistries/finalizers,verbs=update
-//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexcontainerregistries,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexcontainerregistries/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexcontainerregistries/finalizers,verbs=update
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 
 func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.log.WithValues(ycrconfig.LongName, req.NamespacedName)
@@ -125,11 +127,17 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 	return config.GetNormalResult()
 }
 
-func (r *yandexContainerRegistryReconciler) mustBeFinalized(registry *connectorsv1.YandexContainerRegistry) (bool, error) {
-	return !registry.DeletionTimestamp.IsZero() && utils.ContainsString(registry.Finalizers, ycrconfig.FinalizerName), nil
+func (r *yandexContainerRegistryReconciler) mustBeFinalized(registry *connectorsv1.YandexContainerRegistry) (
+	bool, error,
+) {
+	return !registry.DeletionTimestamp.IsZero() && utils.ContainsString(
+		registry.Finalizers, ycrconfig.FinalizerName,
+	), nil
 }
 
-func (r *yandexContainerRegistryReconciler) finalize(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry) error {
+func (r *yandexContainerRegistryReconciler) finalize(
+	ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry,
+) error {
 	for i := len(r.phases); i != 0; i-- {
 		if err := r.phases[i-1].Cleanup(ctx, log, registry); err != nil {
 			return fmt.Errorf("error during finalization: %v", err)

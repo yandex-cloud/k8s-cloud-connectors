@@ -23,7 +23,9 @@ type Allocator struct {
 }
 
 func (r *Allocator) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.StaticAccessKey) (bool, error) {
-	res, err := sakeyutils.GetStaticAccessKey(ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name, r.Sdk)
+	res, err := sakeyutils.GetStaticAccessKey(
+		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name, r.Sdk,
+	)
 	if err != nil {
 		return false, err
 	}
@@ -33,16 +35,20 @@ func (r *Allocator) IsUpdated(ctx context.Context, _ logr.Logger, object *connec
 }
 
 func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey) error {
-	res, err := r.Sdk.Create(ctx, object.Spec.ServiceAccountID, sakeyconfig.GetStaticAccessKeyDescription(object.ClusterName, object.Name))
+	res, err := r.Sdk.Create(
+		ctx, object.Spec.ServiceAccountID, sakeyconfig.GetStaticAccessKeyDescription(object.ClusterName, object.Name),
+	)
 	if err != nil {
 		return fmt.Errorf("error while creating resource: %v", err)
 	}
 
 	// Now we need to create a secret with the key
-	if err = secrets.Put(ctx, r.Client, &object.ObjectMeta, sakeyconfig.ShortName, map[string]string{
-		"key":    res.AccessKey.KeyId,
-		"secret": res.Secret,
-	}); err != nil {
+	if err = secrets.Put(
+		ctx, r.Client, &object.ObjectMeta, sakeyconfig.ShortName, map[string]string{
+			"key":    res.AccessKey.KeyId,
+			"secret": res.Secret,
+		},
+	); err != nil {
 		// This exact error is a disaster - we have created key, but
 		// have not provided secret with secret key and therefore
 		// we will inevitably lose it.
@@ -65,7 +71,9 @@ func (r *Allocator) Cleanup(ctx context.Context, log logr.Logger, object *connec
 		return err
 	}
 
-	res, err := sakeyutils.GetStaticAccessKey(ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name, r.Sdk)
+	res, err := sakeyutils.GetStaticAccessKey(
+		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name, r.Sdk,
+	)
 	if err != nil {
 		return err
 	}

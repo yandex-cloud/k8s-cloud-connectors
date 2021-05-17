@@ -25,16 +25,19 @@ type AwsSdkProvider = func(ctx context.Context, key string, secret string) (*s3.
 
 func NewStaticProvider() AwsSdkProvider {
 	return func(_ context.Context, key string, secret string) (*s3.S3, error) {
-		ses, err := session.NewSession(&aws.Config{
-			Credentials: credentials.NewStaticCredentials(key, secret, ""),
-			Endpoint:    aws.String(config.Endpoint),
-			EndpointResolver: endpoints.ResolverFunc(
-				func(service, region string, opts ...func(*endpoints.Options)) (endpoints.ResolvedEndpoint, error) {
-					return endpoints.ResolvedEndpoint{URL: config.Endpoint}, nil
-				}),
-			Region:           aws.String(config.AwsRegion),
-			S3ForcePathStyle: aws.Bool(true),
-		})
+		ses, err := session.NewSession(
+			&aws.Config{
+				Credentials: credentials.NewStaticCredentials(key, secret, ""),
+				Endpoint:    aws.String(config.Endpoint),
+				EndpointResolver: endpoints.ResolverFunc(
+					func(service, region string, opts ...func(*endpoints.Options)) (endpoints.ResolvedEndpoint, error) {
+						return endpoints.ResolvedEndpoint{URL: config.Endpoint}, nil
+					},
+				),
+				Region:           aws.String(config.AwsRegion),
+				S3ForcePathStyle: aws.Bool(true),
+			},
+		)
 
 		if err != nil {
 			return nil, fmt.Errorf("unable to get yos sdk: %v", err)
@@ -44,21 +47,27 @@ func NewStaticProvider() AwsSdkProvider {
 	}
 }
 
-func KeyAndSecretFromStaticAccessKey(ctx context.Context, bucket *connectorsv1.YandexObjectStorage, cl client.Client) (keyData, secretData string, err error) {
+func KeyAndSecretFromStaticAccessKey(
+	ctx context.Context, bucket *connectorsv1.YandexObjectStorage, cl client.Client,
+) (keyData, secretData string, err error) {
 	var key sakey.StaticAccessKey
-	if err = cl.Get(ctx, types.NamespacedName{
-		Namespace: bucket.Namespace,
-		Name:      bucket.Spec.SAKeyName,
-	}, &key); err != nil {
+	if err = cl.Get(
+		ctx, types.NamespacedName{
+			Namespace: bucket.Namespace,
+			Name:      bucket.Spec.SAKeyName,
+		}, &key,
+	); err != nil {
 		err = fmt.Errorf("unable to retrieve corresponding SAKey: %v", err)
 		return
 	}
 
 	var secret v1.Secret
-	if err = cl.Get(ctx, types.NamespacedName{
-		Namespace: "default",
-		Name:      key.Status.SecretName,
-	}, &secret); err != nil {
+	if err = cl.Get(
+		ctx, types.NamespacedName{
+			Namespace: "default",
+			Name:      key.Status.SecretName,
+		}, &secret,
+	); err != nil {
 		err = fmt.Errorf("unable to retrieve corresponding secret: %v", err)
 		return
 	}

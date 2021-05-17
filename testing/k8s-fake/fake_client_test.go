@@ -39,10 +39,14 @@ func TestCreate(t *testing.T) {
 	require.NoError(t, c.Create(ctx, secret))
 
 	var res v1.Secret
-	require.NoError(t, c.Get(ctx, client.ObjectKey{
-		Name:      secret.Name,
-		Namespace: secret.Namespace,
-	}, &res))
+	require.NoError(
+		t, c.Get(
+			ctx, client.ObjectKey{
+				Name:      secret.Name,
+				Namespace: secret.Namespace,
+			}, &res,
+		),
+	)
 
 	// Assert
 	assert.Equal(t, *secret, res)
@@ -75,10 +79,12 @@ func TestCreateDelete(t *testing.T) {
 	require.NoError(t, c.Delete(ctx, secret))
 
 	var res v1.Secret
-	err := c.Get(ctx, client.ObjectKey{
-		Name:      secret.Name,
-		Namespace: secret.Namespace,
-	}, &res)
+	err := c.Get(
+		ctx, client.ObjectKey{
+			Name:      secret.Name,
+			Namespace: secret.Namespace,
+		}, &res,
+	)
 
 	// Assert
 	assert.True(t, errors.IsNotFound(err))
@@ -129,10 +135,14 @@ func TestUpdate(t *testing.T) {
 	require.NoError(t, c.Update(ctx, updSecret))
 
 	var res v1.Secret
-	require.NoError(t, c.Get(ctx, client.ObjectKey{
-		Name:      secret.Name,
-		Namespace: secret.Namespace,
-	}, &res))
+	require.NoError(
+		t, c.Get(
+			ctx, client.ObjectKey{
+				Name:      secret.Name,
+				Namespace: secret.Namespace,
+			}, &res,
+		),
+	)
 
 	// Assert
 	assert.Equal(t, *updSecret, res)

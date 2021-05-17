@@ -14,7 +14,9 @@ import (
 	"k8s-connectors/pkg/errors"
 )
 
-func GetStaticAccessKey(ctx context.Context, keyID, saID, clusterName, name string, ad adapter.StaticAccessKeyAdapter) (*awscompatibility.AccessKey, error) {
+func GetStaticAccessKey(
+	ctx context.Context, keyID, saID, clusterName, name string, ad adapter.StaticAccessKeyAdapter,
+) (*awscompatibility.AccessKey, error) {
 	if keyID != "" {
 		res, err := ad.Read(ctx, keyID)
 		if err != nil {

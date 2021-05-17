@@ -21,16 +21,20 @@ func NewYandexMessageQueueAdapterSDK() (YandexMessageQueueAdapter, error) {
 	}, nil
 }
 
-func (r YandexMessageQueueAdapterSDK) Create(ctx context.Context, key, secret string, attributes map[string]*string, name string) (string, error) {
+func (r YandexMessageQueueAdapterSDK) Create(
+	ctx context.Context, key, secret string, attributes map[string]*string, name string,
+) (string, error) {
 	sdk, err := r.sqsProvider(ctx, key, secret)
 	if err != nil {
 		return "", err
 	}
 
-	res, err := sdk.CreateQueue(&sqs.CreateQueueInput{
-		Attributes: attributes,
-		QueueName:  &name,
-	})
+	res, err := sdk.CreateQueue(
+		&sqs.CreateQueueInput{
+			Attributes: attributes,
+			QueueName:  &name,
+		},
+	)
 	if err != nil {
 		return "", err
 	}
@@ -62,8 +66,10 @@ func (r YandexMessageQueueAdapterSDK) Delete(ctx context.Context, key, secret, q
 		return err
 	}
 
-	_, err = sdk.DeleteQueue(&sqs.DeleteQueueInput{
-		QueueUrl: &queueURL,
-	})
+	_, err = sdk.DeleteQueue(
+		&sqs.DeleteQueueInput{
+			QueueUrl: &queueURL,
+		},
+	)
 	return err
 }

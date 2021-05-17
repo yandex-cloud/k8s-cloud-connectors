@@ -19,7 +19,7 @@ spec:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: 'YandexObjectStorage: is the Schema for the yandex object storage API'
+        description: YandexObjectStorage is the Schema for the yandex object storage API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
@@ -30,7 +30,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: 'YandexObjectStorageSpec: defines the desired state of YandexObjectStorage'
+            description: YandexObjectStorageSpec defines the desired state of YandexObjectStorage
             properties:
               ACL:
                 description: 'ACL: canned Access Control List to apply to this bucket. Read further about ACL in Yandex Cloud here: https://cloud.yandex.ru/docs/storage/concepts/acl'
@@ -49,7 +49,7 @@ spec:
             - name
             type: object
           status:
-            description: 'YandexObjectStorageStatus: defines the observed state of YandexObjectStorage'
+            description: YandexObjectStorageStatus defines the observed state of YandexObjectStorage
             type: object
         type: object
     served: true

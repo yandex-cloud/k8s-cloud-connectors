@@ -25,7 +25,9 @@ func NewFakeStaticAccessKeyAdapter() FakeStaticAccessKeyAdapter {
 	}
 }
 
-func (r *FakeStaticAccessKeyAdapter) Create(_ context.Context, saID, description string) (*awscompatibility.CreateAccessKeyResponse, error) {
+func (r *FakeStaticAccessKeyAdapter) Create(
+	_ context.Context, saID, description string,
+) (*awscompatibility.CreateAccessKeyResponse, error) {
 	res := &awscompatibility.CreateAccessKeyResponse{
 		AccessKey: &awscompatibility.AccessKey{
 			Id:               strconv.Itoa(r.FreeID),

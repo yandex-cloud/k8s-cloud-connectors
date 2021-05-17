@@ -27,9 +27,11 @@ func (r YandexObjectStorageAdapterSDK) Create(ctx context.Context, key, secret, 
 		return err
 	}
 
-	_, err = sdk.CreateBucket(&s3.CreateBucketInput{
-		Bucket: &name,
-	})
+	_, err = sdk.CreateBucket(
+		&s3.CreateBucketInput{
+			Bucket: &name,
+		},
+	)
 	return err
 }
 
@@ -56,8 +58,10 @@ func (r YandexObjectStorageAdapterSDK) Delete(ctx context.Context, key, secret, 
 		return err
 	}
 
-	_, err = sdk.DeleteBucket(&s3.DeleteBucketInput{
-		Bucket: &name,
-	})
+	_, err = sdk.DeleteBucket(
+		&s3.DeleteBucketInput{
+			Bucket: &name,
+		},
+	)
 	return err
 }

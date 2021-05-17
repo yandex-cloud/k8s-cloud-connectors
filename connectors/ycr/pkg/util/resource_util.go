@@ -20,7 +20,10 @@ func checkRegistryMatchWithYcr(ycr *containerregistry.Registry, registryName, cl
 	return ok1 && ok2 && cluster == clusterName && name == registryName
 }
 
-func GetRegistry(ctx context.Context, registryID, folderID, registryName, clusterName string, ad adapter.YandexContainerRegistryAdapter) (*containerregistry.Registry, error) {
+func GetRegistry(
+	ctx context.Context, registryID, folderID, registryName, clusterName string,
+	ad adapter.YandexContainerRegistryAdapter,
+) (*containerregistry.Registry, error) {
 	// If id is written in the status, we need to check
 	// whether it exists in the cloud
 	if registryID != "" {

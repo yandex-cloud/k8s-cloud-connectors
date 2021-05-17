@@ -23,7 +23,9 @@ func (r *FinalizerRegistrar) IsUpdated(_ context.Context, resource *connectorsv1
 	return utils.ContainsString(resource.Finalizers, ymqconfig.FinalizerName), nil
 }
 
-func (r *FinalizerRegistrar) Update(ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue) error {
+func (r *FinalizerRegistrar) Update(
+	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue,
+) error {
 	resource.Finalizers = append(resource.Finalizers, ymqconfig.FinalizerName)
 	if err := (*r.Client).Update(ctx, resource); err != nil {
 		return fmt.Errorf("unable to update resource status: %v", err)
@@ -32,7 +34,9 @@ func (r *FinalizerRegistrar) Update(ctx context.Context, log logr.Logger, resour
 	return nil
 }
 
-func (r *FinalizerRegistrar) Cleanup(ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue) error {
+func (r *FinalizerRegistrar) Cleanup(
+	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue,
+) error {
 	resource.Finalizers = utils.RemoveString(resource.Finalizers, ymqconfig.FinalizerName)
 	if err := (*r.Client).Update(ctx, resource); err != nil {
 		return fmt.Errorf("unable to remove finalizer: %v", err)
