@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -24,8 +23,7 @@ import (
 // YandexMessageQueueReconciler reconciles a YandexContainerRegistry object
 type YandexMessageQueueReconciler struct {
 	client.Client
-	log    logr.Logger
-	scheme *runtime.Scheme
+	log logr.Logger
 	// phases that are to be invoked on this object
 	// IsUpdated blocks Update, and order of initializers matters,
 	// thus if one of initializers fails, subsequent won't be processed.
@@ -35,7 +33,7 @@ type YandexMessageQueueReconciler struct {
 }
 
 func NewYandexMessageQueueReconciler(
-	cl client.Client, log logr.Logger, scheme *runtime.Scheme,
+	cl client.Client, log logr.Logger,
 ) (*YandexMessageQueueReconciler, error) {
 	sdk, err := adapter.NewYandexMessageQueueAdapterSDK()
 	if err != nil {
@@ -44,7 +42,6 @@ func NewYandexMessageQueueReconciler(
 	return &YandexMessageQueueReconciler{
 		Client: cl,
 		log:    log,
-		scheme: scheme,
 		phases: []phase.YandexMessageQueuePhase{
 			&phase.FinalizerRegistrar{
 				Client: &cl,

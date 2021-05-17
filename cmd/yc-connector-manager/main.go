@@ -95,7 +95,6 @@ func main() {
 	sakeyReconciler, err := sakeyconnector.NewStaticAccessKeyReconciler(
 		mgr.GetClient(),
 		ctrl.Log.WithName("controllers").WithName(sakeyconfig.LongName),
-		mgr.GetScheme(),
 	)
 	controllerCreationErrorExit(err, sakeyconfig.LongName)
 	err = sakeyReconciler.SetupWithManager(mgr)
@@ -104,7 +103,6 @@ func main() {
 	ycrReconciler, err := ycrconnector.NewYandexContainerRegistryReconciler(
 		mgr.GetClient(),
 		ctrl.Log.WithName("controllers").WithName(ycrconfig.LongName),
-		mgr.GetScheme(),
 	)
 	controllerCreationErrorExit(err, ycrconfig.LongName)
 	err = ycrReconciler.SetupWithManager(mgr)
@@ -113,7 +111,6 @@ func main() {
 	ymqReconciler, err := ymqconnector.NewYandexMessageQueueReconciler(
 		mgr.GetClient(),
 		ctrl.Log.WithName("controllers").WithName(ymqconfig.LongName),
-		mgr.GetScheme(),
 	)
 	controllerCreationErrorExit(err, ymqconfig.LongName)
 	err = ymqReconciler.SetupWithManager(mgr)
@@ -122,7 +119,6 @@ func main() {
 	yosReconciler, err := yosconnector.NewYandexObjectStorageReconciler(
 		mgr.GetClient(),
 		ctrl.Log.WithName("controllers").WithName(yosconfig.LongName),
-		mgr.GetScheme(),
 	)
 	controllerCreationErrorExit(err, yosconfig.LongName)
 	err = yosReconciler.SetupWithManager(mgr)

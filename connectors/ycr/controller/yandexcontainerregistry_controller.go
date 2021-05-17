@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -24,8 +23,7 @@ import (
 // yandexContainerRegistryReconciler reconciles a YandexContainerRegistry object
 type yandexContainerRegistryReconciler struct {
 	client.Client
-	log    logr.Logger
-	scheme *runtime.Scheme
+	log logr.Logger
 
 	// phases that are to be invoked on this object
 	// IsUpdated blocks Update, and order of initializers matters,
@@ -36,7 +34,7 @@ type yandexContainerRegistryReconciler struct {
 }
 
 func NewYandexContainerRegistryReconciler(
-	cl client.Client, log logr.Logger, scheme *runtime.Scheme,
+	cl client.Client, log logr.Logger,
 ) (*yandexContainerRegistryReconciler, error) {
 	impl, err := adapter.NewYandexContainerRegistryAdapterSDK()
 	if err != nil {
@@ -45,7 +43,6 @@ func NewYandexContainerRegistryReconciler(
 	return &yandexContainerRegistryReconciler{
 		Client: cl,
 		log:    log,
-		scheme: scheme,
 		phases: []phase.YandexContainerRegistryPhase{
 			// Register finalizer for the object (is blocked by allocation)
 			&phase.FinalizerRegistrar{
