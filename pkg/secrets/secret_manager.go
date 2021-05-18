@@ -41,7 +41,7 @@ func Put(ctx context.Context, client *rtcl.Client, object metav1.ObjectMeta, kin
 			Name:      secretName,
 			Namespace: object.Namespace,
 			Labels: map[string]string{
-				"kind" : kind,
+				"kind": kind,
 			},
 		},
 		StringData: data,

@@ -1,4 +1,0 @@
-resources:
-  - ../../../../config/system/
-  - crd/connectors.cloud.yandex.com_yandexobjectstorages.yaml
-  - ../namespaced/

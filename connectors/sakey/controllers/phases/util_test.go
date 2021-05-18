@@ -12,9 +12,9 @@ func createObject(saID, metaName, namespace string) connectorsv1.StaticAccessKey
 	return connectorsv1.StaticAccessKey{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
-			Name: metaName,
+			Name:      metaName,
 		},
-		Spec:       connectorsv1.StaticAccessKeySpec{
+		Spec: connectorsv1.StaticAccessKeySpec{
 			ServiceAccountID: saID,
 		},
 	}

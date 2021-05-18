@@ -1,24 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: connector
+  name: connector-manager
   namespace: yandex-cloud-connectors
 spec:
   selector:
     matchLabels:
-      control-plane: controller-manager
+      control-plane: connector-manager
   replicas: 1
   template:
     metadata:
       labels:
-        control-plane: controller-manager
+        control-plane: connector-manager
     spec:
       securityContext:
         runAsNonRoot: true
       containers:
-        - command:
-            - /manager
-          image: controller:latest
+        - image: cr.yandex/crptp7j81e7caog8r6gq/yc-connector-manager:latest
           name: manager
           securityContext:
             allowPrivilegeEscalation: false

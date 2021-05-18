@@ -44,7 +44,7 @@ func Put(ctx context.Context, client *rtcl.Client, resourceName string, namespac
 			Name:      cmapName,
 			Namespace: namespace,
 			Labels: map[string]string{
-				"kind" : kind,
+				"kind": kind,
 			},
 		},
 		Data: data,

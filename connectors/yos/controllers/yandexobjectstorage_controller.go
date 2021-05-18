@@ -62,7 +62,8 @@ func NewYandexObjectStorageReconciler(client client.Client, log logr.Logger, sch
 //+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexobjectstorages/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexobjectstorages/finalizers,verbs=update
 //+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=staticaccesskeys,verbs=get
-//+kubebuilder:rbac:groups="",resources:secrets,verbs=get
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=get
+
 func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.log.WithValues(yosconfig.LongName, req.NamespacedName)
 

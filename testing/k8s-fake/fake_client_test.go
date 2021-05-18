@@ -19,19 +19,19 @@ func TestCreate(t *testing.T) {
 	c := NewFakeClient()
 	ctx := context.Background()
 	secret := &v1.Secret{
-		TypeMeta:   metav1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:                       "secret",
-			Namespace:                  "default",
-			Generation:                 0,
+			Name:       "secret",
+			Namespace:  "default",
+			Generation: 0,
 		},
 		StringData: map[string]string{
-			"secret-specific-data" : "exists",
+			"secret-specific-data": "exists",
 		},
-		Type:       "opaque",
+		Type: "opaque",
 	}
 
 	// Act
@@ -39,7 +39,7 @@ func TestCreate(t *testing.T) {
 
 	var res v1.Secret
 	require.NoError(t, c.Get(ctx, client.ObjectKey{
-		Name: secret.Name,
+		Name:      secret.Name,
 		Namespace: secret.Namespace,
 	}, &res))
 
@@ -52,21 +52,21 @@ func TestCreateDelete(t *testing.T) {
 	c := NewFakeClient()
 	ctx := context.Background()
 	secret := &v1.Secret{
-		TypeMeta:   metav1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:                       "secret",
-			Namespace:                  "default",
-			Generation:                 0,
+			Name:       "secret",
+			Namespace:  "default",
+			Generation: 0,
 		},
-		Immutable:  nil,
-		Data:       nil,
+		Immutable: nil,
+		Data:      nil,
 		StringData: map[string]string{
-			"secret-specific-data" : "exists",
+			"secret-specific-data": "exists",
 		},
-		Type:       "opaque",
+		Type: "opaque",
 	}
 
 	// Act
@@ -75,7 +75,7 @@ func TestCreateDelete(t *testing.T) {
 
 	var res v1.Secret
 	err := c.Get(ctx, client.ObjectKey{
-		Name: secret.Name,
+		Name:      secret.Name,
 		Namespace: secret.Namespace,
 	}, &res)
 
@@ -88,39 +88,39 @@ func TestUpdate(t *testing.T) {
 	c := NewFakeClient()
 	ctx := context.Background()
 	secret := &v1.Secret{
-		TypeMeta:   metav1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:                       "secret",
-			Namespace:                  "default",
-			Generation:                 0,
+			Name:       "secret",
+			Namespace:  "default",
+			Generation: 0,
 		},
-		Immutable:  nil,
-		Data:       nil,
+		Immutable: nil,
+		Data:      nil,
 		StringData: map[string]string{
-			"secret-specific-data" : "exists",
+			"secret-specific-data": "exists",
 		},
-		Type:       "opaque",
+		Type: "opaque",
 	}
 
 	updSecret := &v1.Secret{
-		TypeMeta:   metav1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:                       "secret",
-			Namespace:                  "default",
-			Generation:                 0,
+			Name:       "secret",
+			Namespace:  "default",
+			Generation: 0,
 		},
-		Immutable:  nil,
-		Data:       nil,
+		Immutable: nil,
+		Data:      nil,
 		StringData: map[string]string{
-			"secret-specific-data" : "does-not-exist",
+			"secret-specific-data": "does-not-exist",
 		},
-		Type:       "opaque",
+		Type: "opaque",
 	}
 
 	// Act
@@ -129,7 +129,7 @@ func TestUpdate(t *testing.T) {
 
 	var res v1.Secret
 	require.NoError(t, c.Get(ctx, client.ObjectKey{
-		Name: secret.Name,
+		Name:      secret.Name,
 		Namespace: secret.Namespace,
 	}, &res))
 

@@ -16,13 +16,13 @@ import (
 )
 
 type FakeClient struct {
-	scheme *runtime.Scheme
+	scheme  *runtime.Scheme
 	objects map[types.NamespacedName]client.Object
 }
 
 func NewFakeClient() client.Client {
 	return &FakeClient{
-		scheme: nil,
+		scheme:  nil,
 		objects: map[types.NamespacedName]client.Object{},
 	}
 }
@@ -110,7 +110,7 @@ func (r *FakeClient) Status() client.StatusWriter {
 	return &FakeStatusWriter{}
 }
 
-type FakeStatusWriter struct {}
+type FakeStatusWriter struct{}
 
 // Update updates the fields corresponding to the status subresource for the
 // given obj. obj must be a struct pointer so that obj can be updated
