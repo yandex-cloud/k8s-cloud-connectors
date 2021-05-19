@@ -18,20 +18,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	sakey "k8s-connectors/connectors/sakey/api/v1"
-	ycr "k8s-connectors/connectors/ycr/api/v1"
-	ymq "k8s-connectors/connectors/ymq/api/v1"
-	yos "k8s-connectors/connectors/yos/api/v1"
+	sakey "k8s-connectors/connector/sakey/api/v1"
+	ycr "k8s-connectors/connector/ycr/api/v1"
+	ymq "k8s-connectors/connector/ymq/api/v1"
+	yos "k8s-connectors/connector/yos/api/v1"
 
-	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
-	ycrconfig "k8s-connectors/connectors/ycr/pkg/config"
-	ymqconfig "k8s-connectors/connectors/ymq/pkg/config"
-	yosconfig "k8s-connectors/connectors/yos/pkg/config"
+	sakeyconfig "k8s-connectors/connector/sakey/pkg/config"
+	ycrconfig "k8s-connectors/connector/ycr/pkg/config"
+	ymqconfig "k8s-connectors/connector/ymq/pkg/config"
+	yosconfig "k8s-connectors/connector/yos/pkg/config"
 
-	sakeyconnector "k8s-connectors/connectors/sakey/controller"
-	ycrconnector "k8s-connectors/connectors/ycr/controller"
-	ymqconnector "k8s-connectors/connectors/ymq/controller"
-	yosconnector "k8s-connectors/connectors/yos/controller"
+	sakeyconnector "k8s-connectors/connector/sakey/controller"
+	ycrconnector "k8s-connectors/connector/ycr/controller"
+	ymqconnector "k8s-connectors/connector/ymq/controller"
+	yosconnector "k8s-connectors/connector/yos/controller"
 	// +kubebuilder:scaffold:imports
 )
 
