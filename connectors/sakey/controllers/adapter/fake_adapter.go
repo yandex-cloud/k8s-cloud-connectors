@@ -5,38 +5,41 @@ package adapter
 
 import (
 	"context"
+	"strconv"
+
 	"github.com/golang/protobuf/ptypes"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/iam/v1/awscompatibility"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"strconv"
 )
 
 type FakeStaticAccessKeyAdapter struct {
 	Storage map[string]*awscompatibility.AccessKey
-	FreeId  int
+	FreeID  int
 }
 
 func NewFakeStaticAccessKeyAdapter() FakeStaticAccessKeyAdapter {
 	return FakeStaticAccessKeyAdapter{
 		Storage: map[string]*awscompatibility.AccessKey{},
-		FreeId:  0,
+		FreeID:  0,
 	}
 }
 
-func (r *FakeStaticAccessKeyAdapter) Create(_ context.Context, saID string, description string) (*awscompatibility.CreateAccessKeyResponse, error) {
+func (r *FakeStaticAccessKeyAdapter) Create(
+	_ context.Context, saID, description string,
+) (*awscompatibility.CreateAccessKeyResponse, error) {
 	res := &awscompatibility.CreateAccessKeyResponse{
 		AccessKey: &awscompatibility.AccessKey{
-			Id:               strconv.Itoa(r.FreeId),
+			Id:               strconv.Itoa(r.FreeID),
 			ServiceAccountId: saID,
 			CreatedAt:        ptypes.TimestampNow(),
 			Description:      description,
-			KeyId:            strconv.Itoa(r.FreeId),
+			KeyId:            strconv.Itoa(r.FreeID),
 		},
-		Secret: strconv.Itoa(r.FreeId),
+		Secret: strconv.Itoa(r.FreeID),
 	}
-	r.Storage[strconv.Itoa(r.FreeId)] = res.AccessKey
-	r.FreeId++
+	r.Storage[strconv.Itoa(r.FreeID)] = res.AccessKey
+	r.FreeID++
 	return res, nil
 }
 

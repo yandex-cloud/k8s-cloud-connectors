@@ -6,11 +6,13 @@ package phases
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
 	"k8s-connectors/connectors/ycr/controllers/adapter"
 	ycrutils "k8s-connectors/connectors/ycr/pkg/util"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type StatusUpdater struct {
@@ -18,15 +20,21 @@ type StatusUpdater struct {
 	Client *client.Client
 }
 
-func (r *StatusUpdater) IsUpdated(_ context.Context, _ logr.Logger, _ *connectorsv1.YandexContainerRegistry) (bool, error) {
+func (r *StatusUpdater) IsUpdated(_ context.Context, _ logr.Logger, _ *connectorsv1.YandexContainerRegistry) (
+	bool, error,
+) {
 	// In every reconciliation we need to update
 	// status. Therefore, this updater is never
 	// marked as updated.
 	return false, nil
 }
 
-func (r *StatusUpdater) Update(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) error {
-	res, err := ycrutils.GetRegistry(ctx, object.Status.Id, object.Spec.FolderId, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk)
+func (r *StatusUpdater) Update(
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry,
+) error {
+	res, err := ycrutils.GetRegistry(
+		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk,
+	)
 	if err != nil {
 		return err
 	}
@@ -34,7 +42,7 @@ func (r *StatusUpdater) Update(ctx context.Context, log logr.Logger, object *con
 		return fmt.Errorf("resource not found in cloud: %v", object)
 	}
 
-	object.Status.Id = res.Id
+	object.Status.ID = res.Id
 	// TODO (covariance) decide what to do with object.Status.Status
 	// TODO (covariance) maybe store object.Status.CreatedAt as a timestamp?
 	object.Status.CreatedAt = res.CreatedAt.String()

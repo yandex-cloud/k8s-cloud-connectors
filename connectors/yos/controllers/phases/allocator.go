@@ -5,11 +5,13 @@ package phases
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	connectorsv1 "k8s-connectors/connectors/yos/api/v1"
 	"k8s-connectors/connectors/yos/controllers/adapter"
 	yosutils "k8s-connectors/connectors/yos/pkg/utils"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ResourceAllocator struct {
@@ -34,7 +36,9 @@ func (r *ResourceAllocator) IsUpdated(ctx context.Context, resource *connectorsv
 	return false, nil
 }
 
-func (r *ResourceAllocator) Update(ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage) error {
+func (r *ResourceAllocator) Update(
+	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage,
+) error {
 	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, resource, *r.Client)
 	if err != nil {
 		return err
@@ -47,7 +51,9 @@ func (r *ResourceAllocator) Update(ctx context.Context, log logr.Logger, resourc
 	return nil
 }
 
-func (r *ResourceAllocator) Cleanup(ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage) error {
+func (r *ResourceAllocator) Cleanup(
+	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage,
+) error {
 	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, resource, *r.Client)
 	if err != nil {
 		return err

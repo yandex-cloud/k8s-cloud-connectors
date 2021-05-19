@@ -7,7 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// YandexObjectStorageSpec: defines the desired state of YandexObjectStorage
+// YandexObjectStorageSpec defines the desired state of YandexObjectStorage
 type YandexObjectStorageSpec struct {
 	// Name: must be unique in Yandex Cloud. Can consist of lowercase latin letters, dashes, dots and numbers
 	// and must be from 3 to 64 characters long. Must be immutable.
@@ -28,15 +28,15 @@ type YandexObjectStorageSpec struct {
 	SAKeyName string `json:"SAKeyName"`
 }
 
-// YandexObjectStorageStatus: defines the observed state of YandexObjectStorage
+// YandexObjectStorageStatus defines the observed state of YandexObjectStorage
 type YandexObjectStorageStatus struct {
 	// Bucket can be accessed with just a name and
 	// key from secret provided by Static Access Key.
 }
 
-// YandexObjectStorage: is the Schema for the yandex object storage API
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// YandexObjectStorage is the Schema for the yandex object storage API
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 type YandexObjectStorage struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -45,8 +45,8 @@ type YandexObjectStorage struct {
 	Status YandexObjectStorageStatus `json:"status,omitempty"`
 }
 
-// YandexObjectStorageList: contains a list of YandexObjectStorage
-//+kubebuilder:object:root=true
+// YandexObjectStorageList contains a list of YandexObjectStorage
+// +kubebuilder:object:root=true
 type YandexObjectStorageList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

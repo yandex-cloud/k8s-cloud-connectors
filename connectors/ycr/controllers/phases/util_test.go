@@ -5,20 +5,22 @@ package phases
 
 import (
 	"context"
+	"testing"
+
 	"github.com/stretchr/testify/require"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	connectorsv1 "k8s-connectors/connectors/ycr/api/v1"
 	"k8s-connectors/connectors/ycr/controllers/adapter"
 	"k8s-connectors/pkg/config"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 )
 
-func createObject(specName, folderId, metaName, namespace string) connectorsv1.YandexContainerRegistry {
+func createObject(specName, folderID, metaName, namespace string) connectorsv1.YandexContainerRegistry {
 	return connectorsv1.YandexContainerRegistry{
 		Spec: connectorsv1.YandexContainerRegistrySpec{
 			Name:     specName,
-			FolderId: folderId,
+			FolderID: folderID,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      metaName,
@@ -27,15 +29,20 @@ func createObject(specName, folderId, metaName, namespace string) connectorsv1.Y
 	}
 }
 
-func createResourceRequireNoError(ctx context.Context, ad adapter.YandexContainerRegistryAdapter, t *testing.T, specName, folderId, metaName, clusterName string) *containerregistry.Registry {
-	res, err := ad.Create(ctx, &containerregistry.CreateRegistryRequest{
-		FolderId: folderId,
-		Name:     specName,
-		Labels: map[string]string{
-			config.CloudClusterLabel: clusterName,
-			config.CloudNameLabel:    metaName,
+func createResourceRequireNoError(
+	ctx context.Context, ad adapter.YandexContainerRegistryAdapter, t *testing.T,
+	specName, folderID, metaName, clusterName string,
+) *containerregistry.Registry {
+	res, err := ad.Create(
+		ctx, &containerregistry.CreateRegistryRequest{
+			FolderId: folderID,
+			Name:     specName,
+			Labels: map[string]string{
+				config.CloudClusterLabel: clusterName,
+				config.CloudNameLabel:    metaName,
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
 	return res
 }

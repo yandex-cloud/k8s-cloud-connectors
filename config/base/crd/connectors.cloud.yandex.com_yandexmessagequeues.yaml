@@ -19,7 +19,7 @@ spec:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: 'YandexMessageQueue: is the Schema for the yandex object storage API'
+        description: YandexMessageQueue is the Schema for the yandex object storage API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
@@ -30,7 +30,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: 'YandexMessageQueueSpec: defines the desired state of YandexMessageQueue'
+            description: YandexMessageQueueSpec defines the desired state of YandexMessageQueue
             properties:
               SAKeyName:
                 description: 'SAKeyName: specifies name of the Static Access Key that is used to authenticate this Yandex Object Storage in the cloud.'
@@ -73,7 +73,7 @@ spec:
             - name
             type: object
           status:
-            description: 'YandexMessageQueueStatus: defines the observed state of YandexMessageQueue'
+            description: YandexMessageQueueStatus defines the observed state of YandexMessageQueue
             properties:
               queueUrl:
                 description: URL of created queue

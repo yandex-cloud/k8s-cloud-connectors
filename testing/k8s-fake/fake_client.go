@@ -1,18 +1,20 @@
 // Copyright (c) 2021 Yandex LLC. All rights reserved.
 // Author: Martynov Pavel <covariance@yandex-team.ru>
 
-package k8s_fake
+package k8sfake
 
 import (
 	"context"
+
 	"github.com/jinzhu/copier"
-	"k8s-connectors/pkg/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"k8s-connectors/pkg/utils"
 )
 
 type FakeClient struct {
@@ -48,13 +50,15 @@ func (r *FakeClient) RESTMapper() meta.RESTMapper {
 // returned by the Server.
 func (r *FakeClient) Get(_ context.Context, key client.ObjectKey, obj client.Object) error {
 	if _, ok := r.objects[key]; !ok {
-		return errors.NewNotFound(schema.GroupResource{
-			Group:    obj.GetObjectKind().GroupVersionKind().Group,
-			Resource: obj.GetObjectKind().GroupVersionKind().Kind,
-		}, key.String())
+		return errors.NewNotFound(
+			schema.GroupResource{
+				Group:    obj.GetObjectKind().GroupVersionKind().Group,
+				Resource: obj.GetObjectKind().GroupVersionKind().Kind,
+			}, key.String(),
+		)
 	}
 
-	// TODO (covariance) check type mismatch behaviour
+	// TODO (covariance) check type mismatch behavior
 	return copier.Copy(obj, r.objects[key])
 }
 
@@ -82,10 +86,12 @@ func (r *FakeClient) Delete(ctx context.Context, obj client.Object, opts ...clie
 // struct pointer so that obj can be updated with the content returned by the Server.
 func (r *FakeClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
 	if _, ok := r.objects[utils.NamespacedName(obj)]; !ok {
-		return errors.NewNotFound(schema.GroupResource{
-			Group:    obj.GetObjectKind().GroupVersionKind().Group,
-			Resource: obj.GetObjectKind().GroupVersionKind().Kind,
-		}, utils.NamespacedName(obj).String())
+		return errors.NewNotFound(
+			schema.GroupResource{
+				Group:    obj.GetObjectKind().GroupVersionKind().Group,
+				Resource: obj.GetObjectKind().GroupVersionKind().Kind,
+			}, utils.NamespacedName(obj).String(),
+		)
 	}
 
 	return r.Create(ctx, obj)
@@ -93,7 +99,9 @@ func (r *FakeClient) Update(ctx context.Context, obj client.Object, opts ...clie
 
 // Patch patches the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
-func (r *FakeClient) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+func (r *FakeClient) Patch(
+	ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption,
+) error {
 	// TODO (covariance) implement me!
 	panic("not implemented")
 }
@@ -104,7 +112,7 @@ func (r *FakeClient) DeleteAllOf(ctx context.Context, obj client.Object, opts ..
 	panic("not implemented")
 }
 
-// StatusClient knows how to create a client which can update status subresource
+// Status client knows how to create a client which can update status subresource
 // for kubernetes objects.
 func (r *FakeClient) Status() client.StatusWriter {
 	return &FakeStatusWriter{}
@@ -123,7 +131,9 @@ func (r *FakeStatusWriter) Update(ctx context.Context, obj client.Object, opts .
 // Patch patches the given object's subresource. obj must be a struct
 // pointer so that obj can be updated with the content returned by the
 // Server.
-func (r *FakeStatusWriter) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+func (r *FakeStatusWriter) Patch(
+	ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption,
+) error {
 	// TODO (covariance) implement me!
 	panic("not implemented")
 }

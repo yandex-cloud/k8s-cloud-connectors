@@ -5,7 +5,9 @@ package phases
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
+
 	connectorsv1 "k8s-connectors/connectors/ymq/api/v1"
 )
 

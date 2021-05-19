@@ -56,7 +56,7 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 lint: ensure-linter ## Run golangci-lint (https://golangci-lint.run/) against code.
-	$(GOLANGCI-LINT) run ./...
+	$(GOLANGCI-LINT) run ./... --verbose
 
 test: generate fmt vet lint ## Run tests for this connector and common packages.
 	go test ./... -coverprofile cover.out

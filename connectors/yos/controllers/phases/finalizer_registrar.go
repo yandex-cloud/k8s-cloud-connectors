@@ -6,11 +6,13 @@ package phases
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	connectorsv1 "k8s-connectors/connectors/yos/api/v1"
 	yosconfig "k8s-connectors/connectors/yos/pkg/config"
 	"k8s-connectors/pkg/utils"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type FinalizerRegistrar struct {
@@ -21,7 +23,9 @@ func (r *FinalizerRegistrar) IsUpdated(_ context.Context, resource *connectorsv1
 	return utils.ContainsString(resource.Finalizers, yosconfig.FinalizerName), nil
 }
 
-func (r *FinalizerRegistrar) Update(ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage) error {
+func (r *FinalizerRegistrar) Update(
+	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage,
+) error {
 	resource.Finalizers = append(resource.Finalizers, yosconfig.FinalizerName)
 	if err := (*r.Client).Update(ctx, resource); err != nil {
 		return fmt.Errorf("unable to update resource status: %v", err)
@@ -30,7 +34,9 @@ func (r *FinalizerRegistrar) Update(ctx context.Context, log logr.Logger, resour
 	return nil
 }
 
-func (r *FinalizerRegistrar) Cleanup(ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage) error {
+func (r *FinalizerRegistrar) Cleanup(
+	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage,
+) error {
 	resource.Finalizers = utils.RemoveString(resource.Finalizers, yosconfig.FinalizerName)
 	if err := (*r.Client).Update(ctx, resource); err != nil {
 		return fmt.Errorf("unable to remove finalizer: %v", err)

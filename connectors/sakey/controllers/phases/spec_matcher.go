@@ -6,11 +6,13 @@ package phases
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
 	"k8s-connectors/connectors/sakey/controllers/adapter"
 	sakeyutils "k8s-connectors/connectors/sakey/pkg/util"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type SpecMatcher struct {
@@ -18,8 +20,12 @@ type SpecMatcher struct {
 	Client *client.Client
 }
 
-func (r *SpecMatcher) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.StaticAccessKey) (bool, error) {
-	res, err := sakeyutils.GetStaticAccessKey(ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name, r.Sdk)
+func (r *SpecMatcher) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.StaticAccessKey) (
+	bool, error,
+) {
+	res, err := sakeyutils.GetStaticAccessKey(
+		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name, r.Sdk,
+	)
 	if err != nil {
 		return false, err
 	}

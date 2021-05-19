@@ -5,6 +5,7 @@ package adapter
 
 import (
 	"context"
+
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
 	ycsdk "github.com/yandex-cloud/go-sdk"
 )
@@ -14,9 +15,11 @@ type YandexContainerRegistryAdapterSDK struct {
 }
 
 func NewYandexContainerRegistryAdapterSDK() (YandexContainerRegistryAdapter, error) {
-	sdk, err := ycsdk.Build(context.Background(), ycsdk.Config{
-		Credentials: ycsdk.InstanceServiceAccount(),
-	})
+	sdk, err := ycsdk.Build(
+		context.Background(), ycsdk.Config{
+			Credentials: ycsdk.InstanceServiceAccount(),
+		},
+	)
 
 	if err != nil {
 		return nil, err
@@ -26,14 +29,16 @@ func NewYandexContainerRegistryAdapterSDK() (YandexContainerRegistryAdapter, err
 	}, nil
 }
 
-func (r YandexContainerRegistryAdapterSDK) Create(ctx context.Context, request *containerregistry.CreateRegistryRequest) (*containerregistry.Registry, error) {
+func (r YandexContainerRegistryAdapterSDK) Create(
+	ctx context.Context, request *containerregistry.CreateRegistryRequest,
+) (*containerregistry.Registry, error) {
 	op, err := r.sdk.WrapOperation(r.sdk.ContainerRegistry().Registry().Create(ctx, request))
 
 	if err != nil {
 		return nil, err
 	}
 
-	if err := op.Wait(ctx); err != nil {
+	if err = op.Wait(ctx); err != nil {
 		return nil, err
 	}
 
@@ -45,23 +50,33 @@ func (r YandexContainerRegistryAdapterSDK) Create(ctx context.Context, request *
 	return res.(*containerregistry.Registry), nil
 }
 
-func (r YandexContainerRegistryAdapterSDK) Read(ctx context.Context, registryID string) (*containerregistry.Registry, error) {
-	return r.sdk.ContainerRegistry().Registry().Get(ctx, &containerregistry.GetRegistryRequest{
-		RegistryId: registryID,
-	})
+func (r YandexContainerRegistryAdapterSDK) Read(ctx context.Context, registryID string) (
+	*containerregistry.Registry, error,
+) {
+	return r.sdk.ContainerRegistry().Registry().Get(
+		ctx, &containerregistry.GetRegistryRequest{
+			RegistryId: registryID,
+		},
+	)
 }
 
-func (r YandexContainerRegistryAdapterSDK) List(ctx context.Context, folderID string) ([]*containerregistry.Registry, error) {
-	list, err := r.sdk.ContainerRegistry().Registry().List(ctx, &containerregistry.ListRegistriesRequest{
-		FolderId: folderID,
-	})
+func (r YandexContainerRegistryAdapterSDK) List(ctx context.Context, folderID string) (
+	[]*containerregistry.Registry, error,
+) {
+	list, err := r.sdk.ContainerRegistry().Registry().List(
+		ctx, &containerregistry.ListRegistriesRequest{
+			FolderId: folderID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 	return list.Registries, nil
 }
 
-func (r YandexContainerRegistryAdapterSDK) Update(ctx context.Context, request *containerregistry.UpdateRegistryRequest) error {
+func (r YandexContainerRegistryAdapterSDK) Update(
+	ctx context.Context, request *containerregistry.UpdateRegistryRequest,
+) error {
 	op, err := r.sdk.WrapOperation(r.sdk.ContainerRegistry().Registry().Update(ctx, request))
 	if err != nil {
 		return err
@@ -76,10 +91,14 @@ func (r YandexContainerRegistryAdapterSDK) Update(ctx context.Context, request *
 	return nil
 }
 
-func (r YandexContainerRegistryAdapterSDK) Delete(ctx context.Context, registryId string) error {
-	op, err := r.sdk.WrapOperation(r.sdk.ContainerRegistry().Registry().Delete(ctx, &containerregistry.DeleteRegistryRequest{
-		RegistryId: registryId,
-	}))
+func (r YandexContainerRegistryAdapterSDK) Delete(ctx context.Context, registryID string) error {
+	op, err := r.sdk.WrapOperation(
+		r.sdk.ContainerRegistry().Registry().Delete(
+			ctx, &containerregistry.DeleteRegistryRequest{
+				RegistryId: registryID,
+			},
+		),
+	)
 	if err != nil {
 		return err
 	}

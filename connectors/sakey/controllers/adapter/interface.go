@@ -5,6 +5,7 @@ package adapter
 
 import (
 	"context"
+
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/iam/v1/awscompatibility"
 )
 

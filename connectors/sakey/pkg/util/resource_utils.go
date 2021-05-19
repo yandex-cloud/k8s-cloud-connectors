@@ -6,15 +6,19 @@ package util
 import (
 	"context"
 	"fmt"
+
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/iam/v1/awscompatibility"
+
 	"k8s-connectors/connectors/sakey/controllers/adapter"
 	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
 	"k8s-connectors/pkg/errors"
 )
 
-func GetStaticAccessKey(ctx context.Context, keyID string, saID string, clusterName string, name string, adapter adapter.StaticAccessKeyAdapter) (*awscompatibility.AccessKey, error) {
+func GetStaticAccessKey(
+	ctx context.Context, keyID, saID, clusterName, name string, ad adapter.StaticAccessKeyAdapter,
+) (*awscompatibility.AccessKey, error) {
 	if keyID != "" {
-		res, err := adapter.Read(ctx, keyID)
+		res, err := ad.Read(ctx, keyID)
 		if err != nil {
 			// If resource was not found then it does not exist,
 			// but this error is not fatal, just a mismatch between
@@ -31,7 +35,7 @@ func GetStaticAccessKey(ctx context.Context, keyID string, saID string, clusterN
 	// We may have not yet written this key into status,
 	// But we can list objects and match by description
 	// TODO (covariance) pagination
-	lst, err := adapter.List(ctx, saID)
+	lst, err := ad.List(ctx, saID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot list resources in cloud: %v", err)
 	}

@@ -6,6 +6,7 @@ package configmaps
 import (
 	"context"
 	"fmt"
+
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,11 +17,11 @@ func cmapName(resourceName, kind string) string {
 	return kind + "-" + resourceName + "-" + "configmap"
 }
 
-func Exists(ctx context.Context, client *rtcl.Client, resourceName string, namespace string, kind string) (bool, error) {
+func Exists(ctx context.Context, cl rtcl.Client, resourceName, namespace, kind string) (bool, error) {
 	cmapName := cmapName(resourceName, kind)
 
 	var cmapObj v1.ConfigMap
-	err := (*client).Get(ctx, rtcl.ObjectKey{Namespace: namespace, Name: cmapName}, &cmapObj)
+	err := cl.Get(ctx, rtcl.ObjectKey{Namespace: namespace, Name: cmapName}, &cmapObj)
 	if errors.IsNotFound(err) {
 		return false, nil
 	}
@@ -30,11 +31,11 @@ func Exists(ctx context.Context, client *rtcl.Client, resourceName string, names
 	return true, nil
 }
 
-func Put(ctx context.Context, client *rtcl.Client, resourceName string, namespace string, kind string, data map[string]string) error {
+func Put(ctx context.Context, cl rtcl.Client, resourceName, namespace, kind string, data map[string]string) error {
 	cmapName := cmapName(resourceName, kind)
 
 	var cmapObj v1.ConfigMap
-	err := (*client).Get(ctx, rtcl.ObjectKey{Namespace: namespace, Name: cmapName}, &cmapObj)
+	err := cl.Get(ctx, rtcl.ObjectKey{Namespace: namespace, Name: cmapName}, &cmapObj)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -50,22 +51,22 @@ func Put(ctx context.Context, client *rtcl.Client, resourceName string, namespac
 		Data: data,
 	}
 	if errors.IsNotFound(err) {
-		if err := (*client).Create(ctx, &newState); err != nil {
+		if err := cl.Create(ctx, &newState); err != nil {
 			return fmt.Errorf("cannot create configmap: %v", err)
 		}
 	} else {
-		if err := (*client).Update(ctx, &newState); err != nil {
+		if err := cl.Update(ctx, &newState); err != nil {
 			return fmt.Errorf("cannot update configmap: %v", err)
 		}
 	}
 	return nil
 }
 
-func Remove(ctx context.Context, client *rtcl.Client, resourceName string, namespace string, kind string) error {
+func Remove(ctx context.Context, cl rtcl.Client, resourceName, namespace, kind string) error {
 	cmapName := cmapName(resourceName, kind)
 
 	var cmapObj v1.ConfigMap
-	err := (*client).Get(ctx, rtcl.ObjectKey{Namespace: namespace, Name: cmapName}, &cmapObj)
+	err := cl.Get(ctx, rtcl.ObjectKey{Namespace: namespace, Name: cmapName}, &cmapObj)
 	if err != nil && !errors.IsNotFound(err) {
 		return fmt.Errorf("cannot get configmap: %v", err)
 	}
@@ -74,7 +75,7 @@ func Remove(ctx context.Context, client *rtcl.Client, resourceName string, names
 		return nil
 	}
 
-	if err := (*client).Delete(ctx, &cmapObj); err != nil {
+	if err := cl.Delete(ctx, &cmapObj); err != nil {
 		return fmt.Errorf("cannot delete configmap: %v", err)
 	}
 

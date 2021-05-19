@@ -15,24 +15,24 @@ const (
 	Deleting RegistryStatus = "DELETING"
 )
 
-// YandexContainerRegistrySpec: defines the desired state of YandexContainerRegistry
+// YandexContainerRegistrySpec defines the desired state of YandexContainerRegistry
 type YandexContainerRegistrySpec struct {
 	// Name: name of registry
-	//+kubebuilder:validation:Required
-	//+kubebuilder:validation:MinLength=3
-	//+kubebuilder:validation:MaxLength=63
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=3
+	// +kubebuilder:validation:MaxLength=63
 	Name string `json:"name"`
 
-	// FolderId: id of a folder in which registry is located
-	//+kubebuilder:validation:Required
-	//+kubebuilder:validation:
-	FolderId string `json:"folderId"`
+	// FolderID: id of a folder in which registry is located
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:
+	FolderID string `json:"folderId"`
 }
 
-// YandexContainerRegistryStatus: defines the observed state of YandexContainerRegistry
+// YandexContainerRegistryStatus defines the observed state of YandexContainerRegistry
 type YandexContainerRegistryStatus struct {
-	// Id: id of registry
-	Id string `json:"id,omitempty"`
+	// ID: id of registry
+	ID string `json:"id,omitempty"`
 
 	// Status: status of registry.
 	// Valid values are:
@@ -48,9 +48,9 @@ type YandexContainerRegistryStatus struct {
 	Labels map[string]string `json:"labels,omitempty"`
 }
 
-// YandexContainerRegistry: is the Schema for the yandexcontainerregistries API
-//+kubebuilder:object:root=true
-//+kubebuilder:resource:shortName=yc-registry
+// YandexContainerRegistry is the Schema for the yandexcontainerregistries API
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:shortName=yc-registry
 type YandexContainerRegistry struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -59,8 +59,8 @@ type YandexContainerRegistry struct {
 	Status YandexContainerRegistryStatus `json:"status,omitempty"`
 }
 
-// YandexContainerRegistryList: contains a list of YandexContainerRegistry
-//+kubebuilder:object:root=true
+// YandexContainerRegistryList contains a list of YandexContainerRegistry
+// +kubebuilder:object:root=true
 type YandexContainerRegistryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

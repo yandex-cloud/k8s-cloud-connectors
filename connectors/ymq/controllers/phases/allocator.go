@@ -6,12 +6,14 @@ package phases
 import (
 	"context"
 	"fmt"
+	"strconv"
+
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	connectorsv1 "k8s-connectors/connectors/ymq/api/v1"
 	"k8s-connectors/connectors/ymq/controllers/adapter"
 	ymqutils "k8s-connectors/connectors/ymq/pkg/utils"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strconv"
 )
 
 type ResourceAllocator struct {
@@ -36,7 +38,9 @@ func (r *ResourceAllocator) IsUpdated(ctx context.Context, resource *connectorsv
 	return false, nil
 }
 
-func (r *ResourceAllocator) Update(ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue) error {
+func (r *ResourceAllocator) Update(
+	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue,
+) error {
 	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, resource, *r.Client)
 	if err != nil {
 		return err
@@ -77,7 +81,9 @@ func (r *ResourceAllocator) Update(ctx context.Context, log logr.Logger, resourc
 	return nil
 }
 
-func (r *ResourceAllocator) Cleanup(ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue) error {
+func (r *ResourceAllocator) Cleanup(
+	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue,
+) error {
 	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, resource, *r.Client)
 	if err != nil {
 		return err

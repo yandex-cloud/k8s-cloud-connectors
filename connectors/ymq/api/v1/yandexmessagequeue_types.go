@@ -7,7 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// YandexMessageQueueSpec: defines the desired state of YandexMessageQueue
+// YandexMessageQueueSpec defines the desired state of YandexMessageQueue
 type YandexMessageQueueSpec struct {
 	// Name: must be unique in Yandex Cloud. Can consist of lowercase latin letters, dashes, dots and numbers
 	// and must be up to 80 characters long. Name of FIFO queue must end with ".fifo". Must be immutable.
@@ -65,15 +65,15 @@ type YandexMessageQueueSpec struct {
 	SAKeyName string `json:"SAKeyName"`
 }
 
-// YandexMessageQueueStatus: defines the observed state of YandexMessageQueue
+// YandexMessageQueueStatus defines the observed state of YandexMessageQueue
 type YandexMessageQueueStatus struct {
 	// URL of created queue
 	QueueURL string `json:"queueUrl,omitempty"`
 }
 
-// YandexMessageQueue: is the Schema for the yandex object storage API
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// YandexMessageQueue is the Schema for the yandex object storage API
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 type YandexMessageQueue struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -82,8 +82,8 @@ type YandexMessageQueue struct {
 	Status YandexMessageQueueStatus `json:"status,omitempty"`
 }
 
-// YandexMessageQueueList: contains a list of YandexMessageQueue
-//+kubebuilder:object:root=true
+// YandexMessageQueueList contains a list of YandexMessageQueue
+// +kubebuilder:object:root=true
 type YandexMessageQueueList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

@@ -9,10 +9,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"k8s-connectors/connectors/sakey/controllers/adapter"
-	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
-	"k8s-connectors/pkg/config"
-	"k8s-connectors/pkg/utils"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -21,7 +17,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
+	"k8s-connectors/connectors/sakey/controllers/adapter"
 	"k8s-connectors/connectors/sakey/controllers/phases"
+	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
+	"k8s-connectors/pkg/config"
+	"k8s-connectors/pkg/utils"
 )
 
 // staticAccessKeyReconciler reconciles a StaticAccessKey object
@@ -38,46 +38,48 @@ type staticAccessKeyReconciler struct {
 	phases []phases.StaticAccessKeyPhase
 }
 
-func NewStaticAccessKeyReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*staticAccessKeyReconciler, error) {
+func NewStaticAccessKeyReconciler(
+	cl client.Client, log logr.Logger, scheme *runtime.Scheme,
+) (*staticAccessKeyReconciler, error) {
 	impl, err := adapter.NewStaticAccessKeyAdapter()
 	if err != nil {
 		return nil, err
 	}
 	return &staticAccessKeyReconciler{
-		Client: client,
+		Client: cl,
 		log:    log,
 		scheme: scheme,
 		phases: []phases.StaticAccessKeyPhase{
 			// Register finalizer for the object (is blocked by allocation)
 			&phases.FinalizerRegistrar{
-				Client: &client,
+				Client: &cl,
 			},
 			// Allocate corresponding resource in cloud
 			// (is blocked by finalizer registration,
 			// because otherwise resource can leak)
 			&phases.Allocator{
 				Sdk:    impl,
-				Client: &client,
+				Client: cl,
 			},
 			// In case spec was updated and our cloud resource does not match with
 			// spec, we need to update cloud resource (is blocked by allocation)
 			&phases.SpecMatcher{
 				Sdk:    impl,
-				Client: &client,
+				Client: &cl,
 			},
 			// Update status of the object (is blocked by everything mutating)
 			&phases.StatusUpdater{
 				Sdk:    impl,
-				Client: &client,
+				Client: &cl,
 			},
 		},
 	}, nil
 }
 
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=staticaccesskeys,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=staticaccesskeys/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=staticaccesskeys/finalizers,verbs=update
-//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=staticaccesskeys,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=staticaccesskeys/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=staticaccesskeys/finalizers,verbs=update
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
 
 func (r *staticAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.log.WithValues(sakeyconfig.LongName, req.NamespacedName)
@@ -128,7 +130,9 @@ func (r *staticAccessKeyReconciler) mustBeFinalized(object *connectorsv1.StaticA
 	return !object.DeletionTimestamp.IsZero() && utils.ContainsString(object.Finalizers, sakeyconfig.FinalizerName), nil
 }
 
-func (r *staticAccessKeyReconciler) finalize(ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey) error {
+func (r *staticAccessKeyReconciler) finalize(
+	ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey,
+) error {
 	for i := len(r.phases); i != 0; i-- {
 		if err := r.phases[i-1].Cleanup(ctx, log, object); err != nil {
 			return fmt.Errorf("error during finalization: %v", err)

@@ -9,10 +9,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"k8s-connectors/connectors/yos/controllers/adapter"
-	yosconfig "k8s-connectors/connectors/yos/pkg/config"
-	"k8s-connectors/pkg/config"
-	"k8s-connectors/pkg/utils"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -21,7 +17,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	connectorsv1 "k8s-connectors/connectors/yos/api/v1"
+	"k8s-connectors/connectors/yos/controllers/adapter"
 	"k8s-connectors/connectors/yos/controllers/phases"
+	yosconfig "k8s-connectors/connectors/yos/pkg/config"
+	"k8s-connectors/pkg/config"
+	"k8s-connectors/pkg/utils"
 )
 
 // yandexObjectStorageReconciler reconciles a YandexContainerRegistry object
@@ -37,32 +37,34 @@ type yandexObjectStorageReconciler struct {
 	phases []phases.YandexObjectStoragePhase
 }
 
-func NewYandexObjectStorageReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) (*yandexObjectStorageReconciler, error) {
+func NewYandexObjectStorageReconciler(
+	cl client.Client, log logr.Logger, scheme *runtime.Scheme,
+) (*yandexObjectStorageReconciler, error) {
 	sdk, err := adapter.NewYandexObjectStorageAdapterSDK()
 	if err != nil {
 		return nil, err
 	}
 	return &yandexObjectStorageReconciler{
-		Client: client,
+		Client: cl,
 		log:    log,
 		scheme: scheme,
 		phases: []phases.YandexObjectStoragePhase{
 			&phases.FinalizerRegistrar{
-				Client: &client,
+				Client: &cl,
 			},
 			&phases.ResourceAllocator{
-				Client: &client,
+				Client: &cl,
 				Sdk:    sdk,
 			},
 		},
 	}, nil
 }
 
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexobjectstorages,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexobjectstorages/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexobjectstorages/finalizers,verbs=update
-//+kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=staticaccesskeys,verbs=get
-//+kubebuilder:rbac:groups="",resources=secrets,verbs=get
+// +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexobjectstorages,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexobjectstorages/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexobjectstorages/finalizers,verbs=update
+// +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=staticaccesskeys,verbs=get
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get
 
 func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.log.WithValues(yosconfig.LongName, req.NamespacedName)
@@ -112,10 +114,14 @@ func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.
 }
 
 func (r *yandexObjectStorageReconciler) mustBeFinalized(registry *connectorsv1.YandexObjectStorage) (bool, error) {
-	return !registry.DeletionTimestamp.IsZero() && utils.ContainsString(registry.Finalizers, yosconfig.FinalizerName), nil
+	return !registry.DeletionTimestamp.IsZero() && utils.ContainsString(
+		registry.Finalizers, yosconfig.FinalizerName,
+	), nil
 }
 
-func (r *yandexObjectStorageReconciler) finalize(ctx context.Context, log logr.Logger, registry *connectorsv1.YandexObjectStorage) error {
+func (r *yandexObjectStorageReconciler) finalize(
+	ctx context.Context, log logr.Logger, registry *connectorsv1.YandexObjectStorage,
+) error {
 	for i := len(r.phases); i != 0; i-- {
 		if err := r.phases[i-1].Cleanup(ctx, log, registry); err != nil {
 			return fmt.Errorf("error during finalization: %v", err)

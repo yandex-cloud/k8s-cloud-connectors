@@ -32,7 +32,7 @@ import (
 	ycrconnector "k8s-connectors/connectors/ycr/controllers"
 	ymqconnector "k8s-connectors/connectors/ymq/controllers"
 	yosconnector "k8s-connectors/connectors/yos/controllers"
-	//+kubebuilder:scaffold:imports
+	// +kubebuilder:scaffold:imports
 )
 
 var (
@@ -47,7 +47,7 @@ func init() {
 	utilruntime.Must(ycr.AddToScheme(scheme))
 	utilruntime.Must(yos.AddToScheme(scheme))
 	utilruntime.Must(ymq.AddToScheme(scheme))
-	//+kubebuilder:scaffold:scheme
+	// +kubebuilder:scaffold:scheme
 }
 
 func setupErrorExit(err error, setupEntity string) {
@@ -65,9 +65,11 @@ func main() {
 	var probeAddr string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
+	flag.BoolVar(
+		&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
+			"Enabling this will ensure there is only one active controller manager.",
+	)
 	opts := zap.Options{
 		Development: true,
 	}
@@ -76,14 +78,16 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "faeacf9e.cloud.yandex.com",
-	})
+	mgr, err := ctrl.NewManager(
+		ctrl.GetConfigOrDie(), ctrl.Options{
+			Scheme:                 scheme,
+			MetricsBindAddress:     metricsAddr,
+			Port:                   9443,
+			HealthProbeBindAddress: probeAddr,
+			LeaderElection:         enableLeaderElection,
+			LeaderElectionID:       "faeacf9e.cloud.yandex.com",
+		},
+	)
 	if err != nil {
 		setupErrorExit(err, "manager")
 	}
@@ -96,7 +100,7 @@ func main() {
 	if err != nil {
 		controllerCreationErrorExit(err, sakeyconfig.LongName)
 	}
-	if err := sakeyReconciler.SetupWithManager(mgr); err != nil {
+	if err = sakeyReconciler.SetupWithManager(mgr); err != nil {
 		controllerCreationErrorExit(err, sakeyconfig.LongName)
 	}
 
@@ -108,7 +112,7 @@ func main() {
 	if err != nil {
 		controllerCreationErrorExit(err, ycrconfig.LongName)
 	}
-	if err := ycrReconciler.SetupWithManager(mgr); err != nil {
+	if err = ycrReconciler.SetupWithManager(mgr); err != nil {
 		controllerCreationErrorExit(err, ycrconfig.LongName)
 	}
 
@@ -120,7 +124,7 @@ func main() {
 	if err != nil {
 		controllerCreationErrorExit(err, ymqconfig.LongName)
 	}
-	if err := ymqReconciler.SetupWithManager(mgr); err != nil {
+	if err = ymqReconciler.SetupWithManager(mgr); err != nil {
 		controllerCreationErrorExit(err, ymqconfig.LongName)
 	}
 
@@ -132,20 +136,20 @@ func main() {
 	if err != nil {
 		controllerCreationErrorExit(err, yosconfig.LongName)
 	}
-	if err := yosReconciler.SetupWithManager(mgr); err != nil {
+	if err = yosReconciler.SetupWithManager(mgr); err != nil {
 		controllerCreationErrorExit(err, yosconfig.LongName)
 	}
-	//+kubebuilder:scaffold:builder
+	// +kubebuilder:scaffold:builder
 
-	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupErrorExit(err, "health check")
 	}
-	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+	if err = mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupErrorExit(err, "readiness check")
 	}
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err = mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}

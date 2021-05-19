@@ -4,8 +4,9 @@
 package phases
 
 import (
-	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	connectorsv1 "k8s-connectors/connectors/sakey/api/v1"
 )
 
 func createObject(saID, metaName, namespace string) connectorsv1.StaticAccessKey {
