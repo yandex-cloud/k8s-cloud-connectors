@@ -4,9 +4,16 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 
+	"github.com/yandex-cloud/go-genproto/yandex/cloud/compute/v1"
+	"github.com/yandex-cloud/go-genproto/yandex/cloud/compute/v1/instancegroup"
+	ycsdk "github.com/yandex-cloud/go-sdk"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -50,6 +57,46 @@ func init() {
 	// +kubebuilder:scaffold:scheme
 }
 
+func getClusterIDFromNodeMetadata() (string, error) {
+	ctx := context.Background()
+	instanceIDResp, err := http.Get("169.254.169.254:80/latest/meta-data/instance-id")
+	if err != nil {
+		return "", err
+	}
+	if instanceIDResp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("unable to get instanceID from metadata")
+	}
+
+	instanceID, err := ioutil.ReadAll(instanceIDResp.Body)
+	if err != nil {
+		return "", fmt.Errorf("cannot read instanceID from metadata: %v", err)
+	}
+
+	// TODO (covariance) maybe we need to create one YCSDK and just pass it everywhere?
+	yc, err := ycsdk.Build(ctx, ycsdk.Config{
+		Credentials:        ycsdk.InstanceServiceAccount(),
+	})
+	if err != nil {
+		return "", fmt.Errorf("unable to create ycsdk: %v", err)
+	}
+
+	instance, err := yc.Compute().Instance().Get(ctx, &compute.GetInstanceRequest{
+		InstanceId: string(instanceID),
+		View:       compute.InstanceView_FULL,
+	})
+	if err != nil {
+		return "", fmt.Errorf("unable to get instance: %v", err)
+	}
+
+	// TODO (covariance) tbd
+
+	if err := instanceIDResp.Body.Close(); err != nil {
+		return "", err
+	}
+
+	return "", fmt.Errorf("none of the clusters contain this node")
+}
+
 func setupErrorExit(err error, setupEntity string) {
 	if err != nil {
 		setupLog.Error(err, "unable to setup "+setupEntity)
@@ -65,8 +112,10 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
+	var clusterID string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.StringVar(&clusterID, "cluster-id", "", "ID of this cluster in the cloud")
 	flag.BoolVar(
 		&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
@@ -77,6 +126,14 @@ func main() {
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
+
+	if clusterID == "" {
+		var err error
+		clusterID, err = getClusterIDFromNodeMetadata()
+		if err != nil {
+			setupLog.Error(err, "unable to set cluster id")
+		}
+	}
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
