@@ -18,20 +18,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	sakey "k8s-connectors/connectors/sakey/api/v1"
-	ycr "k8s-connectors/connectors/ycr/api/v1"
-	ymq "k8s-connectors/connectors/ymq/api/v1"
-	yos "k8s-connectors/connectors/yos/api/v1"
+	sakey "k8s-connectors/connector/sakey/api/v1"
+	ycr "k8s-connectors/connector/ycr/api/v1"
+	ymq "k8s-connectors/connector/ymq/api/v1"
+	yos "k8s-connectors/connector/yos/api/v1"
 
-	sakeyconfig "k8s-connectors/connectors/sakey/pkg/config"
-	ycrconfig "k8s-connectors/connectors/ycr/pkg/config"
-	ymqconfig "k8s-connectors/connectors/ymq/pkg/config"
-	yosconfig "k8s-connectors/connectors/yos/pkg/config"
+	sakeyconfig "k8s-connectors/connector/sakey/pkg/config"
+	ycrconfig "k8s-connectors/connector/ycr/pkg/config"
+	ymqconfig "k8s-connectors/connector/ymq/pkg/config"
+	yosconfig "k8s-connectors/connector/yos/pkg/config"
 
-	sakeyconnector "k8s-connectors/connectors/sakey/controllers"
-	ycrconnector "k8s-connectors/connectors/ycr/controllers"
-	ymqconnector "k8s-connectors/connectors/ymq/controllers"
-	yosconnector "k8s-connectors/connectors/yos/controllers"
+	sakeyconnector "k8s-connectors/connector/sakey/controller"
+	ycrconnector "k8s-connectors/connector/ycr/controller"
+	ymqconnector "k8s-connectors/connector/ymq/controller"
+	yosconnector "k8s-connectors/connector/yos/controller"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -51,8 +51,10 @@ func init() {
 }
 
 func setupErrorExit(err error, setupEntity string) {
-	setupLog.Error(err, "unable to setup "+setupEntity)
-	os.Exit(1)
+	if err != nil {
+		setupLog.Error(err, "unable to setup "+setupEntity)
+		os.Exit(1)
+	}
 }
 
 func controllerCreationErrorExit(err error, controllerName string) {
@@ -88,65 +90,47 @@ func main() {
 			LeaderElectionID:       "faeacf9e.cloud.yandex.com",
 		},
 	)
-	if err != nil {
-		setupErrorExit(err, "manager")
-	}
+	setupErrorExit(err, "manager")
 
 	sakeyReconciler, err := sakeyconnector.NewStaticAccessKeyReconciler(
 		mgr.GetClient(),
 		ctrl.Log.WithName("controllers").WithName(sakeyconfig.LongName),
-		mgr.GetScheme(),
 	)
-	if err != nil {
-		controllerCreationErrorExit(err, sakeyconfig.LongName)
-	}
-	if err = sakeyReconciler.SetupWithManager(mgr); err != nil {
-		controllerCreationErrorExit(err, sakeyconfig.LongName)
-	}
+	controllerCreationErrorExit(err, sakeyconfig.LongName)
+	err = sakeyReconciler.SetupWithManager(mgr)
+	controllerCreationErrorExit(err, sakeyconfig.LongName)
 
 	ycrReconciler, err := ycrconnector.NewYandexContainerRegistryReconciler(
 		mgr.GetClient(),
 		ctrl.Log.WithName("controllers").WithName(ycrconfig.LongName),
-		mgr.GetScheme(),
 	)
-	if err != nil {
-		controllerCreationErrorExit(err, ycrconfig.LongName)
-	}
-	if err = ycrReconciler.SetupWithManager(mgr); err != nil {
-		controllerCreationErrorExit(err, ycrconfig.LongName)
-	}
+	controllerCreationErrorExit(err, ycrconfig.LongName)
+	err = ycrReconciler.SetupWithManager(mgr)
+	controllerCreationErrorExit(err, ycrconfig.LongName)
 
 	ymqReconciler, err := ymqconnector.NewYandexMessageQueueReconciler(
 		mgr.GetClient(),
 		ctrl.Log.WithName("controllers").WithName(ymqconfig.LongName),
-		mgr.GetScheme(),
 	)
-	if err != nil {
-		controllerCreationErrorExit(err, ymqconfig.LongName)
-	}
-	if err = ymqReconciler.SetupWithManager(mgr); err != nil {
-		controllerCreationErrorExit(err, ymqconfig.LongName)
-	}
+	controllerCreationErrorExit(err, ymqconfig.LongName)
+	err = ymqReconciler.SetupWithManager(mgr)
+	controllerCreationErrorExit(err, ymqconfig.LongName)
 
 	yosReconciler, err := yosconnector.NewYandexObjectStorageReconciler(
 		mgr.GetClient(),
 		ctrl.Log.WithName("controllers").WithName(yosconfig.LongName),
-		mgr.GetScheme(),
 	)
-	if err != nil {
-		controllerCreationErrorExit(err, yosconfig.LongName)
-	}
-	if err = yosReconciler.SetupWithManager(mgr); err != nil {
-		controllerCreationErrorExit(err, yosconfig.LongName)
-	}
+	controllerCreationErrorExit(err, yosconfig.LongName)
+	err = yosReconciler.SetupWithManager(mgr)
+	controllerCreationErrorExit(err, yosconfig.LongName)
+
 	// +kubebuilder:scaffold:builder
 
-	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		setupErrorExit(err, "health check")
-	}
-	if err = mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		setupErrorExit(err, "readiness check")
-	}
+	err = mgr.AddHealthzCheck("healthz", healthz.Ping)
+	setupErrorExit(err, "health check")
+
+	err = mgr.AddReadyzCheck("readyz", healthz.Ping)
+	setupErrorExit(err, "readiness check")
 
 	setupLog.Info("starting manager")
 	if err = mgr.Start(ctrl.SetupSignalHandler()); err != nil {

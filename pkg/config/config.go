@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	CloudClusterLabel string = "managed-kubernetes-cluster-id"
-	CloudNameLabel    string = "managed-kubernetes-registry-metadata-name"
+	CloudClusterLabel = "managed-kubernetes-cluster-id"
+	CloudNameLabel    = "managed-kubernetes-registry-metadata-name"
 
 	normalTimeout  = 30 * time.Second
 	erroredTimeout = 30 * time.Second

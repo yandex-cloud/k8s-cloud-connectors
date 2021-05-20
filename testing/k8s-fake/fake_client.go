@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"k8s-connectors/pkg/utils"
+	"k8s-connectors/pkg/util"
 )
 
 type FakeClient struct {
@@ -72,25 +72,25 @@ func (r *FakeClient) List(ctx context.Context, list client.ObjectList, opts ...c
 
 // Create saves the object obj in the Kubernetes cluster.
 func (r *FakeClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
-	r.objects[utils.NamespacedName(obj)] = obj
+	r.objects[util.NamespacedName(obj)] = obj
 	return nil
 }
 
 // Delete deletes the given obj from Kubernetes cluster.
 func (r *FakeClient) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
-	delete(r.objects, utils.NamespacedName(obj))
+	delete(r.objects, util.NamespacedName(obj))
 	return nil
 }
 
 // Update updates the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
 func (r *FakeClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
-	if _, ok := r.objects[utils.NamespacedName(obj)]; !ok {
+	if _, ok := r.objects[util.NamespacedName(obj)]; !ok {
 		return errors.NewNotFound(
 			schema.GroupResource{
 				Group:    obj.GetObjectKind().GroupVersionKind().Group,
 				Resource: obj.GetObjectKind().GroupVersionKind().Kind,
-			}, utils.NamespacedName(obj).String(),
+			}, util.NamespacedName(obj).String(),
 		)
 	}
 
