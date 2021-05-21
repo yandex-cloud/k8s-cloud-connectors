@@ -92,7 +92,7 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 
 		// This outcome signifies that we just cannot find resource, that is ok
 		if apierrors.IsNotFound(err) {
-			log.Info("Resource not found in k8s, reconciliation not possible")
+			log.Info("object not found in k8s, reconciliation not possible")
 			return config.GetNeverResult()
 		}
 

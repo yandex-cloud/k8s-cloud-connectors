@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/go-logr/logr"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/compute/v1"
 	ycsdk "github.com/yandex-cloud/go-sdk"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -56,7 +57,7 @@ func getClusterIDFromNodeMetadata() (string, error) {
 	ctx := context.Background()
 	instanceIDReq, err := http.NewRequestWithContext(ctx,
 		"GET",
-		"169.254.169.254:80/latest/meta-data/instance-id",
+		"http://169.254.169.254:80/latest/meta-data/instance-id",
 		nil,
 	)
 	if err != nil {
@@ -98,22 +99,22 @@ func getClusterIDFromNodeMetadata() (string, error) {
 		return "", fmt.Errorf("instance does not have label with cluster id")
 	}
 
-	if err := instanceIDResp.Body.Close(); err != nil {
-		return "", err
+	if err = instanceIDResp.Body.Close(); err != nil {
+		return "", fmt.Errorf("unable to close response body: %v", err)
 	}
 
 	return clusterID, nil
 }
 
-func setupErrorExit(err error, setupEntity string) {
+func setupErrorExit(err error, setupEntity string, log logr.Logger) {
 	if err != nil {
-		setupLog.Error(err, "unable to setup "+setupEntity)
+		log.Error(err, "unable to setup "+setupEntity)
 		os.Exit(1)
 	}
 }
 
-func controllerCreationErrorExit(err error, controllerName string) {
-	setupErrorExit(err, "controller "+controllerName)
+func controllerCreationErrorExit(err error, controllerName string, log logr.Logger) {
+	setupErrorExit(err, "controller "+controllerName, log)
 }
 
 func main() {
@@ -135,6 +136,10 @@ func main() {
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	setupLog.Info("starting manager setup")
+
 	if clusterID == "" {
 		var err error
 		clusterID, err = getClusterIDFromNodeMetadata()
@@ -143,8 +148,6 @@ func main() {
 			os.Exit(1)
 		}
 	}
-
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	mgr, err := ctrl.NewManager(
 		ctrl.GetConfigOrDie(), ctrl.Options{
@@ -156,53 +159,72 @@ func main() {
 			LeaderElectionID:       "faeacf9e.cloud.yandex.com",
 		},
 	)
-	setupErrorExit(err, "manager")
+	setupErrorExit(err, "manager", setupLog)
 
-	sakeyReconciler, err := sakeyconnector.NewStaticAccessKeyReconciler(
-		mgr.GetClient(),
-		ctrl.Log.WithName("controllers").WithName(sakeyconfig.LongName),
-		clusterID,
-	)
-	controllerCreationErrorExit(err, sakeyconfig.LongName)
-	err = sakeyReconciler.SetupWithManager(mgr)
-	controllerCreationErrorExit(err, sakeyconfig.LongName)
-
-	ycrReconciler, err := ycrconnector.NewYandexContainerRegistryReconciler(
-		mgr.GetClient(),
-		ctrl.Log.WithName("controllers").WithName(ycrconfig.LongName),
-		clusterID,
-	)
-	controllerCreationErrorExit(err, ycrconfig.LongName)
-	err = ycrReconciler.SetupWithManager(mgr)
-	controllerCreationErrorExit(err, ycrconfig.LongName)
-
-	ymqReconciler, err := ymqconnector.NewYandexMessageQueueReconciler(
-		mgr.GetClient(),
-		ctrl.Log.WithName("controllers").WithName(ymqconfig.LongName),
-	)
-	controllerCreationErrorExit(err, ymqconfig.LongName)
-	err = ymqReconciler.SetupWithManager(mgr)
-	controllerCreationErrorExit(err, ymqconfig.LongName)
-
-	yosReconciler, err := yosconnector.NewYandexObjectStorageReconciler(
-		mgr.GetClient(),
-		ctrl.Log.WithName("controllers").WithName(yosconfig.LongName),
-	)
-	controllerCreationErrorExit(err, yosconfig.LongName)
-	err = yosReconciler.SetupWithManager(mgr)
-	controllerCreationErrorExit(err, yosconfig.LongName)
+	setupSAKeyConnector(mgr, clusterID)
+	setupYCRConnector(mgr, clusterID)
+	setupYMQConnector(mgr)
+	setupYOSConnector(mgr)
 
 	// +kubebuilder:scaffold:builder
 
+	setupLog.Info("setting up health check")
 	err = mgr.AddHealthzCheck("healthz", healthz.Ping)
-	setupErrorExit(err, "health check")
+	setupErrorExit(err, "health check", setupLog)
 
+	setupLog.Info("setting up readiness check")
 	err = mgr.AddReadyzCheck("readyz", healthz.Ping)
-	setupErrorExit(err, "readiness check")
+	setupErrorExit(err, "readiness check", setupLog)
 
 	setupLog.Info("starting manager")
 	if err = mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func setupSAKeyConnector(mgr ctrl.Manager, clusterID string) {
+	setupLog.Info("starting " + sakeyconfig.ShortName + " connector")
+	sakeyReconciler, err := sakeyconnector.NewStaticAccessKeyReconciler(
+		mgr.GetClient(),
+		ctrl.Log.WithName("controllers").WithName(sakeyconfig.LongName),
+		clusterID,
+	)
+	controllerCreationErrorExit(err, sakeyconfig.LongName, setupLog)
+	err = sakeyReconciler.SetupWithManager(mgr)
+	controllerCreationErrorExit(err, sakeyconfig.LongName, setupLog)
+}
+
+func setupYCRConnector(mgr ctrl.Manager, clusterID string) {
+	setupLog.Info("starting " + ycrconfig.ShortName + " connector")
+	ycrReconciler, err := ycrconnector.NewYandexContainerRegistryReconciler(
+		mgr.GetClient(),
+		ctrl.Log.WithName("controllers").WithName(ycrconfig.LongName),
+		clusterID,
+	)
+	controllerCreationErrorExit(err, ycrconfig.LongName, setupLog)
+	err = ycrReconciler.SetupWithManager(mgr)
+	controllerCreationErrorExit(err, ycrconfig.LongName, setupLog)
+}
+
+func setupYMQConnector(mgr ctrl.Manager) {
+	setupLog.Info("starting " + ymqconfig.ShortName + " connector")
+	ymqReconciler, err := ymqconnector.NewYandexMessageQueueReconciler(
+		mgr.GetClient(),
+		ctrl.Log.WithName("controllers").WithName(ymqconfig.LongName),
+	)
+	controllerCreationErrorExit(err, ymqconfig.LongName, setupLog)
+	err = ymqReconciler.SetupWithManager(mgr)
+	controllerCreationErrorExit(err, ymqconfig.LongName, setupLog)
+}
+
+func setupYOSConnector(mgr ctrl.Manager) {
+	setupLog.Info("starting " + yosconfig.ShortName + " connector")
+	yosReconciler, err := yosconnector.NewYandexObjectStorageReconciler(
+		mgr.GetClient(),
+		ctrl.Log.WithName("controllers").WithName(yosconfig.LongName),
+	)
+	controllerCreationErrorExit(err, yosconfig.LongName, setupLog)
+	err = yosReconciler.SetupWithManager(mgr)
+	controllerCreationErrorExit(err, yosconfig.LongName, setupLog)
 }
