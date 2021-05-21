@@ -20,8 +20,8 @@ import (
 	"k8s-connectors/pkg/util"
 )
 
-// YandexMessageQueueReconciler reconciles a YandexContainerRegistry object
-type YandexMessageQueueReconciler struct {
+// yandexMessageQueueReconciler reconciles a YandexContainerRegistry object
+type yandexMessageQueueReconciler struct {
 	client.Client
 	log logr.Logger
 	// phases that are to be invoked on this object
@@ -34,12 +34,12 @@ type YandexMessageQueueReconciler struct {
 
 func NewYandexMessageQueueReconciler(
 	cl client.Client, log logr.Logger,
-) (*YandexMessageQueueReconciler, error) {
+) (*yandexMessageQueueReconciler, error) {
 	sdk, err := adapter.NewYandexMessageQueueAdapterSDK()
 	if err != nil {
 		return nil, err
 	}
-	return &YandexMessageQueueReconciler{
+	return &yandexMessageQueueReconciler{
 		Client: cl,
 		log:    log,
 		phases: []phase.YandexMessageQueuePhase{
@@ -60,7 +60,7 @@ func NewYandexMessageQueueReconciler(
 // +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=staticaccesskeys,verbs=get
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get
 
-func (r *YandexMessageQueueReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *yandexMessageQueueReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.log.WithValues(ymqconfig.LongName, req.NamespacedName)
 
 	// Try to retrieve resource from k8s
@@ -107,13 +107,13 @@ func (r *YandexMessageQueueReconciler) Reconcile(ctx context.Context, req ctrl.R
 	return config.GetNormalResult()
 }
 
-func (r *YandexMessageQueueReconciler) mustBeFinalized(registry *connectorsv1.YandexMessageQueue) (bool, error) {
+func (r *yandexMessageQueueReconciler) mustBeFinalized(registry *connectorsv1.YandexMessageQueue) (bool, error) {
 	return !registry.DeletionTimestamp.IsZero() && util.ContainsString(
 		registry.Finalizers, ymqconfig.FinalizerName,
 	), nil
 }
 
-func (r *YandexMessageQueueReconciler) finalize(
+func (r *yandexMessageQueueReconciler) finalize(
 	ctx context.Context, log logr.Logger, registry *connectorsv1.YandexMessageQueue,
 ) error {
 	for i := len(r.phases); i != 0; i-- {
@@ -126,7 +126,7 @@ func (r *YandexMessageQueueReconciler) finalize(
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *YandexMessageQueueReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *yandexMessageQueueReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&connectorsv1.YandexMessageQueue{}).
 		Complete(r)

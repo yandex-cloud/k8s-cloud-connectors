@@ -16,8 +16,9 @@ import (
 )
 
 type StatusUpdater struct {
-	Sdk    adapter.YandexContainerRegistryAdapter
-	Client client.Client
+	Sdk       adapter.YandexContainerRegistryAdapter
+	Client    client.Client
+	ClusterID string
 }
 
 func (r *StatusUpdater) IsUpdated(_ context.Context, _ logr.Logger, _ *connectorsv1.YandexContainerRegistry) (
@@ -33,7 +34,7 @@ func (r *StatusUpdater) Update(
 	ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry,
 ) error {
 	res, err := ycrutils.GetRegistry(
-		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk,
+		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, r.ClusterID, r.Sdk,
 	)
 	if err != nil {
 		return err

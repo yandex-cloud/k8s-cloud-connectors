@@ -18,13 +18,14 @@ import (
 )
 
 type Allocator struct {
-	Sdk    adapter.StaticAccessKeyAdapter
-	Client client.Client
+	Sdk       adapter.StaticAccessKeyAdapter
+	Client    client.Client
+	ClusterID string
 }
 
 func (r *Allocator) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.StaticAccessKey) (bool, error) {
 	res, err := sakeyutils.GetStaticAccessKey(
-		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name, r.Sdk,
+		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, r.ClusterID, object.Name, r.Sdk,
 	)
 	if err != nil {
 		return false, err
@@ -36,7 +37,7 @@ func (r *Allocator) IsUpdated(ctx context.Context, _ logr.Logger, object *connec
 
 func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey) error {
 	res, err := r.Sdk.Create(
-		ctx, object.Spec.ServiceAccountID, sakeyconfig.GetStaticAccessKeyDescription(object.ClusterName, object.Name),
+		ctx, object.Spec.ServiceAccountID, sakeyconfig.GetStaticAccessKeyDescription(r.ClusterID, object.Name),
 	)
 	if err != nil {
 		return fmt.Errorf("error while creating resource: %v", err)
@@ -72,7 +73,7 @@ func (r *Allocator) Cleanup(ctx context.Context, log logr.Logger, object *connec
 	}
 
 	res, err := sakeyutils.GetStaticAccessKey(
-		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name, r.Sdk,
+		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, r.ClusterID, object.Name, r.Sdk,
 	)
 	if err != nil {
 		return err

@@ -15,14 +15,15 @@ import (
 )
 
 type SpecMatcher struct {
-	Sdk adapter.StaticAccessKeyAdapter
+	Sdk       adapter.StaticAccessKeyAdapter
+	ClusterID string
 }
 
 func (r *SpecMatcher) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.StaticAccessKey) (
 	bool, error,
 ) {
 	res, err := sakeyutils.GetStaticAccessKey(
-		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name, r.Sdk,
+		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, r.ClusterID, object.Name, r.Sdk,
 	)
 	if err != nil {
 		return false, err

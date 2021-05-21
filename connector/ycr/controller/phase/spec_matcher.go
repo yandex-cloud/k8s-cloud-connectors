@@ -17,14 +17,15 @@ import (
 )
 
 type SpecMatcher struct {
-	Sdk adapter.YandexContainerRegistryAdapter
+	Sdk       adapter.YandexContainerRegistryAdapter
+	ClusterID string
 }
 
 func (r *SpecMatcher) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.YandexContainerRegistry) (
 	bool, error,
 ) {
 	res, err := ycrutils.GetRegistry(
-		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk,
+		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, r.ClusterID, r.Sdk,
 	)
 	if err != nil {
 		return false, err
@@ -42,7 +43,7 @@ func (r *SpecMatcher) IsUpdated(ctx context.Context, _ logr.Logger, object *conn
 
 func (r *SpecMatcher) Update(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) error {
 	ycr, err := ycrutils.GetRegistry(
-		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk,
+		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, r.ClusterID, r.Sdk,
 	)
 	if err != nil {
 		return err

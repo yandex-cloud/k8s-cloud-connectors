@@ -16,8 +16,9 @@ import (
 )
 
 type StatusUpdater struct {
-	Sdk    adapter.StaticAccessKeyAdapter
-	Client client.Client
+	Sdk       adapter.StaticAccessKeyAdapter
+	Client    client.Client
+	ClusterID string
 }
 
 func (r *StatusUpdater) IsUpdated(_ context.Context, _ logr.Logger, _ *connectorsv1.StaticAccessKey) (bool, error) {
@@ -33,7 +34,7 @@ func (r *StatusUpdater) Update(ctx context.Context, log logr.Logger, object *con
 	// thing we do is update key cloud id.
 
 	res, err := sakeyutils.GetStaticAccessKey(
-		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, object.ClusterName, object.Name, r.Sdk,
+		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, r.ClusterID, object.Name, r.Sdk,
 	)
 	if err != nil {
 		return err

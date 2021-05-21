@@ -23,8 +23,8 @@ import (
 // staticAccessKeyReconciler reconciles a StaticAccessKey object
 type staticAccessKeyReconciler struct {
 	client.Client
-	log logr.Logger
-
+	log       logr.Logger
+	clusterID string
 	// phases that are to be invoked on this object
 	// IsUpdated blocks Update, and order of initializers matters,
 	// thus if one of initializers fails, subsequent won't be processed.
@@ -34,15 +34,16 @@ type staticAccessKeyReconciler struct {
 }
 
 func NewStaticAccessKeyReconciler(
-	cl client.Client, log logr.Logger,
+	cl client.Client, log logr.Logger, clusterID string,
 ) (*staticAccessKeyReconciler, error) {
 	impl, err := adapter.NewStaticAccessKeyAdapter()
 	if err != nil {
 		return nil, err
 	}
 	return &staticAccessKeyReconciler{
-		Client: cl,
-		log:    log,
+		Client:    cl,
+		log:       log,
+		clusterID: clusterID,
 		phases: []phase.StaticAccessKeyPhase{
 			// Register finalizer for the object (is blocked by allocation)
 			&phase.FinalizerRegistrar{
@@ -52,18 +53,21 @@ func NewStaticAccessKeyReconciler(
 			// (is blocked by finalizer registration,
 			// because otherwise resource can leak)
 			&phase.Allocator{
-				Sdk:    impl,
-				Client: cl,
+				Sdk:       impl,
+				Client:    cl,
+				ClusterID: clusterID,
 			},
 			// In case spec was updated and our cloud resource does not match with
 			// spec, we need to update cloud resource (is blocked by allocation)
 			&phase.SpecMatcher{
-				Sdk: impl,
+				Sdk:       impl,
+				ClusterID: clusterID,
 			},
 			// Update status of the object (is blocked by everything mutating)
 			&phase.StatusUpdater{
-				Sdk:    impl,
-				Client: cl,
+				Sdk:       impl,
+				Client:    cl,
+				ClusterID: clusterID,
 			},
 		},
 	}, nil
