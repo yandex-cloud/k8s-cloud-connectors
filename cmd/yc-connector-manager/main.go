@@ -88,7 +88,7 @@ func getClusterIDFromNodeMetadata() (string, error) {
 
 	instance, err := yc.Compute().Instance().Get(ctx, &compute.GetInstanceRequest{
 		InstanceId: string(instanceID),
-		View:       compute.InstanceView_FULL,
+		View:       compute.InstanceView_BASIC,
 	})
 	if err != nil {
 		return "", fmt.Errorf("unable to get instance: %v", err)
