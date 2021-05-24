@@ -29,6 +29,7 @@ type StaticAccessKeyStatus struct {
 // StaticAccessKey is the Schema for the staticaccesskey API
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:shortName=sakey
+// +kubebuilder:subresource:status
 type StaticAccessKey struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

@@ -117,6 +117,10 @@ func controllerCreationErrorExit(err error, controllerName string, log logr.Logg
 	setupErrorExit(err, "controller "+controllerName, log)
 }
 
+func webhookCreationErrorExit(err error, webhookName string, log logr.Logger) {
+	setupErrorExit(err, "webhook "+webhookName, log)
+}
+
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
@@ -162,6 +166,7 @@ func main() {
 	setupErrorExit(err, "manager", setupLog)
 
 	setupSAKeyConnector(mgr, clusterID)
+	setupSAKeyWebhook(mgr)
 	setupYCRConnector(mgr, clusterID)
 	setupYMQConnector(mgr)
 	setupYOSConnector(mgr)
@@ -193,6 +198,12 @@ func setupSAKeyConnector(mgr ctrl.Manager, clusterID string) {
 	controllerCreationErrorExit(err, sakeyconfig.LongName, setupLog)
 	err = sakeyReconciler.SetupWithManager(mgr)
 	controllerCreationErrorExit(err, sakeyconfig.LongName, setupLog)
+}
+
+func setupSAKeyWebhook(mgr ctrl.Manager) {
+	setupLog.Info("starting " + sakeyconfig.ShortName + " webhook")
+	err := (&sakey.StaticAccessKey{}).SetupWebhookWithManager(mgr)
+	webhookCreationErrorExit(err, sakeyconfig.LongName, setupLog)
 }
 
 func setupYCRConnector(mgr ctrl.Manager, clusterID string) {

@@ -1,0 +1,4 @@
+# This patch changes service namespaces of webhook configurations
+- op: replace
+  path: /webhooks/0/clientConfig/service/namespace
+  value: yandex-cloud-connectors

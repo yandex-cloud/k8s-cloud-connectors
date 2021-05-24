@@ -6,3 +6,4 @@ resources:
   - crd/connectors.cloud.yandex.com_yandexcontainerregistries.yaml
   - crd/connectors.cloud.yandex.com_yandexmessagequeues.yaml
   - crd/connectors.cloud.yandex.com_yandexobjectstorages.yaml
+  - ../webhook
