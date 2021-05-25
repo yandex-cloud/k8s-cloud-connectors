@@ -51,6 +51,6 @@ spec:
               readOnly: true
       volumes:
         - name: tls-certificate
-          hostPath:
-            path: /tls-certificates
+          secret:
+            secretName: webhook-tls-cert
       terminationGracePeriodSeconds: 10
