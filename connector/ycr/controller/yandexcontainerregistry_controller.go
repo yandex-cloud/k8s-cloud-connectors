@@ -23,7 +23,8 @@ import (
 // yandexContainerRegistryReconciler reconciles a YandexContainerRegistry object
 type yandexContainerRegistryReconciler struct {
 	client.Client
-	log logr.Logger
+	log       logr.Logger
+	clusterID string
 
 	// phases that are to be invoked on this object
 	// IsUpdated blocks Update, and order of initializers matters,
@@ -34,15 +35,16 @@ type yandexContainerRegistryReconciler struct {
 }
 
 func NewYandexContainerRegistryReconciler(
-	cl client.Client, log logr.Logger,
+	cl client.Client, log logr.Logger, clusterID string,
 ) (*yandexContainerRegistryReconciler, error) {
 	impl, err := adapter.NewYandexContainerRegistryAdapterSDK()
 	if err != nil {
 		return nil, err
 	}
 	return &yandexContainerRegistryReconciler{
-		Client: cl,
-		log:    log,
+		Client:    cl,
+		log:       log,
+		clusterID: clusterID,
 		phases: []phase.YandexContainerRegistryPhase{
 			// Register finalizer for the object (is blocked by allocation)
 			&phase.FinalizerRegistrar{
@@ -52,17 +54,20 @@ func NewYandexContainerRegistryReconciler(
 			// (is blocked by finalizer registration,
 			// because otherwise resource can leak)
 			&phase.Allocator{
-				Sdk: impl,
+				Sdk:       impl,
+				ClusterID: clusterID,
 			},
 			// In case spec was updated and our cloud registry does not match with
 			// spec, we need to update cloud registry (is blocked by allocation)
 			&phase.SpecMatcher{
-				Sdk: impl,
+				Sdk:       impl,
+				ClusterID: clusterID,
 			},
 			// Update status of the object (is blocked by everything mutating)
 			&phase.StatusUpdater{
-				Sdk:    impl,
-				Client: cl,
+				Sdk:       impl,
+				Client:    cl,
+				ClusterID: clusterID,
 			},
 			// Entrypoint for resource update (is blocked by status update)
 			&phase.EndpointProvider{
@@ -87,7 +92,7 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 
 		// This outcome signifies that we just cannot find resource, that is ok
 		if apierrors.IsNotFound(err) {
-			log.Info("Resource not found in k8s, reconciliation not possible")
+			log.Info("object not found in k8s, reconciliation not possible")
 			return config.GetNeverResult()
 		}
 

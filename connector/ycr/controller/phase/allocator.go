@@ -16,14 +16,15 @@ import (
 )
 
 type Allocator struct {
-	Sdk adapter.YandexContainerRegistryAdapter
+	Sdk       adapter.YandexContainerRegistryAdapter
+	ClusterID string
 }
 
 func (r *Allocator) IsUpdated(ctx context.Context, _ logr.Logger, object *connectorsv1.YandexContainerRegistry) (
 	bool, error,
 ) {
 	res, err := ycrutils.GetRegistry(
-		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk,
+		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, r.ClusterID, r.Sdk,
 	)
 	return res != nil, err
 }
@@ -34,7 +35,7 @@ func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connect
 			FolderId: object.Spec.FolderID,
 			Name:     object.Spec.Name,
 			Labels: map[string]string{
-				config.CloudClusterLabel: object.ClusterName,
+				config.CloudClusterLabel: r.ClusterID,
 				config.CloudNameLabel:    object.Name,
 			},
 		},
@@ -47,7 +48,7 @@ func (r *Allocator) Update(ctx context.Context, log logr.Logger, object *connect
 
 func (r *Allocator) Cleanup(ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry) error {
 	ycr, err := ycrutils.GetRegistry(
-		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, object.ObjectMeta.ClusterName, r.Sdk,
+		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, r.ClusterID, r.Sdk,
 	)
 	if err != nil {
 		return err

@@ -84,10 +84,10 @@ endif
 
 ##@ Deployment
 
-install: build ensure-kustomize ## Deploy controller to the k8s cluster specified in ~/.kube/config.
+install: manifests ensure-kustomize ## Deploy controller to the k8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build ./config/base | kubectl apply -f -
 
-uninstall: build ensure-kustomize ## Undeploy controller from the k8s cluster specified in ~/.kube/config.
+uninstall: ensure-kustomize ## Undeploy controller from the k8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build ./config/base | kubectl delete -f -
 
 ##@ Dependencies
