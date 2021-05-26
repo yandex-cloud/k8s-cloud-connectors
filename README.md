@@ -39,7 +39,7 @@ kubectl -n yandex-cloud-connectors get secret webhook-tls-cert -o json | jq '.da
 ```
 
 Полученный при помощи второй команды ключ вставляем в [patch.yaml](config/webhook/patch.yaml) как
-значение `value` второй записи. Теперь повторяем инсталляцию, kustomize сам пропатчит нужный ресурс:
+значение `value` во всех вторых записях. Теперь повторяем инсталляцию, kustomize сам пропатчит нужный ресурс:
 
 ```shell
 make install
