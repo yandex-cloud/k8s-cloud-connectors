@@ -20,13 +20,30 @@ service_account_id=$(yc compute instance-group get --id ${instance_group_id} --f
 yc resource-manager folder add-access-binding --id $folder_id --role container-registry.admin --service-account-id $service_account_id
 ```
 
-Теперь у нод кластера есть права администрировать Container Registry в облаке. Теперь устанавливаем контроллер в кластер:
+Теперь у нод кластера есть права администрировать Container Registry в облаке. Теперь установим контроллер в кластер.
 
 ```shell
 # Добавляем в кластер все необходимые сущности и контроллер
 make install
+```
+Можно заметить, что все сущности появились, однако под повис в состоянии Container Creating. Это происходит из-за того,
+что он не может получить TLS сертификат, чтобы контроллер мог использовать механизм вебхуков. Скрипт, выписывающий этот
+сертификат, взят из [этого репозитория](https://github.com/morvencao/kube-mutating-webhook-tutorial).
 
-# Эту команду запускаем в другом окне терминала, в первом пишутся логи
+```shell
+./scripts/webhook-create-signed-cert.sh --namespace yandex-cloud-connectors \
+                                        --service webhook-service \
+                                        --secret webhook-tls-cert
+
+kubectl -n yandex-cloud-connectors get secret webhook-tls-cert -o json | jq '.data["tls.crt"]' | tr -d '"'
+```
+
+Полученный при помощи второй команды ключ вставляем в [patch.yaml](config/webhook/patch.yaml) как
+значение `value` второй записи. Теперь повторяем инсталляцию, kustomize сам пропатчит нужный ресурс:
+
+```shell
+make install
+
 folder_id=$folder_id envsubst < ./connectors/ycr/examples/test-registry.yaml.tmpl | kubectl apply -f -
 ```
 
