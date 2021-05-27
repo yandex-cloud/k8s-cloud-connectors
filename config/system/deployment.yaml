@@ -46,7 +46,7 @@ spec:
               cpu: 100m
               memory: 20Mi
           volumeMounts:
-            - mountPath: /tmp/k8s-webhook-server/serving-certs
+            - mountPath: /etc/yandex-cloud-connectors/certs
               name: tls-certificate
               readOnly: true
       volumes:
