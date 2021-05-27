@@ -11,7 +11,7 @@ import (
 )
 
 // log is for logging in this package.
-var ycrlog = logf.Log.WithName("sakey-resource")
+var ycrlog = logf.Log.WithName("ycr-admission")
 
 func (r *YandexContainerRegistry) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).

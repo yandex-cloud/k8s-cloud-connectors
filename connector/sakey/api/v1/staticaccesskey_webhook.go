@@ -11,7 +11,7 @@ import (
 )
 
 // log is for logging in this package.
-var sakeylog = logf.Log.WithName("sakey-resource")
+var sakeylog = logf.Log.WithName("sakey-admission")
 
 func (r *StaticAccessKey) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).

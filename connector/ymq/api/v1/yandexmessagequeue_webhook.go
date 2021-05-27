@@ -11,7 +11,7 @@ import (
 )
 
 // log is for logging in this package.
-var ymqlog = logf.Log.WithName("sakey-resource")
+var ymqlog = logf.Log.WithName("ymq-amdission")
 
 func (r *YandexMessageQueue) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).

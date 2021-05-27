@@ -11,7 +11,7 @@ import (
 )
 
 // log is for logging in this package.
-var ycrlog = logf.Log.WithName("sakey-resource")
+var yoslog = logf.Log.WithName("yos-admission")
 
 func (r *YandexObjectStorage) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
@@ -25,7 +25,7 @@ var _ webhook.Defaulter = &YandexObjectStorage{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *YandexObjectStorage) Default() {
-	ycrlog.Info("default", "name", r.Name)
+	yoslog.Info("default", "name", r.Name)
 
 	// TODO (covariance): fill in your defaulting logic.
 }
@@ -37,7 +37,7 @@ var _ webhook.Validator = &YandexObjectStorage{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *YandexObjectStorage) ValidateCreate() error {
-	ycrlog.Info("validate create", "name", r.Name)
+	yoslog.Info("validate create", "name", r.Name)
 
 	// TODO (covariance): fill in your validation logic upon object creation.
 	return nil
@@ -45,7 +45,7 @@ func (r *YandexObjectStorage) ValidateCreate() error {
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *YandexObjectStorage) ValidateUpdate(old runtime.Object) error {
-	ycrlog.Info("validate update", "name", r.Name)
+	yoslog.Info("validate update", "name", r.Name)
 
 	// TODO (covariance): fill in your validation logic upon object update.
 	return nil
@@ -53,7 +53,7 @@ func (r *YandexObjectStorage) ValidateUpdate(old runtime.Object) error {
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *YandexObjectStorage) ValidateDelete() error {
-	ycrlog.Info("validate delete", "name", r.Name)
+	yoslog.Info("validate delete", "name", r.Name)
 
 	// TODO (covariance): fill in your validation logic upon object deletion.
 	return nil
