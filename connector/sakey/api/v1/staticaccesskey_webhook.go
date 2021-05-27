@@ -4,6 +4,8 @@
 package v1
 
 import (
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -25,21 +27,14 @@ var _ webhook.Defaulter = &StaticAccessKey{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *StaticAccessKey) Default() {
-	sakeylog.Info("default", "name", r.Name)
-
-	// TODO (covariance): fill in your defaulting logic.
 }
 
-// TODO (covariance): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 // +kubebuilder:webhook:path=/validate-connectors-cloud-yandex-com-v1-staticaccesskey,mutating=false,failurePolicy=fail,sideEffects=None,groups=connectors.cloud.yandex.com,resources=staticaccesskeys,verbs=create;update;delete,versions=v1,name=vstaticaccesskey.yandex.com,admissionReviewVersions=v1
 
 var _ webhook.Validator = &StaticAccessKey{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *StaticAccessKey) ValidateCreate() error {
-	sakeylog.Info("validate create", "name", r.Name)
-
-	// TODO (covariance): fill in your validation logic upon object creation.
 	return nil
 }
 
@@ -47,14 +42,24 @@ func (r *StaticAccessKey) ValidateCreate() error {
 func (r *StaticAccessKey) ValidateUpdate(old runtime.Object) error {
 	sakeylog.Info("validate update", "name", r.Name)
 
-	// TODO (covariance): fill in your validation logic upon object update.
+	oldCasted, ok := old.DeepCopyObject().(*StaticAccessKey)
+
+	if !ok {
+		return fmt.Errorf("object is not of the YandexObjectStorage type")
+	}
+
+	if r.Spec.ServiceAccountID != oldCasted.Spec.ServiceAccountID {
+		return fmt.Errorf(
+			"binded service account must be immutable, was changed from %s to %s",
+			oldCasted.Spec.ServiceAccountID,
+			r.Spec.ServiceAccountID,
+		)
+	}
+
 	return nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *StaticAccessKey) ValidateDelete() error {
-	sakeylog.Info("validate delete", "name", r.Name)
-
-	// TODO (covariance): fill in your validation logic upon object deletion.
 	return nil
 }
