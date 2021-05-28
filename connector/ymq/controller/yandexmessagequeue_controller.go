@@ -86,9 +86,9 @@ func (r *yandexMessageQueueReconciler) Reconcile(ctx context.Context, req ctrl.R
 	return config.GetNormalResult()
 }
 
-func (r *yandexMessageQueueReconciler) mustBeFinalized(registry *connectorsv1.YandexMessageQueue) (bool, error) {
-	return !registry.DeletionTimestamp.IsZero() && util.ContainsString(
-		registry.Finalizers, ymqconfig.FinalizerName,
+func (r *yandexMessageQueueReconciler) mustBeFinalized(object *connectorsv1.YandexMessageQueue) (bool, error) {
+	return !object.DeletionTimestamp.IsZero() && util.ContainsString(
+		object.Finalizers, ymqconfig.FinalizerName,
 	), nil
 }
 

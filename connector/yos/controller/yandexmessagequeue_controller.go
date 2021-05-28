@@ -5,7 +5,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -14,7 +13,6 @@ import (
 
 	connectorsv1 "k8s-connectors/connector/yos/api/v1"
 	"k8s-connectors/connector/yos/controller/adapter"
-	"k8s-connectors/connector/yos/controller/phase"
 	yosconfig "k8s-connectors/connector/yos/pkg/config"
 	"k8s-connectors/pkg/config"
 	"k8s-connectors/pkg/util"
@@ -23,34 +21,21 @@ import (
 // yandexObjectStorageReconciler reconciles a YandexContainerRegistry object
 type yandexObjectStorageReconciler struct {
 	client.Client
-	log logr.Logger
-	// phases that are to be invoked on this object
-	// IsUpdated blocks Update, and order of initializers matters,
-	// thus if one of initializers fails, subsequent won't be processed.
-	// Upon destruction of object, phase cleanups are called in
-	// reverse order.
-	phases []phase.YandexObjectStoragePhase
+	adapter adapter.YandexObjectStorageAdapter
+	log     logr.Logger
 }
 
 func NewYandexObjectStorageReconciler(
 	cl client.Client, log logr.Logger,
 ) (*yandexObjectStorageReconciler, error) {
-	sdk, err := adapter.NewYandexObjectStorageAdapterSDK()
+	impl, err := adapter.NewYandexObjectStorageAdapterSDK()
 	if err != nil {
 		return nil, err
 	}
 	return &yandexObjectStorageReconciler{
-		Client: cl,
-		log:    log,
-		phases: []phase.YandexObjectStoragePhase{
-			&phase.FinalizerRegistrar{
-				Client: cl,
-			},
-			&phase.ResourceAllocator{
-				Client: cl,
-				Sdk:    sdk,
-			},
-		},
+		Client:  cl,
+		adapter: impl,
+		log:     log,
 	}, nil
 }
 
@@ -63,12 +48,12 @@ func NewYandexObjectStorageReconciler(
 func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.log.WithValues(yosconfig.LongName, req.NamespacedName)
 
-	// Try to retrieve resource from k8s
-	var resource connectorsv1.YandexObjectStorage
-	if err := r.Get(ctx, req.NamespacedName, &resource); err != nil {
+	// Try to retrieve object from k8s
+	var object connectorsv1.YandexObjectStorage
+	if err := r.Get(ctx, req.NamespacedName, &object); err != nil {
 		// It still can be OK if we have not found it, and we do not need to reconcile it again
 
-		// This outcome signifies that we just cannot find resource, that is ok
+		// This outcome signifies that we just cannot find object, that is ok
 		if apierrors.IsNotFound(err) {
 			log.Info("Resource not found in k8s, reconciliation not possible")
 			return config.GetNeverResult()
@@ -79,49 +64,46 @@ func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	// If object must be currently finalized, do it and quit
-	mustBeFinalized, err := r.mustBeFinalized(&resource)
+	mustBeFinalized, err := r.mustBeFinalized(&object)
 	if err != nil {
 		return config.GetErroredResult(err)
 	}
 	if mustBeFinalized {
-		if err := r.finalize(ctx, log, &resource); err != nil {
+		if err := r.finalize(ctx, log, &object); err != nil {
 			return config.GetErroredResult(err)
 		}
 		return config.GetNormalResult()
 	}
 
-	// Update all fragments of object, keeping track of whether
-	// all of them are initialized
-	for _, updater := range r.phases {
-		isInitialized, err := updater.IsUpdated(ctx, &resource)
-		if err != nil {
-			return config.GetErroredResult(err)
-		}
-		if !isInitialized {
-			if err := updater.Update(ctx, log, &resource); err != nil {
-				return config.GetErroredResult(err)
-			}
-		}
+	if err := r.registerFinalizer(ctx, log, &object); err != nil {
+		return config.GetErroredResult(err)
+	}
+
+	if err := r.allocateResource(ctx, log, &object); err != nil {
+		return config.GetErroredResult(err)
 	}
 
 	return config.GetNormalResult()
 }
 
-func (r *yandexObjectStorageReconciler) mustBeFinalized(registry *connectorsv1.YandexObjectStorage) (bool, error) {
-	return !registry.DeletionTimestamp.IsZero() && util.ContainsString(
-		registry.Finalizers, yosconfig.FinalizerName,
+func (r *yandexObjectStorageReconciler) mustBeFinalized(object *connectorsv1.YandexObjectStorage) (bool, error) {
+	return !object.DeletionTimestamp.IsZero() && util.ContainsString(
+		object.Finalizers, yosconfig.FinalizerName,
 	), nil
 }
 
 func (r *yandexObjectStorageReconciler) finalize(
-	ctx context.Context, log logr.Logger, registry *connectorsv1.YandexObjectStorage,
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexObjectStorage,
 ) error {
-	for i := len(r.phases); i != 0; i-- {
-		if err := r.phases[i-1].Cleanup(ctx, log, registry); err != nil {
-			return fmt.Errorf("error during finalization: %v", err)
-		}
+	if err := r.deallocateResource(ctx, log, object); err != nil {
+		return err
 	}
-	log.Info("resource finalized successfully")
+
+	if err := r.deregisterFinalizer(ctx, log, object); err != nil {
+		return err
+	}
+
+	log.Info("object finalized successfully")
 	return nil
 }
 
