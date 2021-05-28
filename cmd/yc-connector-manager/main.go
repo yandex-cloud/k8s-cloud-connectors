@@ -117,6 +117,10 @@ func controllerCreationErrorExit(err error, controllerName string, log logr.Logg
 	setupErrorExit(err, "controller "+controllerName, log)
 }
 
+func webhookCreationErrorExit(err error, webhookName string, log logr.Logger) {
+	setupErrorExit(err, "webhook "+webhookName, log)
+}
+
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
@@ -157,14 +161,22 @@ func main() {
 			HealthProbeBindAddress: probeAddr,
 			LeaderElection:         enableLeaderElection,
 			LeaderElectionID:       "faeacf9e.cloud.yandex.com",
+			CertDir: "/etc/yandex-cloud-connectors/certs",
 		},
 	)
 	setupErrorExit(err, "manager", setupLog)
 
 	setupSAKeyConnector(mgr, clusterID)
+	setupSAKeyWebhook(mgr)
+
 	setupYCRConnector(mgr, clusterID)
+	setupYCRWebhook(mgr)
+
 	setupYMQConnector(mgr)
+	setupYMQWebhook(mgr)
+
 	setupYOSConnector(mgr)
+	setupYOSWebhook(mgr)
 
 	// +kubebuilder:scaffold:builder
 
@@ -195,6 +207,12 @@ func setupSAKeyConnector(mgr ctrl.Manager, clusterID string) {
 	controllerCreationErrorExit(err, sakeyconfig.LongName, setupLog)
 }
 
+func setupSAKeyWebhook(mgr ctrl.Manager) {
+	setupLog.Info("starting " + sakeyconfig.ShortName + " webhook")
+	err := (&sakey.StaticAccessKey{}).SetupWebhookWithManager(mgr)
+	webhookCreationErrorExit(err, sakeyconfig.LongName, setupLog)
+}
+
 func setupYCRConnector(mgr ctrl.Manager, clusterID string) {
 	setupLog.Info("starting " + ycrconfig.ShortName + " connector")
 	ycrReconciler, err := ycrconnector.NewYandexContainerRegistryReconciler(
@@ -205,6 +223,12 @@ func setupYCRConnector(mgr ctrl.Manager, clusterID string) {
 	controllerCreationErrorExit(err, ycrconfig.LongName, setupLog)
 	err = ycrReconciler.SetupWithManager(mgr)
 	controllerCreationErrorExit(err, ycrconfig.LongName, setupLog)
+}
+
+func setupYCRWebhook(mgr ctrl.Manager) {
+	setupLog.Info("starting " + ycrconfig.ShortName + " webhook")
+	err := (&ycr.YandexContainerRegistry{}).SetupWebhookWithManager(mgr)
+	webhookCreationErrorExit(err, ycrconfig.LongName, setupLog)
 }
 
 func setupYMQConnector(mgr ctrl.Manager) {
@@ -218,6 +242,12 @@ func setupYMQConnector(mgr ctrl.Manager) {
 	controllerCreationErrorExit(err, ymqconfig.LongName, setupLog)
 }
 
+func setupYMQWebhook(mgr ctrl.Manager) {
+	setupLog.Info("starting " + ymqconfig.ShortName + " webhook")
+	err := (&ymq.YandexMessageQueue{}).SetupWebhookWithManager(mgr)
+	webhookCreationErrorExit(err, ymqconfig.LongName, setupLog)
+}
+
 func setupYOSConnector(mgr ctrl.Manager) {
 	setupLog.Info("starting " + yosconfig.ShortName + " connector")
 	yosReconciler, err := yosconnector.NewYandexObjectStorageReconciler(
@@ -227,4 +257,10 @@ func setupYOSConnector(mgr ctrl.Manager) {
 	controllerCreationErrorExit(err, yosconfig.LongName, setupLog)
 	err = yosReconciler.SetupWithManager(mgr)
 	controllerCreationErrorExit(err, yosconfig.LongName, setupLog)
+}
+
+func setupYOSWebhook(mgr ctrl.Manager) {
+	setupLog.Info("starting " + yosconfig.ShortName + " webhook")
+	err := (&yos.YandexObjectStorage{}).SetupWebhookWithManager(mgr)
+	webhookCreationErrorExit(err, yosconfig.LongName, setupLog)
 }

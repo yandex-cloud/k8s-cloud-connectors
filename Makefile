@@ -42,7 +42,7 @@ help: ## Display this help.
 ##@ Development
 
 manifests: ensure-controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects via controller-gen tool.
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=connector-manager-role paths="./..." \
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=connector-manager-role webhook paths="./..." \
 			output:crd:artifacts:config=./config/base/crd \
 			output:rbac:artifacts:config=./config/system
 
