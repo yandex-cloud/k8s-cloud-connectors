@@ -1,33 +1,30 @@
 // Copyright (c) 2021 Yandex LLC. All rights reserved.
 // Author: Martynov Pavel <covariance@yandex-team.ru>
 
-package phase
+package controller
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/go-logr/logr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	connectorsv1 "k8s-connectors/connector/ycr/api/v1"
 	ycrconfig "k8s-connectors/connector/ycr/pkg/config"
 	"k8s-connectors/pkg/configmap"
 )
 
-type EndpointProvider struct {
-	Client client.Client
-}
-
-func (r *EndpointProvider) IsUpdated(
-	ctx context.Context, _ logr.Logger, registry *connectorsv1.YandexContainerRegistry,
-) (bool, error) {
-	return configmap.Exists(ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName)
-}
-
-func (r *EndpointProvider) Update(
+func (r *yandexContainerRegistryReconciler) provideConfigMap(
 	ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry,
 ) error {
+	exists, err := configmap.Exists(ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+
 	if err := configmap.Put(
 		ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName, map[string]string{
 			"ID": registry.Status.ID,
@@ -39,7 +36,7 @@ func (r *EndpointProvider) Update(
 	return nil
 }
 
-func (r *EndpointProvider) Cleanup(
+func (r *yandexContainerRegistryReconciler) removeConfigMap(
 	ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry,
 ) error {
 	if err := configmap.Remove(ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName); err != nil {

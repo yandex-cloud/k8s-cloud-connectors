@@ -1,40 +1,23 @@
 // Copyright (c) 2021 Yandex LLC. All rights reserved.
 // Author: Martynov Pavel <covariance@yandex-team.ru>
 
-package phase
+package controller
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/go-logr/logr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	connectorsv1 "k8s-connectors/connector/ycr/api/v1"
-	"k8s-connectors/connector/ycr/controller/adapter"
 	ycrutils "k8s-connectors/connector/ycr/pkg/util"
 )
 
-type StatusUpdater struct {
-	Sdk       adapter.YandexContainerRegistryAdapter
-	Client    client.Client
-	ClusterID string
-}
-
-func (r *StatusUpdater) IsUpdated(_ context.Context, _ logr.Logger, _ *connectorsv1.YandexContainerRegistry) (
-	bool, error,
-) {
-	// In every reconciliation we need to update
-	// status. Therefore, this updater is never
-	// marked as updated.
-	return false, nil
-}
-
-func (r *StatusUpdater) Update(
+func (r *yandexContainerRegistryReconciler) updateStatus(
 	ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry,
 ) error {
 	res, err := ycrutils.GetRegistry(
-		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, r.ClusterID, r.Sdk,
+		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, r.clusterID, r.adapter,
 	)
 	if err != nil {
 		return err
@@ -54,9 +37,5 @@ func (r *StatusUpdater) Update(
 	}
 
 	log.Info("object status updated")
-	return nil
-}
-
-func (r *StatusUpdater) Cleanup(_ context.Context, _ logr.Logger, _ *connectorsv1.YandexContainerRegistry) error {
 	return nil
 }
