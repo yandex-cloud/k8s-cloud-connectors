@@ -151,7 +151,7 @@ func main() {
 			os.Exit(1)
 		}
 	}
-	ctrl.SetLogger(zapr.NewLogger(log))
+	ctrl.SetLogger(zapr.NewLogger(log.WithOptions(zap.AddCallerSkip(1))))
 	setupLog.Info("starting manager setup")
 
 	if clusterID == "" {
@@ -208,7 +208,7 @@ func setupSAKeyConnector(mgr ctrl.Manager, clusterID string) {
 	setupLog.V(1).Info("starting " + sakeyconfig.ShortName + " connector")
 	sakeyReconciler, err := sakeyconnector.NewStaticAccessKeyReconciler(
 		mgr.GetClient(),
-		ctrl.Log.WithName("controllers").WithName(sakeyconfig.LongName),
+		ctrl.Log.WithName("connector").WithName(sakeyconfig.ShortName),
 		clusterID,
 	)
 	controllerCreationErrorExit(err, sakeyconfig.LongName, setupLog)
@@ -224,7 +224,7 @@ func setupYCRConnector(mgr ctrl.Manager, clusterID string) {
 	setupLog.V(1).Info("starting " + ycrconfig.ShortName + " connector")
 	ycrReconciler, err := ycrconnector.NewYandexContainerRegistryReconciler(
 		mgr.GetClient(),
-		ctrl.Log.WithName("controllers").WithName(ycrconfig.LongName),
+		ctrl.Log.WithName("connector").WithName(ycrconfig.ShortName),
 		clusterID,
 	)
 	controllerCreationErrorExit(err, ycrconfig.LongName, setupLog)
@@ -240,7 +240,7 @@ func setupYMQConnector(mgr ctrl.Manager) {
 	setupLog.V(1).Info("starting " + ymqconfig.ShortName + " connector")
 	ymqReconciler, err := ymqconnector.NewYandexMessageQueueReconciler(
 		mgr.GetClient(),
-		ctrl.Log.WithName("controllers").WithName(ymqconfig.LongName),
+		ctrl.Log.WithName("connector").WithName(ymqconfig.ShortName),
 	)
 	controllerCreationErrorExit(err, ymqconfig.LongName, setupLog)
 	controllerCreationErrorExit(ymqReconciler.SetupWithManager(mgr), ymqconfig.LongName, setupLog)
@@ -255,7 +255,7 @@ func setupYOSConnector(mgr ctrl.Manager) {
 	setupLog.V(1).Info("starting " + yosconfig.ShortName + " connector")
 	yosReconciler, err := yosconnector.NewYandexObjectStorageReconciler(
 		mgr.GetClient(),
-		ctrl.Log.WithName("controllers").WithName(yosconfig.LongName),
+		ctrl.Log.WithName("connector").WithName(yosconfig.ShortName),
 	)
 	controllerCreationErrorExit(err, yosconfig.LongName, setupLog)
 	controllerCreationErrorExit(yosReconciler.SetupWithManager(mgr), yosconfig.LongName, setupLog)

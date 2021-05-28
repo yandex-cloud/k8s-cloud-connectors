@@ -46,7 +46,8 @@ func NewYandexObjectStorageReconciler(
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get
 
 func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.log.WithValues(yosconfig.LongName, req.NamespacedName)
+	log := r.log.WithValues("name", req.NamespacedName)
+	log.V(1).Info("started reconciliation")
 
 	// Try to retrieve object from k8s
 	var object connectorsv1.YandexObjectStorage
@@ -55,7 +56,7 @@ func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.
 
 		// This outcome signifies that we just cannot find object, that is ok
 		if apierrors.IsNotFound(err) {
-			log.Info("Resource not found in k8s, reconciliation not possible")
+			log.V(1).Info("object not found in k8s, reconciliation not possible")
 			return config.GetNeverResult()
 		}
 
@@ -85,6 +86,7 @@ func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.
 		return config.GetErroredResult(err)
 	}
 
+	log.V(1).Info("finished reconciliation")
 	return config.GetNormalResult()
 }
 
@@ -97,17 +99,20 @@ func (r *yandexObjectStorageReconciler) mustBeFinalized(object *connectorsv1.Yan
 func (r *yandexObjectStorageReconciler) finalize(
 	ctx context.Context, log logr.Logger, object *connectorsv1.YandexObjectStorage,
 ) error {
-	if err := r.deallocateResource(ctx, log, object); err != nil {
+	finalizationLog := log.WithName("finalization")
+	finalizationLog.V(1).Info("started")
+
+	if err := r.deallocateResource(ctx, finalizationLog, object); err != nil {
 		return err
 	}
 
 	if err := util.RegisterFinalizer(
-		ctx, r.Client, log, &object.ObjectMeta, object, yosconfig.FinalizerName,
+		ctx, r.Client, finalizationLog, &object.ObjectMeta, object, yosconfig.FinalizerName,
 	); err != nil {
 		return err
 	}
 
-	log.Info("object finalized successfully")
+	finalizationLog.Info("object finalized successfully")
 	return nil
 }
 
