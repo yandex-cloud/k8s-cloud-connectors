@@ -48,14 +48,6 @@ func (r *YandexContainerRegistry) ValidateUpdate(old runtime.Object) error {
 		return fmt.Errorf("object is not of the YandexContainerRegistry type")
 	}
 
-	if r.Spec.Name != oldCasted.Spec.Name {
-		return fmt.Errorf(
-			"name of YandexContainerRegistry must be immutable, was changed from %s to %s",
-			oldCasted.Spec.Name,
-			r.Spec.Name,
-		)
-	}
-
 	if r.Spec.FolderID != oldCasted.Spec.FolderID {
 		return fmt.Errorf(
 			"folder id of YandexContainerRegistry must be immutable, was changed from %s to %s",

@@ -57,12 +57,6 @@ func NewStaticAccessKeyReconciler(
 				Client:    cl,
 				ClusterID: clusterID,
 			},
-			// In case spec was updated and our cloud resource does not match with
-			// spec, we need to update cloud resource (is blocked by allocation)
-			&phase.SpecMatcher{
-				Sdk:       impl,
-				ClusterID: clusterID,
-			},
 			// Update status of the object (is blocked by everything mutating)
 			&phase.StatusUpdater{
 				Sdk:       impl,

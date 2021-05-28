@@ -57,7 +57,7 @@ func (r *YandexMessageQueue) ValidateUpdate(old runtime.Object) error {
 	oldCasted, ok := old.DeepCopyObject().(*YandexMessageQueue)
 
 	if !ok {
-		return fmt.Errorf("object is not of the YandexObjectStorage type")
+		return fmt.Errorf("object is not of the YandexMessageQueue type")
 	}
 
 	if r.Spec.Name != oldCasted.Spec.Name {
