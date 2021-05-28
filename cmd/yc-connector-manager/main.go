@@ -12,16 +12,16 @@ import (
 	"os"
 
 	"github.com/go-logr/logr"
+	"github.com/go-logr/zapr"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/compute/v1"
 	ycsdk "github.com/yandex-cloud/go-sdk"
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
+	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	sakey "k8s-connectors/connector/sakey/api/v1"
 	sakeyconnector "k8s-connectors/connector/sakey/controller"
@@ -124,6 +124,7 @@ func webhookCreationErrorExit(err error, webhookName string, log logr.Logger) {
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
+	var debugLogging bool
 	var probeAddr string
 	var clusterID string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
@@ -134,14 +135,23 @@ func main() {
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.",
 	)
-	opts := zap.Options{
-		Development: true,
-	}
-	opts.BindFlags(flag.CommandLine)
+	flag.BoolVar(&debugLogging, "debug-logging", false, "Enable debug logging level and stacktrace for warnings.")
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
-
+	var log *zap.Logger
+	var err error
+	if debugLogging {
+		log, err = zap.NewDevelopment()
+		if err != nil {
+			os.Exit(1)
+		}
+	} else {
+		log, err = zap.NewProduction()
+		if err != nil {
+			os.Exit(1)
+		}
+	}
+	ctrl.SetLogger(zapr.NewLogger(log))
 	setupLog.Info("starting manager setup")
 
 	if clusterID == "" {
@@ -180,15 +190,15 @@ func main() {
 
 	// +kubebuilder:scaffold:builder
 
-	setupLog.Info("setting up health check")
+	setupLog.V(1).Info("setting up health check")
 	err = mgr.AddHealthzCheck("healthz", healthz.Ping)
 	setupErrorExit(err, "health check", setupLog)
 
-	setupLog.Info("setting up readiness check")
+	setupLog.V(1).Info("setting up readiness check")
 	err = mgr.AddReadyzCheck("readyz", healthz.Ping)
 	setupErrorExit(err, "readiness check", setupLog)
 
-	setupLog.Info("starting manager")
+	setupLog.V(1).Info("starting manager")
 	if err = mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
@@ -196,71 +206,63 @@ func main() {
 }
 
 func setupSAKeyConnector(mgr ctrl.Manager, clusterID string) {
-	setupLog.Info("starting " + sakeyconfig.ShortName + " connector")
+	setupLog.V(1).Info("starting " + sakeyconfig.ShortName + " connector")
 	sakeyReconciler, err := sakeyconnector.NewStaticAccessKeyReconciler(
 		mgr.GetClient(),
 		ctrl.Log.WithName("controllers").WithName(sakeyconfig.LongName),
 		clusterID,
 	)
 	controllerCreationErrorExit(err, sakeyconfig.LongName, setupLog)
-	err = sakeyReconciler.SetupWithManager(mgr)
-	controllerCreationErrorExit(err, sakeyconfig.LongName, setupLog)
+	controllerCreationErrorExit(sakeyReconciler.SetupWithManager(mgr), sakeyconfig.LongName, setupLog)
 }
 
 func setupSAKeyWebhook(mgr ctrl.Manager) {
-	setupLog.Info("starting " + sakeyconfig.ShortName + " webhook")
-	err := (&sakey.StaticAccessKey{}).SetupWebhookWithManager(mgr)
-	webhookCreationErrorExit(err, sakeyconfig.LongName, setupLog)
+	setupLog.V(1).Info("starting " + sakeyconfig.ShortName + " webhook")
+	webhookCreationErrorExit((&sakey.StaticAccessKey{}).SetupWebhookWithManager(mgr), sakeyconfig.LongName, setupLog)
 }
 
 func setupYCRConnector(mgr ctrl.Manager, clusterID string) {
-	setupLog.Info("starting " + ycrconfig.ShortName + " connector")
+	setupLog.V(1).Info("starting " + ycrconfig.ShortName + " connector")
 	ycrReconciler, err := ycrconnector.NewYandexContainerRegistryReconciler(
 		mgr.GetClient(),
 		ctrl.Log.WithName("controllers").WithName(ycrconfig.LongName),
 		clusterID,
 	)
 	controllerCreationErrorExit(err, ycrconfig.LongName, setupLog)
-	err = ycrReconciler.SetupWithManager(mgr)
-	controllerCreationErrorExit(err, ycrconfig.LongName, setupLog)
+	controllerCreationErrorExit(ycrReconciler.SetupWithManager(mgr), ycrconfig.LongName, setupLog)
 }
 
 func setupYCRWebhook(mgr ctrl.Manager) {
-	setupLog.Info("starting " + ycrconfig.ShortName + " webhook")
-	err := (&ycr.YandexContainerRegistry{}).SetupWebhookWithManager(mgr)
-	webhookCreationErrorExit(err, ycrconfig.LongName, setupLog)
+	setupLog.V(1).Info("starting " + ycrconfig.ShortName + " webhook")
+	webhookCreationErrorExit((&ycr.YandexContainerRegistry{}).SetupWebhookWithManager(mgr), ycrconfig.LongName, setupLog)
 }
 
 func setupYMQConnector(mgr ctrl.Manager) {
-	setupLog.Info("starting " + ymqconfig.ShortName + " connector")
+	setupLog.V(1).Info("starting " + ymqconfig.ShortName + " connector")
 	ymqReconciler, err := ymqconnector.NewYandexMessageQueueReconciler(
 		mgr.GetClient(),
 		ctrl.Log.WithName("controllers").WithName(ymqconfig.LongName),
 	)
 	controllerCreationErrorExit(err, ymqconfig.LongName, setupLog)
-	err = ymqReconciler.SetupWithManager(mgr)
-	controllerCreationErrorExit(err, ymqconfig.LongName, setupLog)
+	controllerCreationErrorExit(ymqReconciler.SetupWithManager(mgr), ymqconfig.LongName, setupLog)
 }
 
 func setupYMQWebhook(mgr ctrl.Manager) {
-	setupLog.Info("starting " + ymqconfig.ShortName + " webhook")
-	err := (&ymq.YandexMessageQueue{}).SetupWebhookWithManager(mgr)
-	webhookCreationErrorExit(err, ymqconfig.LongName, setupLog)
+	setupLog.V(1).Info("starting " + ymqconfig.ShortName + " webhook")
+	webhookCreationErrorExit((&ymq.YandexMessageQueue{}).SetupWebhookWithManager(mgr), ymqconfig.LongName, setupLog)
 }
 
 func setupYOSConnector(mgr ctrl.Manager) {
-	setupLog.Info("starting " + yosconfig.ShortName + " connector")
+	setupLog.V(1).Info("starting " + yosconfig.ShortName + " connector")
 	yosReconciler, err := yosconnector.NewYandexObjectStorageReconciler(
 		mgr.GetClient(),
 		ctrl.Log.WithName("controllers").WithName(yosconfig.LongName),
 	)
 	controllerCreationErrorExit(err, yosconfig.LongName, setupLog)
-	err = yosReconciler.SetupWithManager(mgr)
-	controllerCreationErrorExit(err, yosconfig.LongName, setupLog)
+	controllerCreationErrorExit(yosReconciler.SetupWithManager(mgr), yosconfig.LongName, setupLog)
 }
 
 func setupYOSWebhook(mgr ctrl.Manager) {
-	setupLog.Info("starting " + yosconfig.ShortName + " webhook")
-	err := (&yos.YandexObjectStorage{}).SetupWebhookWithManager(mgr)
-	webhookCreationErrorExit(err, yosconfig.LongName, setupLog)
+	setupLog.V(1).Info("starting " + yosconfig.ShortName + " webhook")
+	webhookCreationErrorExit((&yos.YandexObjectStorage{}).SetupWebhookWithManager(mgr), yosconfig.LongName, setupLog)
 }
