@@ -23,7 +23,7 @@ type YandexContainerRegistrySpec struct {
 	// +kubebuilder:validation:MaxLength=63
 	Name string `json:"name"`
 
-	// FolderID: id of a folder in which registry is located
+	// FolderID: id of a folder in which registry is located. Must be immutable.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:
 	FolderID string `json:"folderId"`

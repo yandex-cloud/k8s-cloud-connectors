@@ -35,7 +35,7 @@ spec:
             description: StaticAccessKeySpec defines the desired state of StaticAccessKeySpec
             properties:
               serviceAccountId:
-                description: 'ServiceAccountID: id of service account from which the key will be issued'
+                description: 'ServiceAccountID: id of service account from which the key will be issued. Must be immutable.'
                 type: string
             required:
             - serviceAccountId
@@ -53,8 +53,6 @@ spec:
         type: object
     served: true
     storage: true
-    subresources:
-      status: {}
 status:
   acceptedNames:
     kind: ""

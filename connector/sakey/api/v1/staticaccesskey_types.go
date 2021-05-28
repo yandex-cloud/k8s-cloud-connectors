@@ -9,8 +9,7 @@ import (
 
 // StaticAccessKeySpec defines the desired state of StaticAccessKeySpec
 type StaticAccessKeySpec struct {
-	// ServiceAccountID: id of service account from which
-	// the key will be issued
+	// ServiceAccountID: id of service account from which the key will be issued. Must be immutable.
 	// +kubebuilder:validation:Required
 	ServiceAccountID string `json:"serviceAccountId"`
 }
@@ -29,7 +28,6 @@ type StaticAccessKeyStatus struct {
 // StaticAccessKey is the Schema for the staticaccesskey API
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:shortName=sakey
-// +kubebuilder:subresource:status
 type StaticAccessKey struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

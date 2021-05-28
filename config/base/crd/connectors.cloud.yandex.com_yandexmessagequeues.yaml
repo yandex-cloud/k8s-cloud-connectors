@@ -45,7 +45,7 @@ spec:
                 type: integer
               fifoQueue:
                 default: false
-                description: 'FifoQueue: flag that states whether queue is FIFO or not.'
+                description: 'FifoQueue: flag that states whether queue is FIFO or not. Must be immutable.'
                 type: boolean
               maximumMessageSize:
                 default: 262144
@@ -82,8 +82,6 @@ spec:
         type: object
     served: true
     storage: true
-    subresources:
-      status: {}
 status:
   acceptedNames:
     kind: ""
