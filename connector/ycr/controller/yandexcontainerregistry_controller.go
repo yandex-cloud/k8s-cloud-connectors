@@ -49,12 +49,12 @@ func NewYandexContainerRegistryReconciler(
 func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.log.WithValues(ycrconfig.LongName, req.NamespacedName)
 
-	// Try to retrieve resource from k8s
+	// Try to retrieve object from k8s
 	var object connectorsv1.YandexContainerRegistry
 	if err := r.Get(ctx, req.NamespacedName, &object); err != nil {
 		// It still can be OK if we have not found it, and we do not need to reconcile it again
 
-		// This outcome signifies that we just cannot find resource, that is ok
+		// This outcome signifies that we just cannot find object, that is ok
 		if apierrors.IsNotFound(err) {
 			log.Info("object not found in k8s, reconciliation not possible")
 			return config.GetNeverResult()
@@ -122,7 +122,7 @@ func (r *yandexContainerRegistryReconciler) finalize(
 		return err
 	}
 
-	log.Info("registry finalized successfully")
+	log.Info("object finalized successfully")
 	return nil
 }
 

@@ -1,7 +1,7 @@
 // Copyright (c) 2021 Yandex LLC. All rights reserved.
 // Author: Martynov Pavel <covariance@yandex-team.ru>
 
-package phase
+package controller
 
 import (
 	"context"
@@ -9,41 +9,27 @@ import (
 	"strconv"
 
 	"github.com/go-logr/logr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	connectorsv1 "k8s-connectors/connector/ymq/api/v1"
-	"k8s-connectors/connector/ymq/controller/adapter"
 	ymqutils "k8s-connectors/connector/ymq/pkg/util"
 )
 
-type ResourceAllocator struct {
-	Client client.Client
-	Sdk    adapter.YandexMessageQueueAdapter
-}
-
-func (r *ResourceAllocator) IsUpdated(ctx context.Context, resource *connectorsv1.YandexMessageQueue) (bool, error) {
-	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, resource, r.Client)
-	if err != nil {
-		return false, err
-	}
-	lst, err := r.Sdk.List(ctx, key, secret)
-	if err != nil {
-		return false, err
-	}
-	for _, queue := range lst {
-		if *queue == resource.Status.QueueURL {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
-func (r *ResourceAllocator) Update(
+func (r *yandexMessageQueueReconciler) allocateResource(
 	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue,
 ) error {
 	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, resource, r.Client)
 	if err != nil {
 		return err
+	}
+
+	lst, err := r.adapter.List(ctx, key, secret)
+	if err != nil {
+		return err
+	}
+	for _, queue := range lst {
+		if *queue == resource.Status.QueueURL {
+			return nil
+		}
 	}
 
 	delaySeconds := strconv.Itoa(resource.Spec.DelaySeconds)
@@ -67,7 +53,7 @@ func (r *ResourceAllocator) Update(
 		attributes["ContentBasedDeduplication"] = &contentBasedDeduplication
 	}
 
-	res, err := r.Sdk.Create(ctx, key, secret, attributes, resource.Spec.Name)
+	res, err := r.adapter.Create(ctx, key, secret, attributes, resource.Spec.Name)
 	if err != nil {
 		return err
 	}
@@ -81,7 +67,7 @@ func (r *ResourceAllocator) Update(
 	return nil
 }
 
-func (r *ResourceAllocator) Cleanup(
+func (r *yandexMessageQueueReconciler) deallocateResource(
 	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue,
 ) error {
 	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, resource, r.Client)
@@ -89,7 +75,7 @@ func (r *ResourceAllocator) Cleanup(
 		return err
 	}
 
-	err = r.Sdk.Delete(ctx, key, secret, resource.Status.QueueURL)
+	err = r.adapter.Delete(ctx, key, secret, resource.Status.QueueURL)
 	if err != nil {
 		return err
 	}
