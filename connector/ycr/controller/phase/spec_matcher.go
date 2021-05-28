@@ -34,10 +34,6 @@ func (r *SpecMatcher) IsUpdated(ctx context.Context, _ logr.Logger, object *conn
 		return false, fmt.Errorf("resource not found in cloud: %v", object)
 	}
 
-	// Here we will check immutable fields
-	if object.Spec.FolderID != "" && res.FolderId != object.Spec.FolderID {
-		return false, fmt.Errorf("FolderID changed, invalid state for object")
-	}
 	return res.Name == object.Spec.Name, nil
 }
 

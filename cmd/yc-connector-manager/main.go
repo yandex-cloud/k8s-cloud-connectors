@@ -161,7 +161,7 @@ func main() {
 			HealthProbeBindAddress: probeAddr,
 			LeaderElection:         enableLeaderElection,
 			LeaderElectionID:       "faeacf9e.cloud.yandex.com",
-			CertDir: "/etc/yandex-cloud-connectors/certs",
+			CertDir:                "/etc/yandex-cloud-connectors/certs",
 		},
 	)
 	setupErrorExit(err, "manager", setupLog)

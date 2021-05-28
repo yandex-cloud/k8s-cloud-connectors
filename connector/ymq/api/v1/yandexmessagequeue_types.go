@@ -16,7 +16,7 @@ type YandexMessageQueueSpec struct {
 	// +kubebuilder:validation:Required
 	Name string `json:"name"`
 
-	// FifoQueue: flag that states whether queue is FIFO or not.
+	// FifoQueue: flag that states whether queue is FIFO or not. Must be immutable.
 	// +kubebuilder:default=false
 	// +kubebuilder:validation:Optional
 	FifoQueue bool `json:"fifoQueue"`
