@@ -5,7 +5,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -14,7 +13,6 @@ import (
 
 	connectorsv1 "k8s-connectors/connector/sakey/api/v1"
 	"k8s-connectors/connector/sakey/controller/adapter"
-	"k8s-connectors/connector/sakey/controller/phase"
 	sakeyconfig "k8s-connectors/connector/sakey/pkg/config"
 	"k8s-connectors/pkg/config"
 	"k8s-connectors/pkg/util"
@@ -23,14 +21,9 @@ import (
 // staticAccessKeyReconciler reconciles a StaticAccessKey object
 type staticAccessKeyReconciler struct {
 	client.Client
+	adapter   adapter.StaticAccessKeyAdapter
 	log       logr.Logger
 	clusterID string
-	// phases that are to be invoked on this object
-	// IsUpdated blocks Update, and order of initializers matters,
-	// thus if one of initializers fails, subsequent won't be processed.
-	// Upon destruction of object, phase cleanups are called in
-	// reverse order.
-	phases []phase.StaticAccessKeyPhase
 }
 
 func NewStaticAccessKeyReconciler(
@@ -42,28 +35,9 @@ func NewStaticAccessKeyReconciler(
 	}
 	return &staticAccessKeyReconciler{
 		Client:    cl,
+		adapter:   impl,
 		log:       log,
 		clusterID: clusterID,
-		phases: []phase.StaticAccessKeyPhase{
-			// Register finalizer for the object (is blocked by allocation)
-			&phase.FinalizerRegistrar{
-				Client: cl,
-			},
-			// Allocate corresponding resource in cloud
-			// (is blocked by finalizer registration,
-			// because otherwise resource can leak)
-			&phase.Allocator{
-				Sdk:       impl,
-				Client:    cl,
-				ClusterID: clusterID,
-			},
-			// Update status of the object (is blocked by everything mutating)
-			&phase.StatusUpdater{
-				Sdk:       impl,
-				Client:    cl,
-				ClusterID: clusterID,
-			},
-		},
 	}, nil
 }
 
@@ -100,18 +74,16 @@ func (r *staticAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return config.GetNormalResult()
 	}
 
-	// Update all fragments of object, keeping track of whether
-	// all of them are initialized
-	for _, updater := range r.phases {
-		isInitialized, err := updater.IsUpdated(ctx, log, &object)
-		if err != nil {
-			return config.GetErroredResult(err)
-		}
-		if !isInitialized {
-			if err := updater.Update(ctx, log, &object); err != nil {
-				return config.GetErroredResult(err)
-			}
-		}
+	if err := r.registerFinalizer(ctx, log, &object); err != nil {
+		return config.GetErroredResult(err)
+	}
+
+	if err := r.allocateResource(ctx, log, &object); err != nil {
+		return config.GetErroredResult(err)
+	}
+
+	if err := r.updateStatus(ctx, log, &object); err != nil {
+		return config.GetErroredResult(err)
 	}
 
 	return config.GetNormalResult()
@@ -124,11 +96,14 @@ func (r *staticAccessKeyReconciler) mustBeFinalized(object *connectorsv1.StaticA
 func (r *staticAccessKeyReconciler) finalize(
 	ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey,
 ) error {
-	for i := len(r.phases); i != 0; i-- {
-		if err := r.phases[i-1].Cleanup(ctx, log, object); err != nil {
-			return fmt.Errorf("error during finalization: %v", err)
-		}
+	if err := r.deallocateResource(ctx, log, object); err != nil {
+		return err
 	}
+
+	if err := r.deregisterFinalizer(ctx, log, object); err != nil {
+		return err
+	}
+
 	log.Info("object finalized successfully")
 	return nil
 }
