@@ -75,7 +75,9 @@ func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.
 		return config.GetNormalResult()
 	}
 
-	if err := r.registerFinalizer(ctx, log, &object); err != nil {
+	if err := util.RegisterFinalizer(
+		ctx, r.Client, log, &object.ObjectMeta, &object, yosconfig.FinalizerName,
+	); err != nil {
 		return config.GetErroredResult(err)
 	}
 
@@ -99,7 +101,9 @@ func (r *yandexObjectStorageReconciler) finalize(
 		return err
 	}
 
-	if err := r.deregisterFinalizer(ctx, log, object); err != nil {
+	if err := util.RegisterFinalizer(
+		ctx, r.Client, log, &object.ObjectMeta, object, yosconfig.FinalizerName,
+	); err != nil {
 		return err
 	}
 

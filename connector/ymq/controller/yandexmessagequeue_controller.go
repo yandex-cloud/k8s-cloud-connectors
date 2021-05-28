@@ -75,7 +75,9 @@ func (r *yandexMessageQueueReconciler) Reconcile(ctx context.Context, req ctrl.R
 		return config.GetNormalResult()
 	}
 
-	if err := r.registerFinalizer(ctx, log, &object); err != nil {
+	if err := util.RegisterFinalizer(
+		ctx, r.Client, log, &object.ObjectMeta, &object, ymqconfig.FinalizerName,
+	); err != nil {
 		return config.GetErroredResult(err)
 	}
 
@@ -99,7 +101,9 @@ func (r *yandexMessageQueueReconciler) finalize(
 		return err
 	}
 
-	if err := r.deregisterFinalizer(ctx, log, object); err != nil {
+	if err := util.DeregisterFinalizer(
+		ctx, r.Client, log, &object.ObjectMeta, object, ymqconfig.FinalizerName,
+	); err != nil {
 		return err
 	}
 

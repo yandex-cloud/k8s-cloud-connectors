@@ -76,7 +76,9 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 		return config.GetNormalResult()
 	}
 
-	if err := r.registerFinalizer(ctx, log, &object); err != nil {
+	if err := util.RegisterFinalizer(
+		ctx, r.Client, log, &object.ObjectMeta, &object, ycrconfig.FinalizerName,
+	); err != nil {
 		return config.GetErroredResult(err)
 	}
 
@@ -118,7 +120,9 @@ func (r *yandexContainerRegistryReconciler) finalize(
 		return err
 	}
 
-	if err := r.deregisterFinalizer(ctx, log, object); err != nil {
+	if err := util.DeregisterFinalizer(
+		ctx, r.Client, log, &object.ObjectMeta, object, ycrconfig.FinalizerName,
+	); err != nil {
 		return err
 	}
 

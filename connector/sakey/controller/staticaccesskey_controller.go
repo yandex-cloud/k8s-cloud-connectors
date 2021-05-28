@@ -74,7 +74,9 @@ func (r *staticAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return config.GetNormalResult()
 	}
 
-	if err := r.registerFinalizer(ctx, log, &object); err != nil {
+	if err := util.RegisterFinalizer(
+		ctx, r.Client, log, &object.ObjectMeta, &object, sakeyconfig.FinalizerName,
+	); err != nil {
 		return config.GetErroredResult(err)
 	}
 
@@ -100,7 +102,9 @@ func (r *staticAccessKeyReconciler) finalize(
 		return err
 	}
 
-	if err := r.deregisterFinalizer(ctx, log, object); err != nil {
+	if err := util.DeregisterFinalizer(
+		ctx, r.Client, log, &object.ObjectMeta, object, sakeyconfig.FinalizerName,
+	); err != nil {
 		return err
 	}
 
