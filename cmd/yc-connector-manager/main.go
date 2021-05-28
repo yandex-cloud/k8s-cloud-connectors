@@ -155,7 +155,6 @@ func main() {
 	setupLog.Info("starting manager setup")
 
 	if clusterID == "" {
-		var err error
 		clusterID, err = getClusterIDFromNodeMetadata()
 		if err != nil {
 			setupLog.Error(err, "unable to set cluster id")
