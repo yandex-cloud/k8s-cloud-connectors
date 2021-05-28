@@ -5,6 +5,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -60,33 +61,33 @@ func (r *staticAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 			return config.GetNeverResult()
 		}
 
-		return config.GetErroredResult(err)
+		return config.GetErroredResult(fmt.Errorf("unable to get object from k8s: %v", err))
 	}
 
 	// If object must be currently finalized, do it and quit
 	mustBeFinalized, err := r.mustBeFinalized(&object)
 	if err != nil {
-		return config.GetErroredResult(err)
+		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %v", err))
 	}
 	if mustBeFinalized {
-		if err := r.finalize(ctx, log, &object); err != nil {
-			return config.GetErroredResult(err)
+		if err := r.finalize(ctx, log.WithName("finalize"), &object); err != nil {
+			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %v", err))
 		}
 		return config.GetNormalResult()
 	}
 
 	if err := util.RegisterFinalizer(
-		ctx, r.Client, log, &object.ObjectMeta, &object, sakeyconfig.FinalizerName,
+		ctx, r.Client, log.WithName("register-finalizer"), &object.ObjectMeta, &object, sakeyconfig.FinalizerName,
 	); err != nil {
-		return config.GetErroredResult(err)
+		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %v", err))
 	}
 
-	if err := r.allocateResource(ctx, log, &object); err != nil {
-		return config.GetErroredResult(err)
+	if err := r.allocateResource(ctx, log.WithName("allocate-resource"), &object); err != nil {
+		return config.GetErroredResult(fmt.Errorf("unable to allocate resource: %v", err))
 	}
 
-	if err := r.updateStatus(ctx, log, &object); err != nil {
-		return config.GetErroredResult(err)
+	if err := r.updateStatus(ctx, log.WithName("update-status"), &object); err != nil {
+		return config.GetErroredResult(fmt.Errorf("unble to update status: %v", err))
 	}
 
 	log.V(1).Info("finished reconciliation")
@@ -100,20 +101,19 @@ func (r *staticAccessKeyReconciler) mustBeFinalized(object *connectorsv1.StaticA
 func (r *staticAccessKeyReconciler) finalize(
 	ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey,
 ) error {
-	finalizationLog := log.WithName("finalization")
-	finalizationLog.V(1).Info("started")
+	log.V(1).Info("started")
 
-	if err := r.deallocateResource(ctx, finalizationLog, object); err != nil {
-		return err
+	if err := r.deallocateResource(ctx, log.WithName("deallocate-resource"), object); err != nil {
+		return fmt.Errorf("unable to deallocate resource: %v", err)
 	}
 
 	if err := util.DeregisterFinalizer(
-		ctx, r.Client, finalizationLog, &object.ObjectMeta, object, sakeyconfig.FinalizerName,
+		ctx, r.Client, log.WithName("deregister-finalizer"), &object.ObjectMeta, object, sakeyconfig.FinalizerName,
 	); err != nil {
-		return err
+		return fmt.Errorf("unable to deregister finalizer: %v", err)
 	}
 
-	finalizationLog.Info("successful")
+	log.Info("successful")
 	return nil
 }
 

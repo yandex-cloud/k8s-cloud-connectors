@@ -16,6 +16,7 @@ import (
 func (r *staticAccessKeyReconciler) updateStatus(
 	ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey,
 ) error {
+	log.V(1).Info("started")
 	// We must not forget that field SecretName is
 	// managed by another phase and therefore only
 	// thing we do is update key cloud id.
@@ -24,10 +25,10 @@ func (r *staticAccessKeyReconciler) updateStatus(
 		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, r.clusterID, object.Name, r.adapter,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get resource: %v", err)
 	}
 	if res == nil {
-		return fmt.Errorf("resource not found in k8s")
+		return fmt.Errorf("resource not found in the cloud")
 	}
 
 	// Do not mess this fields up, KeyId in a cloud is
@@ -35,9 +36,9 @@ func (r *staticAccessKeyReconciler) updateStatus(
 	object.Status.KeyID = res.Id
 
 	if err := r.Client.Update(ctx, object); err != nil {
-		return err
+		return fmt.Errorf("unable to update object status: %v", err)
 	}
 
-	log.Info("status successfully updated")
+	log.Info("successful")
 	return nil
 }

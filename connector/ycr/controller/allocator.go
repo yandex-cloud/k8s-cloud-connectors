@@ -5,6 +5,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
@@ -17,11 +18,13 @@ import (
 func (r *yandexContainerRegistryReconciler) allocateResource(
 	ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry,
 ) error {
+	log.V(1).Info("started")
+
 	res, err := ycrutils.GetRegistry(
 		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, r.clusterID, r.adapter,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get resource: %v", err)
 	}
 	if res != nil {
 		return nil
@@ -37,20 +40,22 @@ func (r *yandexContainerRegistryReconciler) allocateResource(
 			},
 		},
 	); err != nil {
-		return err
+		return fmt.Errorf("unable to create resource: %v", err)
 	}
-	log.Info("resource allocated successfully")
+	log.Info("successful")
 	return nil
 }
 
 func (r *yandexContainerRegistryReconciler) deallocateResource(
 	ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry,
 ) error {
+	log.V(1).Info("started")
+
 	ycr, err := ycrutils.GetRegistry(
 		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, r.clusterID, r.adapter,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get resource: %v", err)
 	}
 	if ycr == nil {
 		log.Info("registry deleted externally")
@@ -58,8 +63,8 @@ func (r *yandexContainerRegistryReconciler) deallocateResource(
 	}
 
 	if err := r.adapter.Delete(ctx, ycr.Id); err != nil {
-		return err
+		return fmt.Errorf("unable to delete resource: %v", err)
 	}
-	log.Info("registry deleted successfully")
+	log.Info("successful")
 	return nil
 }

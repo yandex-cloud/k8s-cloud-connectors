@@ -17,9 +17,11 @@ import (
 func (r *yandexContainerRegistryReconciler) provideConfigMap(
 	ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry,
 ) error {
+	log.V(1).Info("started")
+
 	exists, err := configmap.Exists(ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to check configmap existance: %v", err)
 	}
 	if exists {
 		return nil
@@ -30,18 +32,20 @@ func (r *yandexContainerRegistryReconciler) provideConfigMap(
 			"ID": registry.Status.ID,
 		},
 	); err != nil {
-		return fmt.Errorf("unable to update endpoint: %v", err)
+		return fmt.Errorf("unable to update configmap: %v", err)
 	}
-	log.Info("endpoint successfully provided")
+	log.Info("successful")
 	return nil
 }
 
 func (r *yandexContainerRegistryReconciler) removeConfigMap(
 	ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry,
 ) error {
+	log.V(1).Info("started")
+
 	if err := configmap.Remove(ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName); err != nil {
-		return fmt.Errorf("unable to remove endpoint: %v", err)
+		return fmt.Errorf("unable to remove configmap: %v", err)
 	}
-	log.Info("endpoint successfully removed")
+	log.Info("successful")
 	return nil
 }

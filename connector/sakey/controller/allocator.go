@@ -18,11 +18,13 @@ import (
 func (r *staticAccessKeyReconciler) allocateResource(
 	ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey,
 ) error {
+	log.V(1).Info("started")
+
 	res, err := sakeyutils.GetStaticAccessKey(
 		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, r.clusterID, object.Name, r.adapter,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get resource: %v", err)
 	}
 	if res != nil {
 		return nil
@@ -31,7 +33,7 @@ func (r *staticAccessKeyReconciler) allocateResource(
 		ctx, object.Spec.ServiceAccountID, sakeyconfig.GetStaticAccessKeyDescription(r.clusterID, object.Name),
 	)
 	if err != nil {
-		return fmt.Errorf("error while creating resource: %v", err)
+		return fmt.Errorf("unable to create resource: %v", err)
 	}
 
 	// Now we need to create a secret with the key
@@ -45,40 +47,42 @@ func (r *staticAccessKeyReconciler) allocateResource(
 		// have not provided secret with secret key and therefore
 		// we will inevitably lose it.
 		// TODO (covariance) maybe put log.Fatal here?
-		return err
+		return fmt.Errorf("unable to create secret, this is fatal: %v", err)
 	}
 
 	// And we need to update status
 	object.Status.SecretName = secret.Name(&object.ObjectMeta, sakeyconfig.ShortName)
 	if err = r.Client.Update(ctx, object); err != nil {
-		return fmt.Errorf("error while creating resource: %v", err)
+		return fmt.Errorf("unable to update object status: %v", err)
 	}
 
-	log.Info("resource allocated successfully")
+	log.Info("successful")
 	return nil
 }
 
 func (r *staticAccessKeyReconciler) deallocateResource(
 	ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey,
 ) error {
+	log.V(1).Info("started")
+
 	if err := secret.Remove(ctx, r.Client, &object.ObjectMeta, sakeyconfig.ShortName); err != nil {
-		return err
+		return fmt.Errorf("unable to delete secret: %v", err)
 	}
 
 	res, err := sakeyutils.GetStaticAccessKey(
 		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, r.clusterID, object.Name, r.adapter,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get resource: %v", err)
 	}
 	if res == nil {
 		return nil
 	}
 
 	if err = r.adapter.Delete(ctx, res.Id); err != nil {
-		return err
+		return fmt.Errorf("unable to delete resource: %v", err)
 	}
 
-	log.Info("resource deleted successfully")
+	log.Info("successful")
 	return nil
 }

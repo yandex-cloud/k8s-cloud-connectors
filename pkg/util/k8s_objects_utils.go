@@ -24,14 +24,15 @@ func RegisterFinalizer(
 	ctx context.Context, cl client.Client, log logr.Logger, meta *metav1.ObjectMeta, object client.Object,
 	finalizer string,
 ) error {
+	log.V(1).Info("started")
 	if ContainsString(meta.Finalizers, finalizer) {
 		return nil
 	}
 	meta.Finalizers = append(meta.Finalizers, finalizer)
 	if err := cl.Update(ctx, object); err != nil {
-		return fmt.Errorf("unable to update status: %v", err)
+		return fmt.Errorf("unable to register finalizer: %v", err)
 	}
-	log.Info("finalizer registered successfully")
+	log.Info("successful")
 	return nil
 }
 
@@ -39,11 +40,12 @@ func DeregisterFinalizer(
 	ctx context.Context, cl client.Client, log logr.Logger, meta *metav1.ObjectMeta, object client.Object,
 	finalizer string,
 ) error {
+	log.V(1).Info("started")
 	meta.Finalizers = RemoveString(meta.Finalizers, finalizer)
 	if err := cl.Update(ctx, object); err != nil {
-		return fmt.Errorf("unable to remove finalizer: %v", err)
+		return fmt.Errorf("unable to deregister finalizer: %v", err)
 	}
 
-	log.Info("finalizer removed successfully")
+	log.Info("successful")
 	return nil
 }

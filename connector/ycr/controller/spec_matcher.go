@@ -5,6 +5,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
@@ -17,11 +18,13 @@ import (
 func (r *yandexContainerRegistryReconciler) matchSpec(
 	ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry,
 ) error {
+	log.V(1).Info("started")
+
 	res, err := ycrutils.GetRegistry(
 		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, r.clusterID, r.adapter,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get resource: %v", err)
 	}
 	if res.Name == object.Spec.Name {
 		return nil
@@ -34,8 +37,8 @@ func (r *yandexContainerRegistryReconciler) matchSpec(
 			Name:       object.Spec.Name,
 		},
 	); err != nil {
-		return err
+		return fmt.Errorf("unable to update resource: %v", err)
 	}
-	log.Info("object spec matched with cloud")
+	log.Info("successful")
 	return nil
 }
