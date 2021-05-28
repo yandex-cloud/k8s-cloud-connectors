@@ -36,7 +36,6 @@ var _ webhook.Validator = &YandexMessageQueue{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *YandexMessageQueue) ValidateCreate() error {
-
 	if r.Spec.FifoQueue {
 		if !strings.HasSuffix(r.Spec.Name, ".fifo") {
 			return fmt.Errorf("name of FIFO queue must end with \".fifo\"")
@@ -70,7 +69,7 @@ func (r *YandexMessageQueue) ValidateUpdate(old runtime.Object) error {
 
 	if r.Spec.FifoQueue != oldCasted.Spec.FifoQueue {
 		return fmt.Errorf(
-			"FIFO flag of YandexMessageQueue must be immutable, was changed from %s to %s",
+			"FIFO flag of YandexMessageQueue must be immutable, was changed from %t to %t",
 			oldCasted.Spec.FifoQueue,
 			r.Spec.FifoQueue,
 		)
