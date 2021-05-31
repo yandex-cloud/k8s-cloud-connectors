@@ -35,7 +35,7 @@ spec:
             description: YandexContainerRegistrySpec defines the desired state of YandexContainerRegistry
             properties:
               folderId:
-                description: 'FolderID: id of a folder in which registry is located'
+                description: 'FolderID: id of a folder in which registry is located. Must be immutable.'
                 type: string
               name:
                 description: 'Name: name of registry'

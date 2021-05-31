@@ -5,7 +5,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -14,7 +13,6 @@ import (
 
 	connectorsv1 "k8s-connectors/connector/ycr/api/v1"
 	"k8s-connectors/connector/ycr/controller/adapter"
-	"k8s-connectors/connector/ycr/controller/phase"
 	ycrconfig "k8s-connectors/connector/ycr/pkg/config"
 	"k8s-connectors/pkg/config"
 	"k8s-connectors/pkg/util"
@@ -23,15 +21,9 @@ import (
 // yandexContainerRegistryReconciler reconciles a YandexContainerRegistry object
 type yandexContainerRegistryReconciler struct {
 	client.Client
+	adapter   adapter.YandexContainerRegistryAdapter
 	log       logr.Logger
 	clusterID string
-
-	// phases that are to be invoked on this object
-	// IsUpdated blocks Update, and order of initializers matters,
-	// thus if one of initializers fails, subsequent won't be processed.
-	// Upon destruction of object, phase cleanups are called in
-	// reverse order.
-	phases []phase.YandexContainerRegistryPhase
 }
 
 func NewYandexContainerRegistryReconciler(
@@ -43,37 +35,9 @@ func NewYandexContainerRegistryReconciler(
 	}
 	return &yandexContainerRegistryReconciler{
 		Client:    cl,
+		adapter:   impl,
 		log:       log,
 		clusterID: clusterID,
-		phases: []phase.YandexContainerRegistryPhase{
-			// Register finalizer for the object (is blocked by allocation)
-			&phase.FinalizerRegistrar{
-				Client: cl,
-			},
-			// Allocate corresponding resource in cloud
-			// (is blocked by finalizer registration,
-			// because otherwise resource can leak)
-			&phase.Allocator{
-				Sdk:       impl,
-				ClusterID: clusterID,
-			},
-			// In case spec was updated and our cloud registry does not match with
-			// spec, we need to update cloud registry (is blocked by allocation)
-			&phase.SpecMatcher{
-				Sdk:       impl,
-				ClusterID: clusterID,
-			},
-			// Update status of the object (is blocked by everything mutating)
-			&phase.StatusUpdater{
-				Sdk:       impl,
-				Client:    cl,
-				ClusterID: clusterID,
-			},
-			// Entrypoint for resource update (is blocked by status update)
-			&phase.EndpointProvider{
-				Client: cl,
-			},
-		},
 	}, nil
 }
 
@@ -85,12 +49,12 @@ func NewYandexContainerRegistryReconciler(
 func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.log.WithValues(ycrconfig.LongName, req.NamespacedName)
 
-	// Try to retrieve resource from k8s
-	var registry connectorsv1.YandexContainerRegistry
-	if err := r.Get(ctx, req.NamespacedName, &registry); err != nil {
+	// Try to retrieve object from k8s
+	var object connectorsv1.YandexContainerRegistry
+	if err := r.Get(ctx, req.NamespacedName, &object); err != nil {
 		// It still can be OK if we have not found it, and we do not need to reconcile it again
 
-		// This outcome signifies that we just cannot find resource, that is ok
+		// This outcome signifies that we just cannot find object, that is ok
 		if apierrors.IsNotFound(err) {
 			log.Info("object not found in k8s, reconciliation not possible")
 			return config.GetNeverResult()
@@ -101,51 +65,68 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 	}
 
 	// If object must be currently finalized, do it and quit
-	mustBeFinalized, err := r.mustBeFinalized(&registry)
+	mustBeFinalized, err := r.mustBeFinalized(&object)
 	if err != nil {
 		return config.GetErroredResult(err)
 	}
 	if mustBeFinalized {
-		if err := r.finalize(ctx, log, &registry); err != nil {
+		if err := r.finalize(ctx, log, &object); err != nil {
 			return config.GetErroredResult(err)
 		}
 		return config.GetNormalResult()
 	}
 
-	// Update all fragments of object, keeping track of whether
-	// all of them are initialized
-	for _, updater := range r.phases {
-		isInitialized, err := updater.IsUpdated(ctx, log, &registry)
-		if err != nil {
-			return config.GetErroredResult(err)
-		}
-		if !isInitialized {
-			if err := updater.Update(ctx, log, &registry); err != nil {
-				return config.GetErroredResult(err)
-			}
-		}
+	if err := util.RegisterFinalizer(
+		ctx, r.Client, log, &object.ObjectMeta, &object, ycrconfig.FinalizerName,
+	); err != nil {
+		return config.GetErroredResult(err)
+	}
+
+	if err := r.allocateResource(ctx, log, &object); err != nil {
+		return config.GetErroredResult(err)
+	}
+
+	if err := r.matchSpec(ctx, log, &object); err != nil {
+		return config.GetErroredResult(err)
+	}
+
+	if err := r.updateStatus(ctx, log, &object); err != nil {
+		return config.GetErroredResult(err)
+	}
+
+	if err := r.provideConfigMap(ctx, log, &object); err != nil {
+		return config.GetErroredResult(err)
 	}
 
 	return config.GetNormalResult()
 }
 
-func (r *yandexContainerRegistryReconciler) mustBeFinalized(registry *connectorsv1.YandexContainerRegistry) (
+func (r *yandexContainerRegistryReconciler) mustBeFinalized(object *connectorsv1.YandexContainerRegistry) (
 	bool, error,
 ) {
-	return !registry.DeletionTimestamp.IsZero() && util.ContainsString(
-		registry.Finalizers, ycrconfig.FinalizerName,
+	return !object.DeletionTimestamp.IsZero() && util.ContainsString(
+		object.Finalizers, ycrconfig.FinalizerName,
 	), nil
 }
 
 func (r *yandexContainerRegistryReconciler) finalize(
-	ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry,
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry,
 ) error {
-	for i := len(r.phases); i != 0; i-- {
-		if err := r.phases[i-1].Cleanup(ctx, log, registry); err != nil {
-			return fmt.Errorf("error during finalization: %v", err)
-		}
+	if err := r.removeConfigMap(ctx, log, object); err != nil {
+		return err
 	}
-	log.Info("registry finalized successfully")
+
+	if err := r.deallocateResource(ctx, log, object); err != nil {
+		return err
+	}
+
+	if err := util.DeregisterFinalizer(
+		ctx, r.Client, log, &object.ObjectMeta, object, ycrconfig.FinalizerName,
+	); err != nil {
+		return err
+	}
+
+	log.Info("object finalized successfully")
 	return nil
 }
 

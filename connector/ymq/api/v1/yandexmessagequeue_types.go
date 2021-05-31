@@ -73,7 +73,6 @@ type YandexMessageQueueStatus struct {
 
 // YandexMessageQueue is the Schema for the yandex object storage API
 // +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
 type YandexMessageQueue struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

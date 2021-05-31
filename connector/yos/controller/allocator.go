@@ -1,49 +1,36 @@
 // Copyright (c) 2021 Yandex LLC. All rights reserved.
 // Author: Martynov Pavel <covariance@yandex-team.ru>
 
-package phase
+package controller
 
 import (
 	"context"
 
 	"github.com/go-logr/logr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	connectorsv1 "k8s-connectors/connector/yos/api/v1"
-	"k8s-connectors/connector/yos/controller/adapter"
 	yosutils "k8s-connectors/connector/yos/pkg/util"
 )
 
-type ResourceAllocator struct {
-	Client client.Client
-	Sdk    adapter.YandexObjectStorageAdapter
-}
-
-func (r *ResourceAllocator) IsUpdated(ctx context.Context, resource *connectorsv1.YandexObjectStorage) (bool, error) {
-	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, resource, r.Client)
-	if err != nil {
-		return false, err
-	}
-	lst, err := r.Sdk.List(ctx, key, secret)
-	if err != nil {
-		return false, err
-	}
-	for _, bucket := range lst {
-		if *bucket.Name == resource.Name {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
-func (r *ResourceAllocator) Update(
+func (r *yandexObjectStorageReconciler) allocateResource(
 	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage,
 ) error {
 	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, resource, r.Client)
 	if err != nil {
 		return err
 	}
-	err = r.Sdk.Create(ctx, key, secret, resource.Spec.Name)
+
+	lst, err := r.adapter.List(ctx, key, secret)
+	if err != nil {
+		return err
+	}
+	for _, bucket := range lst {
+		if *bucket.Name == resource.Name {
+			return nil
+		}
+	}
+
+	err = r.adapter.Create(ctx, key, secret, resource.Spec.Name)
 	if err != nil {
 		return err
 	}
@@ -51,7 +38,7 @@ func (r *ResourceAllocator) Update(
 	return nil
 }
 
-func (r *ResourceAllocator) Cleanup(
+func (r *yandexObjectStorageReconciler) deallocateResource(
 	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexObjectStorage,
 ) error {
 	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, resource, r.Client)
@@ -59,7 +46,7 @@ func (r *ResourceAllocator) Cleanup(
 		return err
 	}
 
-	err = r.Sdk.Delete(ctx, key, secret, resource.Spec.Name)
+	err = r.adapter.Delete(ctx, key, secret, resource.Spec.Name)
 	if err != nil {
 		return err
 	}
