@@ -4,40 +4,21 @@
 package controller
 
 import (
-	"context"
 	"testing"
 
-	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"k8s-connectors/connector/sakey/controller/adapter"
 	sakeyconfig "k8s-connectors/connector/sakey/pkg/config"
-	k8sfake "k8s-connectors/testing/k8s-fake"
-	logrfake "k8s-connectors/testing/logr-fake"
 )
-
-func setupAllocator(t *testing.T) (
-	context.Context, logr.Logger, client.Client, adapter.StaticAccessKeyAdapter, staticAccessKeyReconciler,
-) {
-	ad := adapter.NewFakeStaticAccessKeyAdapter()
-	cl := k8sfake.NewFakeClient()
-	log := logrfake.NewFakeLogger(t)
-	return context.Background(), log, cl, &ad, staticAccessKeyReconciler{
-		cl,
-		&ad,
-		log,
-		"test-cluster",
-	}
-}
 
 func TestAllocate(t *testing.T) {
 	t.Run(
 		"update on empty cloud creates resource", func(t *testing.T) {
 			// Arrange
-			ctx, log, cl, ad, rc := setupAllocator(t)
+			ctx, log, cl, ad, rc := setup(t)
 			obj := createObject("sukhov", "obj", "default")
 			require.NoError(t, cl.Create(ctx, &obj))
 
@@ -63,7 +44,7 @@ func TestAllocate(t *testing.T) {
 	t.Run(
 		"update on non-empty cloud creates resource", func(t *testing.T) {
 			// Arrange
-			ctx, log, cl, ad, rc := setupAllocator(t)
+			ctx, log, cl, ad, rc := setup(t)
 			obj1 := createObject("sukhov", "obj1", "default")
 			_, err := ad.Create(
 				ctx, obj1.Spec.ServiceAccountID, sakeyconfig.GetStaticAccessKeyDescription(obj1.ClusterName, obj1.Name),
@@ -110,7 +91,7 @@ func TestDeallocate(t *testing.T) {
 	t.Run(
 		"cleanup on cloud with resource deletes resource", func(t *testing.T) {
 			// Arrange
-			ctx, log, cl, ad, rc := setupAllocator(t)
+			ctx, log, cl, ad, rc := setup(t)
 			obj1 := createObject("sukhov", "obj1", "default")
 			require.NoError(t, cl.Create(ctx, &obj1))
 			require.NoError(t, rc.allocateResource(ctx, log, &obj1))
@@ -135,7 +116,7 @@ func TestDeallocate(t *testing.T) {
 	t.Run(
 		"cleanup on cloud without resource does nothing", func(t *testing.T) {
 			// Arrange
-			ctx, log, cl, ad, rc := setupAllocator(t)
+			ctx, log, cl, ad, rc := setup(t)
 			obj1 := createObject("sukhov", "obj1", "default")
 			require.NoError(t, cl.Create(ctx, &obj1))
 			require.NoError(t, rc.allocateResource(ctx, log, &obj1))
