@@ -124,32 +124,30 @@ func webhookCreationErrorExit(err error, webhookName string, log logr.Logger) {
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
-	var debugLogging bool
+	var logLevel string
 	var probeAddr string
 	var clusterID string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.StringVar(&clusterID, "cluster-id", "", "ID of this cluster in the cloud")
+	flag.StringVar(&clusterID, "cluster-id", "", "ID of this cluster in the cloud.")
 	flag.BoolVar(
 		&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.",
 	)
-	flag.BoolVar(&debugLogging, "debug-logging", false, "Enable debug logging level and stacktrace for warnings.")
+	flag.StringVar(&logLevel, "log-level", "info", "Logging level: can be either info (default) or debug.")
 	flag.Parse()
 
 	var log *zap.Logger
 	var err error
-	if debugLogging {
+	if logLevel == "info" {
 		log, err = zap.NewDevelopment()
-		if err != nil {
-			os.Exit(1)
-		}
 	} else {
 		log, err = zap.NewProduction()
-		if err != nil {
-			os.Exit(1)
-		}
+	}
+	if err != nil {
+		fmt.Printf("unable to set up logger: %v", err)
+		os.Exit(1)
 	}
 	ctrl.SetLogger(zapr.NewLogger(log.WithOptions(zap.AddCallerSkip(1))))
 	setupLog.Info("starting manager setup")

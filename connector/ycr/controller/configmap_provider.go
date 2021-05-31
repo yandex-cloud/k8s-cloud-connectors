@@ -21,7 +21,7 @@ func (r *yandexContainerRegistryReconciler) provideConfigMap(
 
 	exists, err := configmap.Exists(ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName)
 	if err != nil {
-		return fmt.Errorf("unable to check configmap existance: %v", err)
+		return fmt.Errorf("unable to check configmap existence: %v", err)
 	}
 	if exists {
 		return nil
