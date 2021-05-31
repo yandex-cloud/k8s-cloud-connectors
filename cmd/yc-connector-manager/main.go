@@ -124,7 +124,7 @@ func webhookCreationErrorExit(err error, webhookName string, log logr.Logger) {
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
-	var logLevel string
+	var debug bool
 	var probeAddr string
 	var clusterID string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
@@ -133,14 +133,14 @@ func main() {
 	flag.BoolVar(
 		&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.",
+			"Enabling this will ensure there is only one active connector manager.",
 	)
-	flag.StringVar(&logLevel, "log-level", "info", "Logging level: can be either info (default) or debug.")
+	flag.BoolVar(&debug, "debug", false, "Enable debug logging for this connector manager.")
 	flag.Parse()
 
 	var log *zap.Logger
 	var err error
-	if logLevel == "info" {
+	if debug {
 		log, err = zap.NewDevelopment()
 	} else {
 		log, err = zap.NewProduction()
