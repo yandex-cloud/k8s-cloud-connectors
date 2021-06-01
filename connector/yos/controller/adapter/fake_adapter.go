@@ -8,24 +8,32 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/jinzhu/copier"
 )
 
-type FakeAdapter struct {
+type FakeYandexObjectStorageAdapter struct {
 	key     string
 	secret  string
 	storage map[string]s3.Bucket
 }
 
-func (r *FakeAdapter) checkCredentials(key, secret string) error {
+func NewFakeYandexObjectStorageAdapter(key, secret string) FakeYandexObjectStorageAdapter {
+	return FakeYandexObjectStorageAdapter{
+		key,
+		secret,
+		make(map[string]s3.Bucket),
+	}
+}
+
+func (r *FakeYandexObjectStorageAdapter) checkCredentials(key, secret string) error {
 	if r.key != key || r.secret != secret {
 		return fmt.Errorf("credentials are incorrect")
 	}
 	return nil
 }
 
-func (r *FakeAdapter) Create(_ context.Context, key, secret, name string) error {
+func (r *FakeYandexObjectStorageAdapter) Create(_ context.Context, key, secret, name string) error {
 	if err := r.checkCredentials(key, secret); err != nil {
 		return err
 	}
@@ -43,16 +51,16 @@ func (r *FakeAdapter) Create(_ context.Context, key, secret, name string) error 
 	return nil
 }
 
-func (r *FakeAdapter) List(_ context.Context, key, secret string) ([]*s3.Bucket, error) {
+func (r *FakeYandexObjectStorageAdapter) List(_ context.Context, key, secret string) ([]*s3.Bucket, error) {
 	if err := r.checkCredentials(key, secret); err != nil {
 		return nil, err
 	}
 
 	var lst []*s3.Bucket
-	for i := range r.storage {
-		var tmp s3.Bucket
-		if err := copier.Copy(tmp, r.storage[i]); err != nil {
-			return nil, err
+	for _, v := range r.storage {
+		tmp := s3.Bucket{
+			CreationDate: v.CreationDate,
+			Name:         v.Name,
 		}
 		lst = append(lst, &tmp)
 	}
@@ -60,13 +68,13 @@ func (r *FakeAdapter) List(_ context.Context, key, secret string) ([]*s3.Bucket,
 	return lst, nil
 }
 
-func (r *FakeAdapter) Delete(_ context.Context, key, secret, name string) error {
+func (r *FakeYandexObjectStorageAdapter) Delete(_ context.Context, key, secret, name string) error {
 	if err := r.checkCredentials(key, secret); err != nil {
 		return err
 	}
 
 	if _, exists := r.storage[name]; !exists {
-		return fmt.Errorf("bucket does not exist: %s", name)
+		return awserr.New(s3.ErrCodeNoSuchBucket, "no such bucket", nil)
 	}
 
 	delete(r.storage, name)

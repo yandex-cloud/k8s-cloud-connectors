@@ -72,7 +72,7 @@ func (r *FakeAdapter) Create(
 	return formURL(name), nil
 }
 
-func (r *FakeAdapter) List(ctx context.Context, key, secret string) ([]*string, error) {
+func (r *FakeAdapter) List(_ context.Context, key, secret string) ([]*string, error) {
 	if err := r.checkCredentials(key, secret); err != nil {
 		return nil, err
 	}
