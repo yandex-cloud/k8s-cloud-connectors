@@ -12,7 +12,7 @@ import (
 	"k8s-connectors/pkg/config"
 )
 
-func TestAllocatorUpdate(t *testing.T) {
+func TestAllocate(t *testing.T) {
 	t.Run(
 		"update on empty cloud creates resource", func(t *testing.T) {
 			// Arrange
@@ -56,7 +56,7 @@ func TestAllocatorUpdate(t *testing.T) {
 	)
 }
 
-func TestAllocatorCleanup(t *testing.T) {
+func TestDeallocate(t *testing.T) {
 	t.Run(
 		"cleanup on cloud with resource deletes resource", func(t *testing.T) {
 			// Arrange

@@ -14,7 +14,7 @@ import (
 	sakeyconfig "k8s-connectors/connector/sakey/pkg/config"
 )
 
-func TestStatusUpdaterUpdate(t *testing.T) {
+func TestUpdateStatus(t *testing.T) {
 	t.Run(
 		"update retains correct status", func(t *testing.T) {
 			// Arrange

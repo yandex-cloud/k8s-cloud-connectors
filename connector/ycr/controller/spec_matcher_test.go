@@ -12,7 +12,7 @@ import (
 	"k8s-connectors/connector/ycr/pkg/util"
 )
 
-func TestSpecMatcherUpdate(t *testing.T) {
+func TestMatchSpec(t *testing.T) {
 	t.Run(
 		"update matches cloud object with spec of resource", func(t *testing.T) {
 			// Arrange

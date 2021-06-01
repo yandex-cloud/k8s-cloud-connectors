@@ -14,7 +14,7 @@ import (
 	ycrutils "k8s-connectors/connector/ycr/pkg/util"
 )
 
-func TestStatusUpdaterUpdate(t *testing.T) {
+func TestUpdateStatus(t *testing.T) {
 	t.Run(
 		"update retains matching status", func(t *testing.T) {
 			// Arrange

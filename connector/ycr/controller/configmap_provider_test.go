@@ -31,7 +31,7 @@ func createConfigMap(ctx context.Context, cl client.Client, t *testing.T, object
 	)
 }
 
-func TestEndpointProviderUpdate(t *testing.T) {
+func TestProvideConfigmap(t *testing.T) {
 	t.Run(
 		"update on empty cloud creates configmap", func(t *testing.T) {
 			// Arrange
@@ -91,7 +91,7 @@ func TestEndpointProviderUpdate(t *testing.T) {
 	)
 }
 
-func TestEndpointProviderCleanup(t *testing.T) {
+func TestRemoveConfigmap(t *testing.T) {
 	t.Run(
 		"cleanup on cloud with other configmaps does nothing", func(t *testing.T) {
 			// Arrange
