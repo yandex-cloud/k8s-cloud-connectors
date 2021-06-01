@@ -21,7 +21,11 @@ import (
 )
 
 func setup(t *testing.T) (
-	context.Context, logr.Logger, client.Client, adapter.YandexContainerRegistryAdapter, yandexContainerRegistryReconciler,
+	context.Context,
+	logr.Logger,
+	client.Client,
+	adapter.YandexContainerRegistryAdapter,
+	yandexContainerRegistryReconciler,
 ) {
 	ad := adapter.NewFakeYandexContainerRegistryAdapter()
 	cl := k8sfake.NewFakeClient()
@@ -33,7 +37,6 @@ func setup(t *testing.T) (
 		"test-cluster",
 	}
 }
-
 
 func createObject(specName, folderID, metaName, namespace string) connectorsv1.YandexContainerRegistry {
 	return connectorsv1.YandexContainerRegistry{

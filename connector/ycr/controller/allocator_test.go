@@ -47,6 +47,7 @@ func TestAllocatorUpdate(t *testing.T) {
 			lst1, err := ad.List(ctx, "folder")
 			require.NoError(t, err)
 			lst2, err := ad.List(ctx, "other-folder")
+			require.NoError(t, err)
 
 			// Assert
 			assert.Len(t, lst1, 2)
