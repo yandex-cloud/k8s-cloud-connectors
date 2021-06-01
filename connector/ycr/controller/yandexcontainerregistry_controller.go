@@ -5,6 +5,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -47,7 +48,8 @@ func NewYandexContainerRegistryReconciler(
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 
 func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.log.WithValues(ycrconfig.LongName, req.NamespacedName)
+	log := r.log.WithValues("name", req.NamespacedName)
+	log.V(1).Info("started reconciliation")
 
 	// Try to retrieve object from k8s
 	var object connectorsv1.YandexContainerRegistry
@@ -56,22 +58,21 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 
 		// This outcome signifies that we just cannot find object, that is ok
 		if apierrors.IsNotFound(err) {
-			log.Info("object not found in k8s, reconciliation not possible")
+			log.V(1).Info("object not found in k8s, reconciliation not possible")
 			return config.GetNeverResult()
 		}
 
-		// Some unexpected error occurred, must throw
-		return config.GetErroredResult(err)
+		return config.GetErroredResult(fmt.Errorf("unable to get object from k8s: %v", err))
 	}
 
 	// If object must be currently finalized, do it and quit
 	mustBeFinalized, err := r.mustBeFinalized(&object)
 	if err != nil {
-		return config.GetErroredResult(err)
+		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %v", err))
 	}
 	if mustBeFinalized {
-		if err := r.finalize(ctx, log, &object); err != nil {
-			return config.GetErroredResult(err)
+		if err := r.finalize(ctx, log.WithName("finalize"), &object); err != nil {
+			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %v", err))
 		}
 		return config.GetNormalResult()
 	}
@@ -79,25 +80,26 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 	if err := util.RegisterFinalizer(
 		ctx, r.Client, log, &object.ObjectMeta, &object, ycrconfig.FinalizerName,
 	); err != nil {
-		return config.GetErroredResult(err)
+		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %v", err))
 	}
 
-	if err := r.allocateResource(ctx, log, &object); err != nil {
-		return config.GetErroredResult(err)
+	if err := r.allocateResource(ctx, log.WithName("allocate-resource"), &object); err != nil {
+		return config.GetErroredResult(fmt.Errorf("unable to allocate resource: %v", err))
 	}
 
-	if err := r.matchSpec(ctx, log, &object); err != nil {
-		return config.GetErroredResult(err)
+	if err := r.matchSpec(ctx, log.WithName("match-spec"), &object); err != nil {
+		return config.GetErroredResult(fmt.Errorf("unable to match spec: %v", err))
 	}
 
-	if err := r.updateStatus(ctx, log, &object); err != nil {
-		return config.GetErroredResult(err)
+	if err := r.updateStatus(ctx, log.WithName("update-status"), &object); err != nil {
+		return config.GetErroredResult(fmt.Errorf("unable to update status: %v", err))
 	}
 
-	if err := r.provideConfigMap(ctx, log, &object); err != nil {
-		return config.GetErroredResult(err)
+	if err := r.provideConfigMap(ctx, log.WithName("provide-configmap"), &object); err != nil {
+		return config.GetErroredResult(fmt.Errorf("unable to provide configmap: %v", err))
 	}
 
+	log.V(1).Info("finished reconciliation")
 	return config.GetNormalResult()
 }
 
@@ -112,21 +114,23 @@ func (r *yandexContainerRegistryReconciler) mustBeFinalized(object *connectorsv1
 func (r *yandexContainerRegistryReconciler) finalize(
 	ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry,
 ) error {
-	if err := r.removeConfigMap(ctx, log, object); err != nil {
-		return err
+	log.V(1).Info("started")
+
+	if err := r.removeConfigMap(ctx, log.WithName("remove-configmap"), object); err != nil {
+		return fmt.Errorf("unable to remove configmap: %v", err)
 	}
 
-	if err := r.deallocateResource(ctx, log, object); err != nil {
-		return err
+	if err := r.deallocateResource(ctx, log.WithName("deallocate-resource"), object); err != nil {
+		return fmt.Errorf("unable to deallocate resource: %v", err)
 	}
 
 	if err := util.DeregisterFinalizer(
-		ctx, r.Client, log, &object.ObjectMeta, object, ycrconfig.FinalizerName,
+		ctx, r.Client, log.WithName("deregister-finalizer"), &object.ObjectMeta, object, ycrconfig.FinalizerName,
 	); err != nil {
-		return err
+		return fmt.Errorf("unable to deregister finalizer: %v", err)
 	}
 
-	log.Info("object finalized successfully")
+	log.Info("successful")
 	return nil
 }
 

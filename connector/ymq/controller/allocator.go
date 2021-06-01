@@ -15,28 +15,30 @@ import (
 )
 
 func (r *yandexMessageQueueReconciler) allocateResource(
-	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue,
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexMessageQueue,
 ) error {
-	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, resource, r.Client)
+	log.V(1).Info("started")
+
+	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, object, r.Client)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to retrieve key and secret: %v", err)
 	}
 
 	lst, err := r.adapter.List(ctx, key, secret)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to list resources: %v", err)
 	}
 	for _, queue := range lst {
-		if *queue == resource.Status.QueueURL {
+		if *queue == object.Status.QueueURL {
 			return nil
 		}
 	}
 
-	delaySeconds := strconv.Itoa(resource.Spec.DelaySeconds)
-	maximumMessageSize := strconv.Itoa(resource.Spec.MaximumMessageSize)
-	messageRetentionPeriod := strconv.Itoa(resource.Spec.MessageRetentionPeriod)
-	receiveMessageWaitTimeSeconds := strconv.Itoa(resource.Spec.ReceiveMessageWaitTimeSeconds)
-	visibilityTimeout := strconv.Itoa(resource.Spec.VisibilityTimeout)
+	delaySeconds := strconv.Itoa(object.Spec.DelaySeconds)
+	maximumMessageSize := strconv.Itoa(object.Spec.MaximumMessageSize)
+	messageRetentionPeriod := strconv.Itoa(object.Spec.MessageRetentionPeriod)
+	receiveMessageWaitTimeSeconds := strconv.Itoa(object.Spec.ReceiveMessageWaitTimeSeconds)
+	visibilityTimeout := strconv.Itoa(object.Spec.VisibilityTimeout)
 
 	attributes := map[string]*string{
 		"DelaySeconds":                  &delaySeconds,
@@ -46,40 +48,42 @@ func (r *yandexMessageQueueReconciler) allocateResource(
 		"VisibilityTimeout":             &visibilityTimeout,
 	}
 
-	if resource.Spec.FifoQueue {
+	if object.Spec.FifoQueue {
 		fifoQueue := "true"
-		contentBasedDeduplication := strconv.FormatBool(resource.Spec.ContentBasedDeduplication)
+		contentBasedDeduplication := strconv.FormatBool(object.Spec.ContentBasedDeduplication)
 		attributes["FifoQueue"] = &fifoQueue
 		attributes["ContentBasedDeduplication"] = &contentBasedDeduplication
 	}
 
-	res, err := r.adapter.Create(ctx, key, secret, attributes, resource.Spec.Name)
+	res, err := r.adapter.Create(ctx, key, secret, attributes, object.Spec.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("ubable to create resource: %v", err)
 	}
 
-	resource.Status.QueueURL = res
-	if err := r.Client.Status().Update(ctx, resource); err != nil {
-		return fmt.Errorf("error while creating resource: %v", err)
+	object.Status.QueueURL = res
+	if err := r.Client.Status().Update(ctx, object); err != nil {
+		return fmt.Errorf("unable to update object status: %v", err)
 	}
 
-	log.Info("resource successfully allocated")
+	log.Info("successful")
 	return nil
 }
 
 func (r *yandexMessageQueueReconciler) deallocateResource(
-	ctx context.Context, log logr.Logger, resource *connectorsv1.YandexMessageQueue,
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexMessageQueue,
 ) error {
-	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, resource, r.Client)
+	log.V(1).Info("started")
+
+	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, object, r.Client)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to retrieve key and secret: %v", err)
 	}
 
-	err = r.adapter.Delete(ctx, key, secret, resource.Status.QueueURL)
+	err = r.adapter.Delete(ctx, key, secret, object.Status.QueueURL)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to delete resource: %v", err)
 	}
 
-	log.Info("resource successfully deleted")
+	log.Info("successful")
 	return nil
 }

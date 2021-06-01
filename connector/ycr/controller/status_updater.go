@@ -16,14 +16,16 @@ import (
 func (r *yandexContainerRegistryReconciler) updateStatus(
 	ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry,
 ) error {
+	log.V(1).Info("started")
+
 	res, err := ycrutils.GetRegistry(
 		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, r.clusterID, r.adapter,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get resource: %v", err)
 	}
 	if res == nil {
-		return fmt.Errorf("resource not found in cloud: %v", object)
+		return fmt.Errorf("resource not found in the cloud")
 	}
 
 	object.Status.ID = res.Id
@@ -36,6 +38,6 @@ func (r *yandexContainerRegistryReconciler) updateStatus(
 		return fmt.Errorf("unable to update object status: %v", err)
 	}
 
-	log.Info("object status updated")
+	log.Info("successful")
 	return nil
 }
