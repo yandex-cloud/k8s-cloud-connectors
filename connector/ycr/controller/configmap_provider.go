@@ -15,11 +15,11 @@ import (
 )
 
 func (r *yandexContainerRegistryReconciler) provideConfigMap(
-	ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry,
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry,
 ) error {
 	log.V(1).Info("started")
 
-	exists, err := configmap.Exists(ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName)
+	exists, err := configmap.Exists(ctx, r.Client, object.Name, object.Namespace, ycrconfig.ShortName)
 	if err != nil {
 		return fmt.Errorf("unable to check configmap existence: %v", err)
 	}
@@ -28,8 +28,8 @@ func (r *yandexContainerRegistryReconciler) provideConfigMap(
 	}
 
 	if err := configmap.Put(
-		ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName, map[string]string{
-			"ID": registry.Status.ID,
+		ctx, r.Client, object.Name, object.Namespace, ycrconfig.ShortName, map[string]string{
+			"ID": object.Status.ID,
 		},
 	); err != nil {
 		return fmt.Errorf("unable to update configmap: %v", err)
@@ -39,11 +39,11 @@ func (r *yandexContainerRegistryReconciler) provideConfigMap(
 }
 
 func (r *yandexContainerRegistryReconciler) removeConfigMap(
-	ctx context.Context, log logr.Logger, registry *connectorsv1.YandexContainerRegistry,
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry,
 ) error {
 	log.V(1).Info("started")
 
-	if err := configmap.Remove(ctx, r.Client, registry.Name, registry.Namespace, ycrconfig.ShortName); err != nil {
+	if err := configmap.Remove(ctx, r.Client, object.Name, object.Namespace, ycrconfig.ShortName); err != nil {
 		return fmt.Errorf("unable to remove configmap: %v", err)
 	}
 	log.Info("successful")

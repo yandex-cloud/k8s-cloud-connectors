@@ -90,6 +90,10 @@ func (r *yandexMessageQueueReconciler) Reconcile(ctx context.Context, req ctrl.R
 		return config.GetErroredResult(fmt.Errorf("unable to match spec: %v", err))
 	}
 
+	if err := r.provideConfigmap(ctx, log.WithName("provide-configmap"), &object); err != nil {
+		return config.GetErroredResult(fmt.Errorf("unable to provide configmap: %v", err))
+	}
+
 	log.V(1).Info("finished reconciliation")
 	return config.GetNormalResult()
 }
@@ -104,6 +108,10 @@ func (r *yandexMessageQueueReconciler) finalize(
 	ctx context.Context, log logr.Logger, object *connectorsv1.YandexMessageQueue,
 ) error {
 	log.V(1).Info("started")
+
+	if err := r.removeConfigMap(ctx, log.WithName("remove-configmap"), object); err != nil {
+		return fmt.Errorf("unable to remove configmap: %v", err)
+	}
 
 	if err := r.deallocateResource(ctx, log.WithName("deallocate-resource"), object); err != nil {
 		return fmt.Errorf("unable to deallocate resource: %v", err)
