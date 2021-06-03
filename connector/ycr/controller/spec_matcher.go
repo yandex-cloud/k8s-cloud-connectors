@@ -26,6 +26,9 @@ func (r *yandexContainerRegistryReconciler) matchSpec(
 	if err != nil {
 		return fmt.Errorf("unable to get resource: %v", err)
 	}
+	if res == nil {
+		return fmt.Errorf("unable to get resource: %v", err)
+	}
 	if res.Name == object.Spec.Name {
 		return nil
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 type YandexMessageQueueAdapter interface {
-	Create(ctx context.Context, key string, secret string, attributes map[string]*string, name string) (string, error)
-	List(ctx context.Context, key string, secret string) ([]*string, error)
-	Delete(ctx context.Context, key string, secret string, queueURL string) error
+	Create(ctx context.Context, key, secret string, attributes map[string]*string, name string) (string, error)
+	List(ctx context.Context, key, secret string) ([]*string, error)
+	Delete(ctx context.Context, key, secret, queueURL string) error
 }

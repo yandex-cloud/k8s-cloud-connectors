@@ -52,6 +52,7 @@ func (r YandexObjectStorageAdapterSDK) List(ctx context.Context, key, secret str
 func (r YandexObjectStorageAdapterSDK) Update() error {
 	return nil
 }
+
 func (r YandexObjectStorageAdapterSDK) Delete(ctx context.Context, key, secret, name string) error {
 	sdk, err := r.s3provider(ctx, key, secret)
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/jinzhu/copier"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -72,7 +73,20 @@ func (r *FakeClient) List(ctx context.Context, list client.ObjectList, opts ...c
 
 // Create saves the object obj in the Kubernetes cluster.
 func (r *FakeClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
-	r.objects[util.NamespacedName(obj)] = obj
+	dcObj := obj.DeepCopyObject().(client.Object)
+
+	// This is a workaround for Secret storage system
+	// Read: https://pkg.go.dev/k8s.io/api/core/v1@v0.20.2#Secret.StringData
+	if sec, ok := dcObj.(*v1.Secret); ok {
+		if sec.Data == nil {
+			sec.Data = make(map[string][]byte)
+		}
+		for k, v := range sec.StringData {
+			sec.Data[k] = []byte(v)
+		}
+		sec.StringData = make(map[string]string)
+	}
+	r.objects[util.NamespacedName(dcObj)] = dcObj
 	return nil
 }
 

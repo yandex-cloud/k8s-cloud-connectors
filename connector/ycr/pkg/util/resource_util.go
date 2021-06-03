@@ -21,7 +21,7 @@ func checkRegistryMatchWithYcr(ycr *containerregistry.Registry, registryName, cl
 }
 
 func GetRegistry(
-	ctx context.Context, registryID, folderID, registryName, clusterName string,
+	ctx context.Context, registryID, folderID, metaName, clusterName string,
 	ad adapter.YandexContainerRegistryAdapter,
 ) (*containerregistry.Registry, error) {
 	// If id is written in the status, we need to check
@@ -35,7 +35,7 @@ func GetRegistry(
 			if !errorhandling.CheckRPCErrorNotFound(err) {
 				return nil, fmt.Errorf("cannot get registry from cloud: %v", err)
 			}
-		} else if checkRegistryMatchWithYcr(ycr, registryName, clusterName) {
+		} else if checkRegistryMatchWithYcr(ycr, metaName, clusterName) {
 			// If labels do match with our object, then we have found it
 			return ycr, nil
 		}
@@ -52,7 +52,7 @@ func GetRegistry(
 
 	for _, res := range list {
 		// If labels do match with our object, then we have found it
-		if checkRegistryMatchWithYcr(res, registryName, clusterName) {
+		if checkRegistryMatchWithYcr(res, metaName, clusterName) {
 			return res, nil
 		}
 	}
