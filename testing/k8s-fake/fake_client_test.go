@@ -29,8 +29,8 @@ func TestCreate(t *testing.T) {
 			Namespace:  "default",
 			Generation: 0,
 		},
-		StringData: map[string]string{
-			"secret-specific-data": "exists",
+		Data: map[string][]byte{
+			"secret-specific-data": []byte("exists"),
 		},
 		Type: "opaque",
 	}
@@ -67,9 +67,8 @@ func TestCreateDelete(t *testing.T) {
 			Generation: 0,
 		},
 		Immutable: nil,
-		Data:      nil,
-		StringData: map[string]string{
-			"secret-specific-data": "exists",
+		Data: map[string][]byte{
+			"secret-specific-data": []byte("exists"),
 		},
 		Type: "opaque",
 	}
@@ -105,9 +104,8 @@ func TestUpdate(t *testing.T) {
 			Generation: 0,
 		},
 		Immutable: nil,
-		Data:      nil,
-		StringData: map[string]string{
-			"secret-specific-data": "exists",
+		Data: map[string][]byte{
+			"secret-specific-data": []byte("exists"),
 		},
 		Type: "opaque",
 	}
@@ -123,9 +121,8 @@ func TestUpdate(t *testing.T) {
 			Generation: 0,
 		},
 		Immutable: nil,
-		Data:      nil,
-		StringData: map[string]string{
-			"secret-specific-data": "does-not-exist",
+		Data: map[string][]byte{
+			"secret-specific-data": []byte("does-not-exists"),
 		},
 		Type: "opaque",
 	}

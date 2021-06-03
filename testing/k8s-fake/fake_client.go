@@ -84,7 +84,7 @@ func (r *FakeClient) Create(ctx context.Context, obj client.Object, opts ...clie
 		for k, v := range sec.StringData {
 			sec.Data[k] = []byte(v)
 		}
-		sec.StringData = make(map[string]string)
+		sec.StringData = nil
 	}
 	r.objects[util.NamespacedName(dcObj)] = dcObj
 	return nil
