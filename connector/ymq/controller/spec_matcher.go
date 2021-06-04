@@ -32,9 +32,10 @@ func (r *yandexMessageQueueReconciler) matchSpec(
 		if *oldAttributes[k] != *v {
 			log.V(1).Info("arguments do not match, updating")
 			if err := r.adapter.UpdateAttributes(ctx, key, secret, attributes, object.Status.QueueURL); err != nil {
-				return err
+				return fmt.Errorf("unable to update attributes: %v", err)
 			}
-			log.V(1).Info("successful")
+			log.Info("successful")
+			return nil
 		}
 	}
 

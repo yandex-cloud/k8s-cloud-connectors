@@ -7,28 +7,31 @@ import (
 	"strconv"
 
 	connectorsv1 "k8s-connectors/connector/ymq/api/v1"
+	"k8s-connectors/pkg/util"
+)
+
+const (
+	FifoQueue                     = "FifoQueue"
+	ContentBasedDeduplication     = "ContentBasedDeduplication"
+	DelaySeconds                  = "DelaySeconds"
+	MaximumMessageSize            = "MaximumMessageSize"
+	MessageRetentionPeriod        = "MessageRetentionPeriod"
+	ReceiveMessageWaitTimeSeconds = "ReceiveMessageWaitTimeSeconds"
+	VisibilityTimeout             = "VisibilityTimeout"
 )
 
 func AttributesFromSpec(spec *connectorsv1.YandexMessageQueueSpec) map[string]*string {
-	delaySeconds := strconv.Itoa(spec.DelaySeconds)
-	maximumMessageSize := strconv.Itoa(spec.MaximumMessageSize)
-	messageRetentionPeriod := strconv.Itoa(spec.MessageRetentionPeriod)
-	receiveMessageWaitTimeSeconds := strconv.Itoa(spec.ReceiveMessageWaitTimeSeconds)
-	visibilityTimeout := strconv.Itoa(spec.VisibilityTimeout)
-
 	attributes := map[string]*string{
-		"DelaySeconds":                  &delaySeconds,
-		"MaximumMessageSize":            &maximumMessageSize,
-		"MessageRetentionPeriod":        &messageRetentionPeriod,
-		"ReceiveMessageWaitTimeSeconds": &receiveMessageWaitTimeSeconds,
-		"VisibilityTimeout":             &visibilityTimeout,
+		"DelaySeconds":                  util.IntToStringPtr(spec.DelaySeconds),
+		"MaximumMessageSize":            util.IntToStringPtr(spec.MaximumMessageSize),
+		"MessageRetentionPeriod":        util.IntToStringPtr(spec.MessageRetentionPeriod),
+		"ReceiveMessageWaitTimeSeconds": util.IntToStringPtr(spec.ReceiveMessageWaitTimeSeconds),
+		"VisibilityTimeout":             util.IntToStringPtr(spec.VisibilityTimeout),
 	}
 
 	if spec.FifoQueue {
-		fifoQueue := "true"
-		contentBasedDeduplication := strconv.FormatBool(spec.ContentBasedDeduplication)
-		attributes["FifoQueue"] = &fifoQueue
-		attributes["ContentBasedDeduplication"] = &contentBasedDeduplication
+		attributes["FifoQueue"] = util.StringPtr("true")
+		attributes["ContentBasedDeduplication"] = util.StringPtr(strconv.FormatBool(spec.ContentBasedDeduplication))
 	}
 	return attributes
 }

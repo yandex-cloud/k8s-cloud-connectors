@@ -8,16 +8,17 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/sqs"
 
-	"k8s-connectors/connector/ymq/pkg/util"
+	ymqutil "k8s-connectors/connector/ymq/pkg/util"
+	"k8s-connectors/pkg/util"
 )
 
 type YandexMessageQueueAdapterSDK struct {
-	sqsProvider util.SQSProvider
+	sqsProvider ymqutil.SQSProvider
 }
 
 func NewYandexMessageQueueAdapterSDK() (YandexMessageQueueAdapter, error) {
 	return &YandexMessageQueueAdapterSDK{
-		sqsProvider: util.NewStaticProvider(),
+		sqsProvider: ymqutil.NewStaticProvider(),
 	}, nil
 }
 
@@ -69,27 +70,17 @@ func (r *YandexMessageQueueAdapterSDK) GetAttributes(
 		return nil, err
 	}
 
-	fifoQueue := "FifoQueue"
-	contentBasedDeduplication := "ContentBasedDeduplication"
-	delaySeconds := "DelaySeconds"
-	maximumMessageSize := "MaximumMessageSize"
-	messageRetentionPeriod := "MessageRetentionPeriod"
-	receiveMessageWaitTimeSeconds := "ReceiveMessageWaitTimeSeconds"
-	visibilityTimeout := "VisibilityTimeout"
-
-	attributes := []*string{
-		&fifoQueue,
-		&contentBasedDeduplication,
-		&delaySeconds,
-		&maximumMessageSize,
-		&messageRetentionPeriod,
-		&receiveMessageWaitTimeSeconds,
-		&visibilityTimeout,
-	}
-
 	res, err := sdk.GetQueueAttributes(
 		&sqs.GetQueueAttributesInput{
-			AttributeNames: attributes,
+			AttributeNames: []*string{
+				util.StringPtr(ymqutil.FifoQueue),
+				util.StringPtr(ymqutil.ContentBasedDeduplication),
+				util.StringPtr(ymqutil.DelaySeconds),
+				util.StringPtr(ymqutil.MaximumMessageSize),
+				util.StringPtr(ymqutil.MessageRetentionPeriod),
+				util.StringPtr(ymqutil.ReceiveMessageWaitTimeSeconds),
+				util.StringPtr(ymqutil.VisibilityTimeout),
+			},
 			QueueUrl:       &queueURL,
 		},
 	)
