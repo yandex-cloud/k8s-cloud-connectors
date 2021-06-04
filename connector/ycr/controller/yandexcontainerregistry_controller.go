@@ -95,7 +95,13 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 		return config.GetErroredResult(fmt.Errorf("unable to update status: %v", err))
 	}
 
-	if err := r.provideConfigMap(ctx, log.WithName("provide-configmap"), &object); err != nil {
+	if err := util.ProvideConfigmap(
+		ctx,
+		r.Client,
+		log.WithName("provide-configmap"),
+		object.Name, ycrconfig.ShortName, object.Namespace,
+		map[string]string{"ID": object.Status.ID},
+	); err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to provide configmap: %v", err))
 	}
 
@@ -116,7 +122,12 @@ func (r *yandexContainerRegistryReconciler) finalize(
 ) error {
 	log.V(1).Info("started")
 
-	if err := r.removeConfigMap(ctx, log.WithName("remove-configmap"), object); err != nil {
+	if err := util.RemoveConfigmap(
+		ctx,
+		r.Client,
+		log.WithName("remove-configmap"),
+		object.Name, ycrconfig.ShortName, object.Namespace,
+	); err != nil {
 		return fmt.Errorf("unable to remove configmap: %v", err)
 	}
 

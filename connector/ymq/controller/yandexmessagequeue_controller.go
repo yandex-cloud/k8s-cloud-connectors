@@ -90,7 +90,13 @@ func (r *yandexMessageQueueReconciler) Reconcile(ctx context.Context, req ctrl.R
 		return config.GetErroredResult(fmt.Errorf("unable to match spec: %v", err))
 	}
 
-	if err := r.provideConfigmap(ctx, log.WithName("provide-configmap"), &object); err != nil {
+	if err := util.ProvideConfigmap(
+		ctx,
+		r.Client,
+		log.WithName("provide-configmap"),
+		object.Name, ymqconfig.ShortName, object.Namespace,
+		map[string]string{"URL": object.Status.QueueURL},
+	); err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to provide configmap: %v", err))
 	}
 
@@ -109,7 +115,12 @@ func (r *yandexMessageQueueReconciler) finalize(
 ) error {
 	log.V(1).Info("started")
 
-	if err := r.removeConfigMap(ctx, log.WithName("remove-configmap"), object); err != nil {
+	if err := util.RemoveConfigmap(
+		ctx,
+		r.Client,
+		log.WithName("remove-configmap"),
+		object.Name, ymqconfig.ShortName, object.Namespace,
+	); err != nil {
 		return fmt.Errorf("unable to remove configmap: %v", err)
 	}
 

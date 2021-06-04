@@ -86,7 +86,13 @@ func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.
 		return config.GetErroredResult(fmt.Errorf("unable to allocate resource: %v", err))
 	}
 
-	if err := r.provideConfigmap(ctx, log.WithName("provide-configmap"), &object); err != nil {
+	if err := util.ProvideConfigmap(
+		ctx,
+		r.Client,
+		log.WithName("provide-configmap"),
+		object.Name, yosconfig.ShortName, object.Namespace,
+		map[string]string{"name": object.Spec.Name},
+	); err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to provide configmap: %v", err))
 	}
 
@@ -105,7 +111,12 @@ func (r *yandexObjectStorageReconciler) finalize(
 ) error {
 	log.V(1).Info("started")
 
-	if err := r.removeConfigMap(ctx, log.WithName("remove-configmap"), object); err != nil {
+	if err := util.RemoveConfigmap(
+		ctx,
+		r.Client,
+		log.WithName("provide-configmap"),
+		object.Name, yosconfig.ShortName, object.Namespace,
+	); err != nil {
 		return fmt.Errorf("unable to remove configmap: %v", err)
 	}
 
