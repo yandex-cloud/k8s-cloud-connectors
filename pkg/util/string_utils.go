@@ -12,5 +12,4 @@ func IntToStringPtr(v int) *string {
 	return &s
 }
 
-func StringPtr(s string) *string {return &s}
-
+func StringPtr(s string) *string { return &s }

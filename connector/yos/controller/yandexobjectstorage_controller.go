@@ -16,6 +16,7 @@ import (
 	"k8s-connectors/connector/yos/controller/adapter"
 	yosconfig "k8s-connectors/connector/yos/pkg/config"
 	"k8s-connectors/pkg/config"
+	"k8s-connectors/pkg/phase"
 	"k8s-connectors/pkg/util"
 )
 
@@ -76,7 +77,7 @@ func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.
 		return config.GetNormalResult()
 	}
 
-	if err := util.RegisterFinalizer(
+	if err := phase.RegisterFinalizer(
 		ctx, r.Client, log.WithName("register-finalizer"), &object.ObjectMeta, &object, yosconfig.FinalizerName,
 	); err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %v", err))
@@ -86,7 +87,7 @@ func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.
 		return config.GetErroredResult(fmt.Errorf("unable to allocate resource: %v", err))
 	}
 
-	if err := util.ProvideConfigmap(
+	if err := phase.ProvideConfigmap(
 		ctx,
 		r.Client,
 		log.WithName("provide-configmap"),
@@ -111,7 +112,7 @@ func (r *yandexObjectStorageReconciler) finalize(
 ) error {
 	log.V(1).Info("started")
 
-	if err := util.RemoveConfigmap(
+	if err := phase.RemoveConfigmap(
 		ctx,
 		r.Client,
 		log.WithName("provide-configmap"),
@@ -124,7 +125,7 @@ func (r *yandexObjectStorageReconciler) finalize(
 		return fmt.Errorf("unable to deallocate resource: %v", err)
 	}
 
-	if err := util.DeregisterFinalizer(
+	if err := phase.DeregisterFinalizer(
 		ctx, r.Client, log.WithName("finalizer-deregister"), &object.ObjectMeta, object, yosconfig.FinalizerName,
 	); err != nil {
 		return fmt.Errorf("unable to deregister finalizer: %v", err)

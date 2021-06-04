@@ -16,6 +16,7 @@ import (
 	"k8s-connectors/connector/ycr/controller/adapter"
 	ycrconfig "k8s-connectors/connector/ycr/pkg/config"
 	"k8s-connectors/pkg/config"
+	"k8s-connectors/pkg/phase"
 	"k8s-connectors/pkg/util"
 )
 
@@ -77,7 +78,7 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 		return config.GetNormalResult()
 	}
 
-	if err := util.RegisterFinalizer(
+	if err := phase.RegisterFinalizer(
 		ctx, r.Client, log, &object.ObjectMeta, &object, ycrconfig.FinalizerName,
 	); err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %v", err))
@@ -95,7 +96,7 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 		return config.GetErroredResult(fmt.Errorf("unable to update status: %v", err))
 	}
 
-	if err := util.ProvideConfigmap(
+	if err := phase.ProvideConfigmap(
 		ctx,
 		r.Client,
 		log.WithName("provide-configmap"),
@@ -122,7 +123,7 @@ func (r *yandexContainerRegistryReconciler) finalize(
 ) error {
 	log.V(1).Info("started")
 
-	if err := util.RemoveConfigmap(
+	if err := phase.RemoveConfigmap(
 		ctx,
 		r.Client,
 		log.WithName("remove-configmap"),
@@ -135,7 +136,7 @@ func (r *yandexContainerRegistryReconciler) finalize(
 		return fmt.Errorf("unable to deallocate resource: %v", err)
 	}
 
-	if err := util.DeregisterFinalizer(
+	if err := phase.DeregisterFinalizer(
 		ctx, r.Client, log.WithName("deregister-finalizer"), &object.ObjectMeta, object, ycrconfig.FinalizerName,
 	); err != nil {
 		return fmt.Errorf("unable to deregister finalizer: %v", err)
