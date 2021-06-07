@@ -50,7 +50,7 @@ func createSAKeyRequireNoError(ctx context.Context, t *testing.T, cl client.Clie
 		},
 	}
 	require.NoError(t, cl.Create(ctx, &secret))
-	sakey := sakey.StaticAccessKey{
+	SAKey := sakey.StaticAccessKey{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
@@ -59,10 +59,10 @@ func createSAKeyRequireNoError(ctx context.Context, t *testing.T, cl client.Clie
 			SecretName: secretName,
 		},
 	}
-	require.NoError(t, cl.Create(ctx, &sakey))
+	require.NoError(t, cl.Create(ctx, &SAKey))
 }
 
-func createDefaultQueue(name, namespace, sakey, queueName string) connectorsv1.YandexMessageQueue {
+func createDefaultQueue(name, namespace, key, queueName string) connectorsv1.YandexMessageQueue {
 	return connectorsv1.YandexMessageQueue{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -77,7 +77,7 @@ func createDefaultQueue(name, namespace, sakey, queueName string) connectorsv1.Y
 			MessageRetentionPeriod:        60,
 			ReceiveMessageWaitTimeSeconds: 0,
 			VisibilityTimeout:             30,
-			SAKeyName:                     sakey,
+			SAKeyName:                     key,
 		},
 	}
 }
