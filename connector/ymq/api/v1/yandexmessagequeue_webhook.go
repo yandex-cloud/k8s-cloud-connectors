@@ -36,10 +36,12 @@ var _ webhook.Validator = &YandexMessageQueue{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *YandexMessageQueue) ValidateCreate() error {
-	if r.Spec.FifoQueue {
-		if !strings.HasSuffix(r.Spec.Name, ".fifo") {
-			return fmt.Errorf("name of FIFO queue must end with \".fifo\"")
-		}
+	if r.Spec.FifoQueue && !strings.HasSuffix(r.Spec.Name, ".fifo") {
+		return fmt.Errorf("name of FIFO queue must end with \".fifo\"")
+	}
+
+	if !r.Spec.FifoQueue && strings.HasSuffix(r.Spec.Name, ".fifo") {
+		return fmt.Errorf("name of non-FIFO queue must NOT end with \".fifo\"")
 	}
 
 	if r.Spec.ContentBasedDeduplication && !r.Spec.FifoQueue {

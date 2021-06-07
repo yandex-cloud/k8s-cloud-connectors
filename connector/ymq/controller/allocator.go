@@ -6,7 +6,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/go-logr/logr"
 
@@ -34,28 +33,7 @@ func (r *yandexMessageQueueReconciler) allocateResource(
 		}
 	}
 
-	delaySeconds := strconv.Itoa(object.Spec.DelaySeconds)
-	maximumMessageSize := strconv.Itoa(object.Spec.MaximumMessageSize)
-	messageRetentionPeriod := strconv.Itoa(object.Spec.MessageRetentionPeriod)
-	receiveMessageWaitTimeSeconds := strconv.Itoa(object.Spec.ReceiveMessageWaitTimeSeconds)
-	visibilityTimeout := strconv.Itoa(object.Spec.VisibilityTimeout)
-
-	attributes := map[string]*string{
-		"DelaySeconds":                  &delaySeconds,
-		"MaximumMessageSize":            &maximumMessageSize,
-		"MessageRetentionPeriod":        &messageRetentionPeriod,
-		"ReceiveMessageWaitTimeSeconds": &receiveMessageWaitTimeSeconds,
-		"VisibilityTimeout":             &visibilityTimeout,
-	}
-
-	if object.Spec.FifoQueue {
-		fifoQueue := "true"
-		contentBasedDeduplication := strconv.FormatBool(object.Spec.ContentBasedDeduplication)
-		attributes["FifoQueue"] = &fifoQueue
-		attributes["ContentBasedDeduplication"] = &contentBasedDeduplication
-	}
-
-	res, err := r.adapter.Create(ctx, key, secret, attributes, object.Spec.Name)
+	res, err := r.adapter.Create(ctx, key, secret, ymqutils.AttributesFromSpec(&object.Spec), object.Spec.Name)
 	if err != nil {
 		return fmt.Errorf("ubable to create resource: %v", err)
 	}

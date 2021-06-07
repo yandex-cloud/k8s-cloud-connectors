@@ -86,6 +86,10 @@ func (r *yandexMessageQueueReconciler) Reconcile(ctx context.Context, req ctrl.R
 		return config.GetErroredResult(fmt.Errorf("unable to allocate resource: %v", err))
 	}
 
+	if err := r.matchSpec(ctx, log.WithName("match-spec"), &object); err != nil {
+		return config.GetErroredResult(fmt.Errorf("unable to match spec: %v", err))
+	}
+
 	log.V(1).Info("finished reconciliation")
 	return config.GetNormalResult()
 }

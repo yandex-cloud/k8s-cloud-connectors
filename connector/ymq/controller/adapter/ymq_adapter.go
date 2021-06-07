@@ -8,20 +8,21 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/sqs"
 
-	"k8s-connectors/connector/ymq/pkg/util"
+	ymqutil "k8s-connectors/connector/ymq/pkg/util"
+	"k8s-connectors/pkg/util"
 )
 
 type YandexMessageQueueAdapterSDK struct {
-	sqsProvider util.SQSProvider
+	sqsProvider ymqutil.SQSProvider
 }
 
 func NewYandexMessageQueueAdapterSDK() (YandexMessageQueueAdapter, error) {
 	return &YandexMessageQueueAdapterSDK{
-		sqsProvider: util.NewStaticProvider(),
+		sqsProvider: ymqutil.NewStaticProvider(),
 	}, nil
 }
 
-func (r YandexMessageQueueAdapterSDK) Create(
+func (r *YandexMessageQueueAdapterSDK) Create(
 	ctx context.Context, key, secret string, attributes map[string]*string, name string,
 ) (string, error) {
 	sdk, err := r.sqsProvider(ctx, key, secret)
@@ -42,7 +43,55 @@ func (r YandexMessageQueueAdapterSDK) Create(
 	return *res.QueueUrl, nil
 }
 
-func (r YandexMessageQueueAdapterSDK) List(ctx context.Context, key, secret string) ([]*string, error) {
+func (r *YandexMessageQueueAdapterSDK) GetURL(ctx context.Context, key, secret, queueName string) (string, error) {
+	sdk, err := r.sqsProvider(ctx, key, secret)
+	if err != nil {
+		return "", err
+	}
+
+	res, err := sdk.GetQueueUrl(
+		&sqs.GetQueueUrlInput{
+			QueueName:              &queueName,
+			QueueOwnerAWSAccountId: nil,
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return *res.QueueUrl, nil
+}
+
+func (r *YandexMessageQueueAdapterSDK) GetAttributes(
+	ctx context.Context, key, secret, queueURL string,
+) (map[string]*string, error) {
+	sdk, err := r.sqsProvider(ctx, key, secret)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := sdk.GetQueueAttributes(
+		&sqs.GetQueueAttributesInput{
+			AttributeNames: []*string{
+				util.StringPtr(ymqutil.FifoQueue),
+				util.StringPtr(ymqutil.ContentBasedDeduplication),
+				util.StringPtr(ymqutil.DelaySeconds),
+				util.StringPtr(ymqutil.MaximumMessageSize),
+				util.StringPtr(ymqutil.MessageRetentionPeriod),
+				util.StringPtr(ymqutil.ReceiveMessageWaitTimeSeconds),
+				util.StringPtr(ymqutil.VisibilityTimeout),
+			},
+			QueueUrl:       &queueURL,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.Attributes, nil
+}
+
+func (r *YandexMessageQueueAdapterSDK) List(ctx context.Context, key, secret string) ([]*string, error) {
 	sdk, err := r.sqsProvider(ctx, key, secret)
 	if err != nil {
 		return nil, err
@@ -56,11 +105,24 @@ func (r YandexMessageQueueAdapterSDK) List(ctx context.Context, key, secret stri
 	return res.QueueUrls, nil
 }
 
-func (r YandexMessageQueueAdapterSDK) Update() error {
-	return nil
+func (r *YandexMessageQueueAdapterSDK) UpdateAttributes(
+	ctx context.Context, key, secret string, attributes map[string]*string, queueURL string,
+) error {
+	sdk, err := r.sqsProvider(ctx, key, secret)
+	if err != nil {
+		return err
+	}
+
+	_, err = sdk.SetQueueAttributes(
+		&sqs.SetQueueAttributesInput{
+			Attributes: attributes,
+			QueueUrl:   &queueURL,
+		},
+	)
+	return err
 }
 
-func (r YandexMessageQueueAdapterSDK) Delete(ctx context.Context, key, secret, queueURL string) error {
+func (r *YandexMessageQueueAdapterSDK) Delete(ctx context.Context, key, secret, queueURL string) error {
 	sdk, err := r.sqsProvider(ctx, key, secret)
 	if err != nil {
 		return err
