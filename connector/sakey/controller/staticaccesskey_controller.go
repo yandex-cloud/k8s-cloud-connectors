@@ -16,6 +16,7 @@ import (
 	"k8s-connectors/connector/sakey/controller/adapter"
 	sakeyconfig "k8s-connectors/connector/sakey/pkg/config"
 	"k8s-connectors/pkg/config"
+	"k8s-connectors/pkg/phase"
 	"k8s-connectors/pkg/util"
 )
 
@@ -76,7 +77,7 @@ func (r *staticAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return config.GetNormalResult()
 	}
 
-	if err := util.RegisterFinalizer(
+	if err := phase.RegisterFinalizer(
 		ctx, r.Client, log.WithName("register-finalizer"), &object.ObjectMeta, &object, sakeyconfig.FinalizerName,
 	); err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %v", err))
@@ -107,7 +108,7 @@ func (r *staticAccessKeyReconciler) finalize(
 		return fmt.Errorf("unable to deallocate resource: %v", err)
 	}
 
-	if err := util.DeregisterFinalizer(
+	if err := phase.DeregisterFinalizer(
 		ctx, r.Client, log.WithName("deregister-finalizer"), &object.ObjectMeta, object, sakeyconfig.FinalizerName,
 	); err != nil {
 		return fmt.Errorf("unable to deregister finalizer: %v", err)

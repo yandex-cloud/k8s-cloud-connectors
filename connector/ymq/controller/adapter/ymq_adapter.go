@@ -81,7 +81,7 @@ func (r *YandexMessageQueueAdapterSDK) GetAttributes(
 				util.StringPtr(ymqutil.ReceiveMessageWaitTimeSeconds),
 				util.StringPtr(ymqutil.VisibilityTimeout),
 			},
-			QueueUrl:       &queueURL,
+			QueueUrl: &queueURL,
 		},
 	)
 	if err != nil {

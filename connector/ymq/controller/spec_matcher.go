@@ -39,6 +39,5 @@ func (r *yandexMessageQueueReconciler) matchSpec(
 		}
 	}
 
-	log.V(1).Info("arguments match, successful")
 	return nil
 }

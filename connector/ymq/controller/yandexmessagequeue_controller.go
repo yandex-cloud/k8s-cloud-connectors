@@ -16,6 +16,7 @@ import (
 	"k8s-connectors/connector/ymq/controller/adapter"
 	ymqconfig "k8s-connectors/connector/ymq/pkg/config"
 	"k8s-connectors/pkg/config"
+	"k8s-connectors/pkg/phase"
 	"k8s-connectors/pkg/util"
 )
 
@@ -76,7 +77,7 @@ func (r *yandexMessageQueueReconciler) Reconcile(ctx context.Context, req ctrl.R
 		return config.GetNormalResult()
 	}
 
-	if err := util.RegisterFinalizer(
+	if err := phase.RegisterFinalizer(
 		ctx, r.Client, log.WithName("register-finalizer"), &object.ObjectMeta, &object, ymqconfig.FinalizerName,
 	); err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %v", err))
@@ -88,6 +89,16 @@ func (r *yandexMessageQueueReconciler) Reconcile(ctx context.Context, req ctrl.R
 
 	if err := r.matchSpec(ctx, log.WithName("match-spec"), &object); err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to match spec: %v", err))
+	}
+
+	if err := phase.ProvideConfigmap(
+		ctx,
+		r.Client,
+		log.WithName("provide-configmap"),
+		object.Name, ymqconfig.ShortName, object.Namespace,
+		map[string]string{"URL": object.Status.QueueURL},
+	); err != nil {
+		return config.GetErroredResult(fmt.Errorf("unable to provide configmap: %v", err))
 	}
 
 	log.V(1).Info("finished reconciliation")
@@ -105,11 +116,20 @@ func (r *yandexMessageQueueReconciler) finalize(
 ) error {
 	log.V(1).Info("started")
 
+	if err := phase.RemoveConfigmap(
+		ctx,
+		r.Client,
+		log.WithName("remove-configmap"),
+		object.Name, ymqconfig.ShortName, object.Namespace,
+	); err != nil {
+		return fmt.Errorf("unable to remove configmap: %v", err)
+	}
+
 	if err := r.deallocateResource(ctx, log.WithName("deallocate-resource"), object); err != nil {
 		return fmt.Errorf("unable to deallocate resource: %v", err)
 	}
 
-	if err := util.DeregisterFinalizer(
+	if err := phase.DeregisterFinalizer(
 		ctx, r.Client, log.WithName("deregister-finalizer"), &object.ObjectMeta, object, ymqconfig.FinalizerName,
 	); err != nil {
 		return fmt.Errorf("unable to deregister finalizer: %v", err)
