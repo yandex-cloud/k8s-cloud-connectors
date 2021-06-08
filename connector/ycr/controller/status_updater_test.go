@@ -20,7 +20,8 @@ func TestUpdateStatus(t *testing.T) {
 			// Arrange
 			ctx, log, cl, ad, rc := setup(t)
 			obj := createObject("resource", "folder", "obj", "default")
-			require.NoError(t, rc.allocateResource(ctx, log, &obj))
+			res, err := rc.allocateResource(ctx, log, &obj)
+			require.NoError(t, err)
 
 			res1, err := ycrutils.GetRegistry(ctx, "", "folder", "obj", "test-cluster", ad)
 			require.NoError(t, err)
@@ -31,7 +32,7 @@ func TestUpdateStatus(t *testing.T) {
 			require.NoError(t, cl.Create(ctx, &obj))
 
 			// Act
-			require.NoError(t, rc.updateStatus(ctx, log, &obj))
+			require.NoError(t, rc.updateStatus(ctx, log, &obj, res))
 			var current connectorsv1.YandexContainerRegistry
 			require.NoError(
 				t, cl.Get(
@@ -54,14 +55,15 @@ func TestUpdateStatus(t *testing.T) {
 			// Arrange
 			ctx, log, cl, ad, rc := setup(t)
 			obj := createObject("resource", "folder", "obj", "default")
-			require.NoError(t, rc.allocateResource(ctx, log, &obj))
+			res, err := rc.allocateResource(ctx, log, &obj)
+			require.NoError(t, err)
 
 			res1, err := ycrutils.GetRegistry(ctx, "", "folder", "obj", "test-cluster", ad)
 			require.NoError(t, err)
 			require.NoError(t, cl.Create(ctx, &obj))
 
 			// Act
-			require.NoError(t, rc.updateStatus(ctx, log, &obj))
+			require.NoError(t, rc.updateStatus(ctx, log, &obj, res))
 			var current connectorsv1.YandexContainerRegistry
 			require.NoError(
 				t, cl.Get(
@@ -84,7 +86,8 @@ func TestUpdateStatus(t *testing.T) {
 			// Arrange
 			ctx, log, cl, ad, rc := setup(t)
 			obj := createObject("resource", "folder", "obj", "default")
-			require.NoError(t, rc.allocateResource(ctx, log, &obj))
+			res, err := rc.allocateResource(ctx, log, &obj)
+			require.NoError(t, err)
 
 			res1, err := ycrutils.GetRegistry(ctx, "", "folder", "obj", "test-cluster", ad)
 			require.NoError(t, err)
@@ -93,7 +96,7 @@ func TestUpdateStatus(t *testing.T) {
 			require.NoError(t, cl.Create(ctx, &obj))
 
 			// Act
-			require.NoError(t, rc.updateStatus(ctx, log, &obj))
+			require.NoError(t, rc.updateStatus(ctx, log, &obj, res))
 			var current connectorsv1.YandexContainerRegistry
 			require.NoError(
 				t, cl.Get(

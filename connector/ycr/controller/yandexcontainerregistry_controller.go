@@ -72,27 +72,28 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %v", err))
 	}
 	if mustBeFinalized {
-		if err := r.finalize(ctx, log.WithName("finalize"), &object); err != nil {
+		if err = r.finalize(ctx, log.WithName("finalize"), &object); err != nil {
 			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %v", err))
 		}
 		return config.GetNormalResult()
 	}
 
-	if err := phase.RegisterFinalizer(
+	if err = phase.RegisterFinalizer(
 		ctx, r.Client, log, &object.ObjectMeta, &object, ycrconfig.FinalizerName,
 	); err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %v", err))
 	}
 
-	if err := r.allocateResource(ctx, log.WithName("allocate-resource"), &object); err != nil {
+	res, err := r.allocateResource(ctx, log.WithName("allocate-resource"), &object)
+	if err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to allocate resource: %v", err))
 	}
 
-	if err := r.matchSpec(ctx, log.WithName("match-spec"), &object); err != nil {
+	if err := r.matchSpec(ctx, log.WithName("match-spec"), &object, res); err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to match spec: %v", err))
 	}
 
-	if err := r.updateStatus(ctx, log.WithName("update-status"), &object); err != nil {
+	if err := r.updateStatus(ctx, log.WithName("update-status"), &object, res); err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to update status: %v", err))
 	}
 

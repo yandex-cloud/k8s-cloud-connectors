@@ -17,20 +17,20 @@ import (
 
 func (r *yandexContainerRegistryReconciler) allocateResource(
 	ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry,
-) error {
+) (*containerregistry.Registry, error) {
 	log.V(1).Info("started")
 
 	res, err := ycrutils.GetRegistry(
 		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, r.clusterID, r.adapter,
 	)
 	if err != nil {
-		return fmt.Errorf("unable to get resource: %v", err)
+		return nil, fmt.Errorf("unable to get resource: %v", err)
 	}
 	if res != nil {
-		return nil
+		return res, nil
 	}
 
-	if _, err := r.adapter.Create(
+	resp, err := r.adapter.Create(
 		ctx, &containerregistry.CreateRegistryRequest{
 			FolderId: object.Spec.FolderID,
 			Name:     object.Spec.Name,
@@ -39,11 +39,12 @@ func (r *yandexContainerRegistryReconciler) allocateResource(
 				config.CloudNameLabel:    object.Name,
 			},
 		},
-	); err != nil {
-		return fmt.Errorf("unable to create resource: %v", err)
+	)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create resource: %v", err)
 	}
 	log.Info("successful")
-	return nil
+	return resp, nil
 }
 
 func (r *yandexContainerRegistryReconciler) deallocateResource(

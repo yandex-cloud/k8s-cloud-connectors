@@ -20,7 +20,8 @@ func TestAllocate(t *testing.T) {
 			obj := createObject("registry", "folder", "obj", "default")
 
 			// Act
-			require.NoError(t, rc.allocateResource(ctx, log, &obj))
+			_, err := rc.allocateResource(ctx, log, &obj)
+			require.NoError(t, err)
 			lst, err := ad.List(ctx, "folder")
 			require.NoError(t, err)
 
@@ -43,7 +44,8 @@ func TestAllocate(t *testing.T) {
 			_ = createResourceRequireNoError(ctx, ad, t, "resource2", "other-folder", "obj2", "")
 
 			// Act
-			require.NoError(t, rc.allocateResource(ctx, log, &obj))
+			_, err := rc.allocateResource(ctx, log, &obj)
+			require.NoError(t, err)
 			lst1, err := ad.List(ctx, "folder")
 			require.NoError(t, err)
 			lst2, err := ad.List(ctx, "other-folder")
@@ -62,7 +64,8 @@ func TestDeallocate(t *testing.T) {
 			// Arrange
 			ctx, log, _, ad, rc := setup(t)
 			obj := createObject("resource", "folder", "obj", "default")
-			require.NoError(t, rc.allocateResource(ctx, log, &obj))
+			_, err := rc.allocateResource(ctx, log, &obj)
+			require.NoError(t, err)
 
 			// Act
 			require.NoError(t, rc.deallocateResource(ctx, log, &obj))
@@ -83,9 +86,12 @@ func TestDeallocate(t *testing.T) {
 			otherObj1 := createObject("other-resource", "folder", "otherObj1", "default")
 			otherObj2 := createObject("resource", "other-folder", "otherObj2", "default")
 
-			require.NoError(t, rc.allocateResource(ctx, log, &obj))
-			require.NoError(t, rc.allocateResource(ctx, log, &otherObj1))
-			require.NoError(t, rc.allocateResource(ctx, log, &otherObj2))
+			_, err := rc.allocateResource(ctx, log, &obj)
+			require.NoError(t, err)
+			_, err = rc.allocateResource(ctx, log, &otherObj1)
+			require.NoError(t, err)
+			_, err = rc.allocateResource(ctx, log, &otherObj2)
+			require.NoError(t, err)
 
 			// Act
 			require.NoError(t, rc.deallocateResource(ctx, log, &obj))
