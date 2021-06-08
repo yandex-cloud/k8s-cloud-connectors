@@ -28,7 +28,7 @@ func TestUpdateStatus(t *testing.T) {
 			require.NoError(t, cl.Create(ctx, &obj))
 
 			// Act
-			require.NoError(t, rc.updateStatus(ctx, log, &obj))
+			require.NoError(t, rc.updateStatus(ctx, log, &obj, resp.AccessKey))
 			var current connectorsv1.StaticAccessKey
 			require.NoError(
 				t, cl.Get(
@@ -56,7 +56,7 @@ func TestUpdateStatus(t *testing.T) {
 			require.NoError(t, cl.Create(ctx, &obj))
 
 			// Act
-			require.NoError(t, rc.updateStatus(ctx, log, &obj))
+			require.NoError(t, rc.updateStatus(ctx, log, &obj, resp.AccessKey))
 			var current connectorsv1.StaticAccessKey
 			require.NoError(
 				t, cl.Get(
@@ -85,7 +85,7 @@ func TestUpdateStatus(t *testing.T) {
 			require.NoError(t, cl.Create(ctx, &obj))
 
 			// Act
-			require.NoError(t, rc.updateStatus(ctx, log, &obj))
+			require.NoError(t, rc.updateStatus(ctx, log, &obj, resp.AccessKey))
 			var current connectorsv1.StaticAccessKey
 			require.NoError(
 				t, cl.Get(

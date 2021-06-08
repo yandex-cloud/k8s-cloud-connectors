@@ -8,28 +8,18 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	"github.com/yandex-cloud/go-genproto/yandex/cloud/iam/v1/awscompatibility"
 
 	connectorsv1 "k8s-connectors/connector/sakey/api/v1"
-	sakeyutils "k8s-connectors/connector/sakey/pkg/util"
 )
 
 func (r *staticAccessKeyReconciler) updateStatus(
-	ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey,
+	ctx context.Context, log logr.Logger, object *connectorsv1.StaticAccessKey, res *awscompatibility.AccessKey,
 ) error {
 	log.V(1).Info("started")
 	// We must not forget that field SecretName is
 	// managed by another phase and therefore only
 	// thing we do is update key cloud id.
-
-	res, err := sakeyutils.GetStaticAccessKey(
-		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, r.clusterID, object.Name, r.adapter,
-	)
-	if err != nil {
-		return fmt.Errorf("unable to get resource: %v", err)
-	}
-	if res == nil {
-		return fmt.Errorf("resource not found in the cloud")
-	}
 
 	// Do not mess this fields up, KeyId in a cloud is
 	// another entity.

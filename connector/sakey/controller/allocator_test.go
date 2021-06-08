@@ -23,7 +23,8 @@ func TestAllocate(t *testing.T) {
 			require.NoError(t, cl.Create(ctx, &obj))
 
 			// Act
-			require.NoError(t, rc.allocateResource(ctx, log, &obj))
+			_, err := rc.allocateResource(ctx, log, &obj)
+			require.NoError(t, err)
 			lst, err := ad.List(ctx, "sukhov")
 			require.NoError(t, err)
 			var secret v1.Secret
@@ -62,7 +63,8 @@ func TestAllocate(t *testing.T) {
 			require.NoError(t, cl.Create(ctx, &obj3))
 
 			// Act
-			require.NoError(t, rc.allocateResource(ctx, log, &obj3))
+			_, err = rc.allocateResource(ctx, log, &obj3)
+			require.NoError(t, err)
 			lst1, err := ad.List(ctx, "sukhov")
 			require.NoError(t, err)
 			lst2, err := ad.List(ctx, "abdullah")
@@ -94,11 +96,13 @@ func TestDeallocate(t *testing.T) {
 			ctx, log, cl, ad, rc := setup(t)
 			obj1 := createObject("sukhov", "obj1", "default")
 			require.NoError(t, cl.Create(ctx, &obj1))
-			require.NoError(t, rc.allocateResource(ctx, log, &obj1))
+			_, err := rc.allocateResource(ctx, log, &obj1)
+			require.NoError(t, err)
 
 			obj2 := createObject("abdullah", "obj2", "other-namespace")
 			require.NoError(t, cl.Create(ctx, &obj2))
-			require.NoError(t, rc.allocateResource(ctx, log, &obj2))
+			_, err = rc.allocateResource(ctx, log, &obj2)
+			require.NoError(t, err)
 
 			// Act
 			require.NoError(t, rc.deallocateResource(ctx, log, &obj1))
@@ -119,7 +123,8 @@ func TestDeallocate(t *testing.T) {
 			ctx, log, cl, ad, rc := setup(t)
 			obj1 := createObject("sukhov", "obj1", "default")
 			require.NoError(t, cl.Create(ctx, &obj1))
-			require.NoError(t, rc.allocateResource(ctx, log, &obj1))
+			_, err := rc.allocateResource(ctx, log, &obj1)
+			require.NoError(t, err)
 
 			obj2 := createObject("abdullah", "obj2", "other-namespace")
 
