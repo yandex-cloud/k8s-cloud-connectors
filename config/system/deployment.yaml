@@ -20,7 +20,7 @@ spec:
       containers:
         - image: cr.yandex/crptp7j81e7caog8r6gq/yc-connector-manager:latest
           args:
-            - --debug-logging
+            - --debug
           name: manager
           securityContext:
             allowPrivilegeEscalation: false
