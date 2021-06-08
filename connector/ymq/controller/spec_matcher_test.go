@@ -19,10 +19,10 @@ func TestSpecMatching(t *testing.T) {
 		createSAKeyRequireNoError(ctx, t, cl, "sakey", "default")
 		obj := createDefaultQueue("obj", "default", "sakey", "queue")
 		require.NoError(t, cl.Create(ctx, &obj))
-		require.NoError(t, rc.allocateResource(ctx, log, &obj))
+		require.NoError(t, rc.allocateResource(ctx, log, &obj, "test-key", "test-secret"))
 
 		// Act
-		require.NoError(t, rc.matchSpec(ctx, log, &obj))
+		require.NoError(t, rc.matchSpec(ctx, log, &obj, "test-key", "test-secret"))
 		res, err := ad.GetAttributes(ctx, "test-key", "test-secret", obj.Status.QueueURL)
 		require.NoError(t, err)
 
@@ -40,7 +40,7 @@ func TestSpecMatching(t *testing.T) {
 		createSAKeyRequireNoError(ctx, t, cl, "sakey", "default")
 		obj := createDefaultQueue("obj", "default", "sakey", "queue")
 		require.NoError(t, cl.Create(ctx, &obj))
-		require.NoError(t, rc.allocateResource(ctx, log, &obj))
+		require.NoError(t, rc.allocateResource(ctx, log, &obj, "test-key", "test-secret"))
 
 		// Act
 		obj.Spec.DelaySeconds = 1
@@ -48,7 +48,7 @@ func TestSpecMatching(t *testing.T) {
 		obj.Spec.MessageRetentionPeriod = 59
 		obj.Spec.ReceiveMessageWaitTimeSeconds = 1
 		obj.Spec.VisibilityTimeout = 29
-		require.NoError(t, rc.matchSpec(ctx, log, &obj))
+		require.NoError(t, rc.matchSpec(ctx, log, &obj, "test-key", "test-secret"))
 		res, err := ad.GetAttributes(ctx, "test-key", "test-secret", obj.Status.QueueURL)
 		require.NoError(t, err)
 

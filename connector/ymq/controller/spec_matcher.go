@@ -14,13 +14,9 @@ import (
 )
 
 func (r *yandexMessageQueueReconciler) matchSpec(
-	ctx context.Context, log logr.Logger, object *connectorsv1.YandexMessageQueue,
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexMessageQueue, key, secret string,
 ) error {
 	log.V(1).Info("started")
-	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, object, r.Client)
-	if err != nil {
-		return fmt.Errorf("unable to retrieve key and secret: %v", err)
-	}
 
 	attributes := ymqutils.AttributesFromSpec(&object.Spec)
 	oldAttributes, err := r.adapter.GetAttributes(ctx, key, secret, object.Status.QueueURL)

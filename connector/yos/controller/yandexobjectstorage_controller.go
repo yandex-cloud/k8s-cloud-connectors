@@ -15,6 +15,7 @@ import (
 	connectorsv1 "k8s-connectors/connector/yos/api/v1"
 	"k8s-connectors/connector/yos/controller/adapter"
 	yosconfig "k8s-connectors/connector/yos/pkg/config"
+	yosutils "k8s-connectors/connector/yos/pkg/util"
 	"k8s-connectors/pkg/config"
 	"k8s-connectors/pkg/phase"
 	"k8s-connectors/pkg/util"
@@ -65,13 +66,18 @@ func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.
 		return config.GetErroredResult(fmt.Errorf("unable to get object from k8s: %v", err))
 	}
 
+	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, &object, r.Client)
+	if err != nil {
+		return config.GetErroredResult(fmt.Errorf("unable to retrieve key and secret: %v", err))
+	}
+
 	// If object must be currently finalized, do it and quit
 	mustBeFinalized, err := r.mustBeFinalized(&object)
 	if err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %v", err))
 	}
 	if mustBeFinalized {
-		if err := r.finalize(ctx, log.WithName("finalize"), &object); err != nil {
+		if err := r.finalize(ctx, log.WithName("finalize"), &object, key, secret); err != nil {
 			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %v", err))
 		}
 		return config.GetNormalResult()
@@ -83,7 +89,7 @@ func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.
 		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %v", err))
 	}
 
-	if err := r.allocateResource(ctx, log.WithName("allocate-resource"), &object); err != nil {
+	if err := r.allocateResource(ctx, log.WithName("allocate-resource"), &object, key, secret); err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to allocate resource: %v", err))
 	}
 
@@ -108,7 +114,7 @@ func (r *yandexObjectStorageReconciler) mustBeFinalized(object *connectorsv1.Yan
 }
 
 func (r *yandexObjectStorageReconciler) finalize(
-	ctx context.Context, log logr.Logger, object *connectorsv1.YandexObjectStorage,
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexObjectStorage, key, secret string,
 ) error {
 	log.V(1).Info("started")
 
@@ -121,7 +127,7 @@ func (r *yandexObjectStorageReconciler) finalize(
 		return fmt.Errorf("unable to remove configmap: %v", err)
 	}
 
-	if err := r.deallocateResource(ctx, log.WithName("deallocate-resource"), object); err != nil {
+	if err := r.deallocateResource(ctx, log.WithName("deallocate-resource"), object, key, secret); err != nil {
 		return fmt.Errorf("unable to deallocate resource: %v", err)
 	}
 

@@ -12,18 +12,12 @@ import (
 	"github.com/go-logr/logr"
 
 	connectorsv1 "k8s-connectors/connector/yos/api/v1"
-	yosutils "k8s-connectors/connector/yos/pkg/util"
 )
 
 func (r *yandexObjectStorageReconciler) allocateResource(
-	ctx context.Context, log logr.Logger, object *connectorsv1.YandexObjectStorage,
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexObjectStorage, key, secret string,
 ) error {
 	log.V(1).Info("started")
-
-	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, object, r.Client)
-	if err != nil {
-		return fmt.Errorf("unable to retrieve key and secret: %v", err)
-	}
 
 	lst, err := r.adapter.List(ctx, key, secret)
 	if err != nil {
@@ -45,16 +39,11 @@ func (r *yandexObjectStorageReconciler) allocateResource(
 }
 
 func (r *yandexObjectStorageReconciler) deallocateResource(
-	ctx context.Context, log logr.Logger, object *connectorsv1.YandexObjectStorage,
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexObjectStorage, key, secret string,
 ) error {
 	log.V(1).Info("started")
 
-	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, object, r.Client)
-	if err != nil {
-		return fmt.Errorf("unable to retrieve key and secret: %v", err)
-	}
-
-	err = r.adapter.Delete(ctx, key, secret, object.Spec.Name)
+	err := r.adapter.Delete(ctx, key, secret, object.Spec.Name)
 	if err != nil {
 		if aer, ok := err.(awserr.Error); ok && aer.Code() == s3.ErrCodeNoSuchBucket {
 			return nil
