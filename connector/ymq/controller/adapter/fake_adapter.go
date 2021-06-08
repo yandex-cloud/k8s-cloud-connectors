@@ -20,6 +20,14 @@ type FakeYandexMessageQueueAdapter struct {
 	attributes map[string]map[string]*string
 }
 
+func NewFakeYandexMessageQueueAdapter(key, secret string) FakeYandexMessageQueueAdapter {
+	return FakeYandexMessageQueueAdapter{
+		key:        key,
+		secret:     secret,
+		attributes: map[string]map[string]*string{},
+	}
+}
+
 const (
 	prefix = "https://message-queue.api.cloud.yandex.net/"
 	suffix = "/url/sqs"

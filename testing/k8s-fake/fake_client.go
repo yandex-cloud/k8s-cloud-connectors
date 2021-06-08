@@ -129,25 +129,5 @@ func (r *FakeClient) DeleteAllOf(ctx context.Context, obj client.Object, opts ..
 // Status client knows how to create a client which can update status subresource
 // for kubernetes objects.
 func (r *FakeClient) Status() client.StatusWriter {
-	return &FakeStatusWriter{}
-}
-
-type FakeStatusWriter struct{}
-
-// Update updates the fields corresponding to the status subresource for the
-// given obj. obj must be a struct pointer so that obj can be updated
-// with the content returned by the Server.
-func (r *FakeStatusWriter) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
-	// TODO (covariance) implement me!
-	panic("not implemented")
-}
-
-// Patch patches the given object's subresource. obj must be a struct
-// pointer so that obj can be updated with the content returned by the
-// Server.
-func (r *FakeStatusWriter) Patch(
-	ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption,
-) error {
-	// TODO (covariance) implement me!
-	panic("not implemented")
+	return r
 }
