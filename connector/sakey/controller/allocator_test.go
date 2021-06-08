@@ -16,14 +16,14 @@ import (
 
 func TestAllocate(t *testing.T) {
 	t.Run(
-		"update on empty cloud creates resource", func(t *testing.T) {
+		"allocate on empty cloud creates resource", func(t *testing.T) {
 			// Arrange
 			ctx, log, cl, ad, rc := setup(t)
 			obj := createObject("sukhov", "obj", "default")
 			require.NoError(t, cl.Create(ctx, &obj))
 
 			// Act
-			_, err := rc.allocateResource(ctx, log, &obj)
+			res, err := rc.allocateResource(ctx, log, &obj)
 			require.NoError(t, err)
 			lst, err := ad.List(ctx, "sukhov")
 			require.NoError(t, err)
@@ -35,15 +35,22 @@ func TestAllocate(t *testing.T) {
 
 			// Assert
 			assert.Len(t, lst, 1)
+
+			// Check match with cloud
 			assert.Equal(t, "sukhov", lst[0].ServiceAccountId)
 			assert.Equal(t, sakeyconfig.GetStaticAccessKeyDescription("test-cluster", "obj"), lst[0].Description)
+			// Check values in the secret
 			assert.Equal(t, lst[0].Id, string(secret.Data["secret"]))
 			assert.Equal(t, lst[0].Id, string(secret.Data["key"]))
+			// Check match with returned object
+			assert.Equal(t, "sukhov", res.ServiceAccountId)
+			assert.Equal(t, sakeyconfig.GetStaticAccessKeyDescription("test-cluster", "obj"), res.Description)
+			assert.Equal(t, string(secret.Data["key"]), res.KeyId)
 		},
 	)
 
 	t.Run(
-		"update on non-empty cloud creates resource", func(t *testing.T) {
+		"allocate on non-empty cloud creates resource", func(t *testing.T) {
 			// Arrange
 			ctx, log, cl, ad, rc := setup(t)
 			obj1 := createObject("sukhov", "obj1", "default")
@@ -63,7 +70,7 @@ func TestAllocate(t *testing.T) {
 			require.NoError(t, cl.Create(ctx, &obj3))
 
 			// Act
-			_, err = rc.allocateResource(ctx, log, &obj3)
+			res, err := rc.allocateResource(ctx, log, &obj3)
 			require.NoError(t, err)
 			lst1, err := ad.List(ctx, "sukhov")
 			require.NoError(t, err)
@@ -81,17 +88,24 @@ func TestAllocate(t *testing.T) {
 			assert.Len(t, lst1, 1)
 			assert.Len(t, lst2, 1)
 			assert.Len(t, lst3, 1)
+
+			// Check match with cloud
 			assert.Equal(t, "gulchatay", lst3[0].ServiceAccountId)
 			assert.Equal(t, sakeyconfig.GetStaticAccessKeyDescription("test-cluster", "obj3"), lst3[0].Description)
+			// Check values in the secret
 			assert.Equal(t, lst3[0].Id, string(secret.Data["secret"]))
 			assert.Equal(t, lst3[0].Id, string(secret.Data["key"]))
+			// Check match with returned object
+			assert.Equal(t, "gulchatay", res.ServiceAccountId)
+			assert.Equal(t, sakeyconfig.GetStaticAccessKeyDescription("test-cluster", "obj3"), res.Description)
+			assert.Equal(t, string(secret.Data["key"]), res.KeyId)
 		},
 	)
 }
 
 func TestDeallocate(t *testing.T) {
 	t.Run(
-		"cleanup on cloud with resource deletes resource", func(t *testing.T) {
+		"deallocate on cloud with resource deletes resource", func(t *testing.T) {
 			// Arrange
 			ctx, log, cl, ad, rc := setup(t)
 			obj1 := createObject("sukhov", "obj1", "default")
@@ -118,7 +132,7 @@ func TestDeallocate(t *testing.T) {
 	)
 
 	t.Run(
-		"cleanup on cloud without resource does nothing", func(t *testing.T) {
+		"deallocate on cloud without resource does nothing", func(t *testing.T) {
 			// Arrange
 			ctx, log, cl, ad, rc := setup(t)
 			obj1 := createObject("sukhov", "obj1", "default")

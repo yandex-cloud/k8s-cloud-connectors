@@ -14,28 +14,34 @@ import (
 
 func TestAllocate(t *testing.T) {
 	t.Run(
-		"update on empty cloud creates resource", func(t *testing.T) {
+		"allocate on empty cloud creates resource", func(t *testing.T) {
 			// Arrange
 			ctx, log, _, ad, rc := setup(t)
 			obj := createObject("registry", "folder", "obj", "default")
 
 			// Act
-			_, err := rc.allocateResource(ctx, log, &obj)
+			res, err := rc.allocateResource(ctx, log, &obj)
 			require.NoError(t, err)
 			lst, err := ad.List(ctx, "folder")
 			require.NoError(t, err)
 
 			// Assert
 			assert.Len(t, lst, 1)
+			// Check match with cloud
 			assert.Equal(t, "registry", lst[0].Name)
 			assert.Equal(t, "folder", lst[0].FolderId)
 			assert.Equal(t, "test-cluster", lst[0].Labels[config.CloudClusterLabel])
 			assert.Equal(t, "obj", lst[0].Labels[config.CloudNameLabel])
+			// Check match with returned object
+			assert.Equal(t, "registry", res.Name)
+			assert.Equal(t, "folder", res.FolderId)
+			assert.Equal(t, "test-cluster", res.Labels[config.CloudClusterLabel])
+			assert.Equal(t, "obj", res.Labels[config.CloudNameLabel])
 		},
 	)
 
 	t.Run(
-		"update on non-empty cloud creates resource", func(t *testing.T) {
+		"allocate on non-empty cloud creates resource", func(t *testing.T) {
 			// Arrange
 			ctx, log, _, ad, rc := setup(t)
 			obj := createObject("resource", "folder", "obj", "default")
@@ -60,7 +66,7 @@ func TestAllocate(t *testing.T) {
 
 func TestDeallocate(t *testing.T) {
 	t.Run(
-		"cleanup on cloud with resource deletes resource", func(t *testing.T) {
+		"deallocate on cloud with resource deletes resource", func(t *testing.T) {
 			// Arrange
 			ctx, log, _, ad, rc := setup(t)
 			obj := createObject("resource", "folder", "obj", "default")
@@ -78,7 +84,7 @@ func TestDeallocate(t *testing.T) {
 	)
 
 	t.Run(
-		"cleanup on cloud with this and other resources deletes this resource", func(t *testing.T) {
+		"deallocate on cloud with this and other resources deletes this resource", func(t *testing.T) {
 			// Arrange
 			ctx, log, _, ad, rc := setup(t)
 			obj := createObject("resource", "folder", "obj", "default")
@@ -111,7 +117,7 @@ func TestDeallocate(t *testing.T) {
 	)
 
 	t.Run(
-		"cleanup on cloud without resource does nothing", func(t *testing.T) {
+		"deallocate on cloud without resource does nothing", func(t *testing.T) {
 			// Arrange
 			ctx, log, _, ad, rc := setup(t)
 			obj := createObject("resource", "folder", "obj", "default")
