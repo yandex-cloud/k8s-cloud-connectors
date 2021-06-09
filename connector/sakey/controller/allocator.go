@@ -13,6 +13,7 @@ import (
 	connectorsv1 "k8s-connectors/connector/sakey/api/v1"
 	sakeyconfig "k8s-connectors/connector/sakey/pkg/config"
 	sakeyutils "k8s-connectors/connector/sakey/pkg/util"
+	"k8s-connectors/pkg/errorhandling"
 	"k8s-connectors/pkg/secret"
 )
 
@@ -24,11 +25,11 @@ func (r *staticAccessKeyReconciler) allocateResource(
 	res, err := sakeyutils.GetStaticAccessKey(
 		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, r.clusterID, object.Name, r.adapter,
 	)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get resource: %v", err)
-	}
-	if res != nil {
+	if err == nil {
 		return res, nil
+	}
+	if !errorhandling.CheckConnectorErrorCode(err, sakeyconfig.ErrCodeSAKeyNotFound) {
+		return nil, fmt.Errorf("unable to get resource: %v", err)
 	}
 	response, err := r.adapter.Create(
 		ctx, object.Spec.ServiceAccountID, sakeyconfig.GetStaticAccessKeyDescription(r.clusterID, object.Name),
@@ -75,10 +76,11 @@ func (r *staticAccessKeyReconciler) deallocateResource(
 		ctx, object.Status.KeyID, object.Spec.ServiceAccountID, r.clusterID, object.Name, r.adapter,
 	)
 	if err != nil {
+		if errorhandling.CheckConnectorErrorCode(err, sakeyconfig.ErrCodeSAKeyNotFound) {
+			log.Info("already deleted")
+			return nil
+		}
 		return fmt.Errorf("unable to get resource: %v", err)
-	}
-	if res == nil {
-		return nil
 	}
 
 	if err := r.adapter.Delete(ctx, res.Id); err != nil {

@@ -9,6 +9,8 @@ const (
 	FinalizerName = "finalizer.sakey.connectors.cloud.yandex.com"
 	LongName      = "StaticAccessKey"
 	ShortName     = "sakey"
+
+	ErrCodeSAKeyNotFound = "yc.sakey.not-found"
 )
 
 func GetStaticAccessKeyDescription(clusterName, name string) string {

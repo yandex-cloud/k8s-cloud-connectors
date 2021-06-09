@@ -44,3 +44,11 @@ func CheckRPCErrorAlreadyExists(err error) bool {
 	}
 	return s.Code() == codes.AlreadyExists
 }
+
+func CheckConnectorErrorCode(err error, code string) bool {
+	s, ok := err.(ConnectorError)
+	if !ok {
+		return false
+	}
+	return s.Code() == code
+}
