@@ -164,6 +164,9 @@ func (r *FakeYandexMessageQueueAdapter) Delete(_ context.Context, key, secret, q
 	if err != nil {
 		return err
 	}
+	if _, exists := r.attributes[name]; !exists {
+		return awserr.New(sqs.ErrCodeQueueDoesNotExist, "no such queue", nil)
+	}
 	delete(r.attributes, name)
 	return nil
 }

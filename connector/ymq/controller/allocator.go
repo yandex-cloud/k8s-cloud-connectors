@@ -11,6 +11,7 @@ import (
 
 	connectorsv1 "k8s-connectors/connector/ymq/api/v1"
 	ymqutils "k8s-connectors/connector/ymq/pkg/util"
+	"k8s-connectors/pkg/awsutils"
 )
 
 func (r *yandexMessageQueueReconciler) allocateResource(
@@ -49,6 +50,10 @@ func (r *yandexMessageQueueReconciler) deallocateResource(
 
 	err := r.adapter.Delete(ctx, key, secret, object.Status.QueueURL)
 	if err != nil {
+		if awsutils.CheckSQSDoesNotExist(err) {
+			log.Info("already deleted")
+			return nil
+		}
 		return fmt.Errorf("unable to delete resource: %v", err)
 	}
 

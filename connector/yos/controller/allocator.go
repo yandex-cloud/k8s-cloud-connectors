@@ -7,11 +7,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/go-logr/logr"
 
 	connectorsv1 "k8s-connectors/connector/yos/api/v1"
+	"k8s-connectors/pkg/awsutils"
 )
 
 func (r *yandexObjectStorageReconciler) allocateResource(
@@ -45,7 +44,8 @@ func (r *yandexObjectStorageReconciler) deallocateResource(
 
 	err := r.adapter.Delete(ctx, key, secret, object.Spec.Name)
 	if err != nil {
-		if aer, ok := err.(awserr.Error); ok && aer.Code() == s3.ErrCodeNoSuchBucket {
+		if awsutils.CheckS3DoesNotExist(err) {
+			log.Info("already deleted")
 			return nil
 		}
 		return fmt.Errorf("unable to delete resource: %v", err)

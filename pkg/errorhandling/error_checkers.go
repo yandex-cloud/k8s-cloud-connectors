@@ -36,6 +36,7 @@ func CheckRPCErrorNotFound(err error) bool {
 	}
 	return s.Code() == codes.NotFound
 }
+
 func CheckRPCErrorAlreadyExists(err error) bool {
 	s, ok := status.FromError(err)
 	if !ok {
