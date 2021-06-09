@@ -71,13 +71,13 @@ func (r *staticAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %v", err))
 	}
 	if mustBeFinalized {
-		if err = r.finalize(ctx, log.WithName("finalize"), &object); err != nil {
+		if err := r.finalize(ctx, log.WithName("finalize"), &object); err != nil {
 			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %v", err))
 		}
 		return config.GetNormalResult()
 	}
 
-	if err = phase.RegisterFinalizer(
+	if err := phase.RegisterFinalizer(
 		ctx, r.Client, log.WithName("register-finalizer"), &object.ObjectMeta, &object, sakeyconfig.FinalizerName,
 	); err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %v", err))

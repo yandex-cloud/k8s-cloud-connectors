@@ -38,7 +38,7 @@ func (r YandexContainerRegistryAdapterSDK) Create(
 		return nil, err
 	}
 
-	if err = op.Wait(ctx); err != nil {
+	if err := op.Wait(ctx); err != nil {
 		return nil, err
 	}
 

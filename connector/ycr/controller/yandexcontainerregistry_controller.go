@@ -72,13 +72,13 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %v", err))
 	}
 	if mustBeFinalized {
-		if err = r.finalize(ctx, log.WithName("finalize"), &object); err != nil {
+		if err := r.finalize(ctx, log.WithName("finalize"), &object); err != nil {
 			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %v", err))
 		}
 		return config.GetNormalResult()
 	}
 
-	if err = phase.RegisterFinalizer(
+	if err := phase.RegisterFinalizer(
 		ctx, r.Client, log, &object.ObjectMeta, &object, ycrconfig.FinalizerName,
 	); err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %v", err))

@@ -38,7 +38,7 @@ func (r *staticAccessKeyReconciler) allocateResource(
 	}
 
 	// Now we need to create a secret with the key
-	if err = secret.Put(
+	if err := secret.Put(
 		ctx, r.Client, &object.ObjectMeta, sakeyconfig.ShortName, map[string]string{
 			"key":    response.AccessKey.KeyId,
 			"secret": response.Secret,
@@ -54,7 +54,7 @@ func (r *staticAccessKeyReconciler) allocateResource(
 
 	// And we need to update status
 	object.Status.SecretName = secret.Name(&object.ObjectMeta, sakeyconfig.ShortName)
-	if err = r.Client.Update(ctx, object); err != nil {
+	if err := r.Client.Update(ctx, object); err != nil {
 		return nil, fmt.Errorf("unable to update object status: %v", err)
 	}
 
@@ -81,7 +81,7 @@ func (r *staticAccessKeyReconciler) deallocateResource(
 		return nil
 	}
 
-	if err = r.adapter.Delete(ctx, res.Id); err != nil {
+	if err := r.adapter.Delete(ctx, res.Id); err != nil {
 		return fmt.Errorf("unable to delete resource: %v", err)
 	}
 
