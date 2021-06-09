@@ -13,23 +13,15 @@ import (
 )
 
 type YandexMessageQueueAdapterSDK struct {
-	sqsProvider ymqutil.SQSProvider
 }
 
 func NewYandexMessageQueueAdapterSDK() (YandexMessageQueueAdapter, error) {
-	return &YandexMessageQueueAdapterSDK{
-		sqsProvider: ymqutil.NewStaticProvider(),
-	}, nil
+	return &YandexMessageQueueAdapterSDK{}, nil
 }
 
 func (r *YandexMessageQueueAdapterSDK) Create(
-	ctx context.Context, key, secret string, attributes map[string]*string, name string,
+	_ context.Context, sdk *sqs.SQS, attributes map[string]*string, name string,
 ) (string, error) {
-	sdk, err := r.sqsProvider(ctx, key, secret)
-	if err != nil {
-		return "", err
-	}
-
 	res, err := sdk.CreateQueue(
 		&sqs.CreateQueueInput{
 			Attributes: attributes,
@@ -43,12 +35,7 @@ func (r *YandexMessageQueueAdapterSDK) Create(
 	return *res.QueueUrl, nil
 }
 
-func (r *YandexMessageQueueAdapterSDK) GetURL(ctx context.Context, key, secret, queueName string) (string, error) {
-	sdk, err := r.sqsProvider(ctx, key, secret)
-	if err != nil {
-		return "", err
-	}
-
+func (r *YandexMessageQueueAdapterSDK) GetURL(_ context.Context, sdk *sqs.SQS, queueName string) (string, error) {
 	res, err := sdk.GetQueueUrl(
 		&sqs.GetQueueUrlInput{
 			QueueName:              &queueName,
@@ -63,13 +50,10 @@ func (r *YandexMessageQueueAdapterSDK) GetURL(ctx context.Context, key, secret, 
 }
 
 func (r *YandexMessageQueueAdapterSDK) GetAttributes(
-	ctx context.Context, key, secret, queueURL string,
+	_ context.Context,
+	sdk *sqs.SQS,
+	queueURL string,
 ) (map[string]*string, error) {
-	sdk, err := r.sqsProvider(ctx, key, secret)
-	if err != nil {
-		return nil, err
-	}
-
 	res, err := sdk.GetQueueAttributes(
 		&sqs.GetQueueAttributesInput{
 			AttributeNames: []*string{
@@ -91,12 +75,7 @@ func (r *YandexMessageQueueAdapterSDK) GetAttributes(
 	return res.Attributes, nil
 }
 
-func (r *YandexMessageQueueAdapterSDK) List(ctx context.Context, key, secret string) ([]*string, error) {
-	sdk, err := r.sqsProvider(ctx, key, secret)
-	if err != nil {
-		return nil, err
-	}
-
+func (r *YandexMessageQueueAdapterSDK) List(ctx context.Context, sdk *sqs.SQS) ([]*string, error) {
 	res, err := sdk.ListQueues(&sqs.ListQueuesInput{})
 	if err != nil {
 		return nil, err
@@ -106,14 +85,9 @@ func (r *YandexMessageQueueAdapterSDK) List(ctx context.Context, key, secret str
 }
 
 func (r *YandexMessageQueueAdapterSDK) UpdateAttributes(
-	ctx context.Context, key, secret string, attributes map[string]*string, queueURL string,
+	_ context.Context, sdk *sqs.SQS, attributes map[string]*string, queueURL string,
 ) error {
-	sdk, err := r.sqsProvider(ctx, key, secret)
-	if err != nil {
-		return err
-	}
-
-	_, err = sdk.SetQueueAttributes(
+	_, err := sdk.SetQueueAttributes(
 		&sqs.SetQueueAttributesInput{
 			Attributes: attributes,
 			QueueUrl:   &queueURL,
@@ -122,13 +96,8 @@ func (r *YandexMessageQueueAdapterSDK) UpdateAttributes(
 	return err
 }
 
-func (r *YandexMessageQueueAdapterSDK) Delete(ctx context.Context, key, secret, queueURL string) error {
-	sdk, err := r.sqsProvider(ctx, key, secret)
-	if err != nil {
-		return err
-	}
-
-	_, err = sdk.DeleteQueue(
+func (r *YandexMessageQueueAdapterSDK) Delete(_ context.Context, sdk *sqs.SQS, queueURL string) error {
+	_, err := sdk.DeleteQueue(
 		&sqs.DeleteQueueInput{
 			QueueUrl: &queueURL,
 		},

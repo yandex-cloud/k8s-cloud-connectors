@@ -27,12 +27,12 @@ func setup(t *testing.T) (
 	adapter.YandexMessageQueueAdapter,
 	yandexMessageQueueReconciler,
 ) {
-	ad := adapter.NewFakeYandexMessageQueueAdapter("test-key", "test-secret")
+	ad := adapter.NewFakeYandexMessageQueueAdapter()
 	cl := k8sfake.NewFakeClient()
 	log := logrfake.NewFakeLogger(t)
-	return context.Background(), log, cl, &ad, yandexMessageQueueReconciler{
+	return context.Background(), log, cl, ad, yandexMessageQueueReconciler{
 		cl,
-		&ad,
+		ad,
 		log,
 	}
 }

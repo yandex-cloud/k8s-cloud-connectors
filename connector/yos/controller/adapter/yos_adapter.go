@@ -7,27 +7,16 @@ import (
 	"context"
 
 	"github.com/aws/aws-sdk-go/service/s3"
-
-	"k8s-connectors/connector/yos/pkg/util"
 )
 
-type YandexObjectStorageAdapterSDK struct {
-	s3provider util.S3Provider
-}
+type YandexObjectStorageAdapterSDK struct{}
 
 func NewYandexObjectStorageAdapterSDK() (YandexObjectStorageAdapter, error) {
-	return &YandexObjectStorageAdapterSDK{
-		s3provider: util.NewStaticProvider(),
-	}, nil
+	return &YandexObjectStorageAdapterSDK{}, nil
 }
 
-func (r *YandexObjectStorageAdapterSDK) Create(ctx context.Context, key, secret, name string) error {
-	sdk, err := r.s3provider(ctx, key, secret)
-	if err != nil {
-		return err
-	}
-
-	_, err = sdk.CreateBucket(
+func (r *YandexObjectStorageAdapterSDK) Create(_ context.Context, sdk *s3.S3, name string) error {
+	_, err := sdk.CreateBucket(
 		&s3.CreateBucketInput{
 			Bucket: &name,
 		},
@@ -35,12 +24,7 @@ func (r *YandexObjectStorageAdapterSDK) Create(ctx context.Context, key, secret,
 	return err
 }
 
-func (r *YandexObjectStorageAdapterSDK) List(ctx context.Context, key, secret string) ([]*s3.Bucket, error) {
-	sdk, err := r.s3provider(ctx, key, secret)
-	if err != nil {
-		return nil, err
-	}
-
+func (r *YandexObjectStorageAdapterSDK) List(_ context.Context, sdk *s3.S3) ([]*s3.Bucket, error) {
 	res, err := sdk.ListBuckets(&s3.ListBucketsInput{})
 	if err != nil {
 		return nil, err
@@ -49,13 +33,8 @@ func (r *YandexObjectStorageAdapterSDK) List(ctx context.Context, key, secret st
 	return res.Buckets, nil
 }
 
-func (r *YandexObjectStorageAdapterSDK) Delete(ctx context.Context, key, secret, name string) error {
-	sdk, err := r.s3provider(ctx, key, secret)
-	if err != nil {
-		return err
-	}
-
-	_, err = sdk.DeleteBucket(
+func (r *YandexObjectStorageAdapterSDK) Delete(_ context.Context, sdk *s3.S3, name string) error {
+	_, err := sdk.DeleteBucket(
 		&s3.DeleteBucketInput{
 			Bucket: &name,
 		},

@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/go-logr/logr"
 
 	connectorsv1 "k8s-connectors/connector/yos/api/v1"
@@ -14,11 +15,14 @@ import (
 )
 
 func (r *yandexObjectStorageReconciler) allocateResource(
-	ctx context.Context, log logr.Logger, object *connectorsv1.YandexObjectStorage, key, secret string,
+	ctx context.Context,
+	log logr.Logger,
+	object *connectorsv1.YandexObjectStorage,
+	sdk *s3.S3,
 ) error {
 	log.V(1).Info("started")
 
-	lst, err := r.adapter.List(ctx, key, secret)
+	lst, err := r.adapter.List(ctx, sdk)
 	if err != nil {
 		return fmt.Errorf("unable to list resources: %v", err)
 	}
@@ -29,7 +33,7 @@ func (r *yandexObjectStorageReconciler) allocateResource(
 		}
 	}
 
-	err = r.adapter.Create(ctx, key, secret, object.Spec.Name)
+	err = r.adapter.Create(ctx, sdk, object.Spec.Name)
 	if err != nil {
 		return fmt.Errorf("unable to create resource: %v", err)
 	}
@@ -38,11 +42,11 @@ func (r *yandexObjectStorageReconciler) allocateResource(
 }
 
 func (r *yandexObjectStorageReconciler) deallocateResource(
-	ctx context.Context, log logr.Logger, object *connectorsv1.YandexObjectStorage, key, secret string,
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexObjectStorage, sdk *s3.S3,
 ) error {
 	log.V(1).Info("started")
 
-	err := r.adapter.Delete(ctx, key, secret, object.Spec.Name)
+	err := r.adapter.Delete(ctx, sdk, object.Spec.Name)
 	if err != nil {
 		if awsutils.CheckS3DoesNotExist(err) {
 			log.Info("already deleted")

@@ -10,7 +10,7 @@ import (
 )
 
 type YandexObjectStorageAdapter interface {
-	Create(ctx context.Context, key string, secret string, name string) error
-	List(ctx context.Context, key string, secret string) ([]*s3.Bucket, error)
-	Delete(ctx context.Context, key string, secret string, name string) error
+	Create(ctx context.Context, sdk *s3.S3, name string) error
+	List(ctx context.Context, sdk *s3.S3) ([]*s3.Bucket, error)
+	Delete(ctx context.Context, sdk *s3.S3, name string) error
 }
