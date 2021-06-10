@@ -15,15 +15,11 @@ import (
 // TODO (covariance) check attributes in Create and Update for correctness
 
 type FakeYandexMessageQueueAdapter struct {
-	key        string
-	secret     string
 	attributes map[string]map[string]*string
 }
 
-func NewFakeYandexMessageQueueAdapter(key, secret string) FakeYandexMessageQueueAdapter {
-	return FakeYandexMessageQueueAdapter{
-		key:        key,
-		secret:     secret,
+func NewFakeYandexMessageQueueAdapter() YandexMessageQueueAdapter {
+	return &FakeYandexMessageQueueAdapter{
 		attributes: map[string]map[string]*string{},
 	}
 }
@@ -44,13 +40,6 @@ func getName(url string) (string, error) {
 	return strings.TrimSuffix(strings.TrimPrefix(url, prefix), suffix), nil
 }
 
-func (r *FakeYandexMessageQueueAdapter) checkCredentials(key, secret string) error {
-	if r.key != key || r.secret != secret {
-		return fmt.Errorf("credentials are incorrect")
-	}
-	return nil
-}
-
 func (r *FakeYandexMessageQueueAdapter) checkAttr(lhs, rhs map[string]*string) bool {
 	checkIn := func(lhs, rhs map[string]*string) bool {
 		for k, v := range lhs {
@@ -64,11 +53,8 @@ func (r *FakeYandexMessageQueueAdapter) checkAttr(lhs, rhs map[string]*string) b
 }
 
 func (r *FakeYandexMessageQueueAdapter) Create(
-	_ context.Context, key, secret string, attributes map[string]*string, name string,
+	_ context.Context, _ *sqs.SQS, attributes map[string]*string, name string,
 ) (string, error) {
-	if err := r.checkCredentials(key, secret); err != nil {
-		return "", err
-	}
 	if _, exists := r.attributes[name]; exists {
 		if r.checkAttr(attributes, r.attributes[name]) {
 			return formURL(name), nil
@@ -85,11 +71,7 @@ func (r *FakeYandexMessageQueueAdapter) Create(
 	return formURL(name), nil
 }
 
-func (r *FakeYandexMessageQueueAdapter) GetURL(_ context.Context, key, secret, queueName string) (string, error) {
-	if err := r.checkCredentials(key, secret); err != nil {
-		return "", err
-	}
-
+func (r *FakeYandexMessageQueueAdapter) GetURL(_ context.Context, _ *sqs.SQS, queueName string) (string, error) {
 	if _, exists := r.attributes[queueName]; !exists {
 		return "", awserr.New(sqs.ErrCodeQueueDoesNotExist, "no such queue", nil)
 	}
@@ -98,11 +80,8 @@ func (r *FakeYandexMessageQueueAdapter) GetURL(_ context.Context, key, secret, q
 }
 
 func (r *FakeYandexMessageQueueAdapter) GetAttributes(
-	_ context.Context, key, secret, queueURL string,
+	_ context.Context, _ *sqs.SQS, queueURL string,
 ) (map[string]*string, error) {
-	if err := r.checkCredentials(key, secret); err != nil {
-		return nil, err
-	}
 	name, err := getName(queueURL)
 	if err != nil {
 		return nil, err
@@ -118,10 +97,7 @@ func (r *FakeYandexMessageQueueAdapter) GetAttributes(
 	return nil, awserr.New(sqs.ErrCodeQueueDoesNotExist, "no such queue", nil)
 }
 
-func (r *FakeYandexMessageQueueAdapter) List(_ context.Context, key, secret string) ([]*string, error) {
-	if err := r.checkCredentials(key, secret); err != nil {
-		return nil, err
-	}
+func (r *FakeYandexMessageQueueAdapter) List(_ context.Context, _ *sqs.SQS) ([]*string, error) {
 	res := make([]*string, 0)
 	for name := range r.attributes {
 		url := formURL(name)
@@ -131,11 +107,8 @@ func (r *FakeYandexMessageQueueAdapter) List(_ context.Context, key, secret stri
 }
 
 func (r *FakeYandexMessageQueueAdapter) UpdateAttributes(
-	_ context.Context, key, secret string, attributes map[string]*string, queueURL string,
+	_ context.Context, _ *sqs.SQS, attributes map[string]*string, queueURL string,
 ) error {
-	if err := r.checkCredentials(key, secret); err != nil {
-		return err
-	}
 	name, err := getName(queueURL)
 	if err != nil {
 		return err
@@ -156,13 +129,13 @@ func (r *FakeYandexMessageQueueAdapter) UpdateAttributes(
 	return nil
 }
 
-func (r *FakeYandexMessageQueueAdapter) Delete(_ context.Context, key, secret, queueURL string) error {
-	if err := r.checkCredentials(key, secret); err != nil {
-		return err
-	}
+func (r *FakeYandexMessageQueueAdapter) Delete(_ context.Context, _ *sqs.SQS, queueURL string) error {
 	name, err := getName(queueURL)
 	if err != nil {
 		return err
+	}
+	if _, exists := r.attributes[name]; !exists {
+		return awserr.New(sqs.ErrCodeQueueDoesNotExist, "no such queue", nil)
 	}
 	delete(r.attributes, name)
 	return nil

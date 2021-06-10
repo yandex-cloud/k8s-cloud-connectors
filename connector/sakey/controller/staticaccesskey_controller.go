@@ -83,11 +83,12 @@ func (r *staticAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %v", err))
 	}
 
-	if err := r.allocateResource(ctx, log.WithName("allocate-resource"), &object); err != nil {
+	res, err := r.allocateResource(ctx, log.WithName("allocate-resource"), &object)
+	if err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to allocate resource: %v", err))
 	}
 
-	if err := r.updateStatus(ctx, log.WithName("update-status"), &object); err != nil {
+	if err := r.updateStatus(ctx, log.WithName("update-status"), &object, res); err != nil {
 		return config.GetErroredResult(fmt.Errorf("unble to update status: %v", err))
 	}
 

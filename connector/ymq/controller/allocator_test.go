@@ -19,8 +19,8 @@ func TestAllocate(t *testing.T) {
 		require.NoError(t, cl.Create(ctx, &obj))
 
 		// Act
-		require.NoError(t, rc.allocateResource(ctx, log, &obj))
-		lst, err := ad.List(ctx, "test-key", "test-secret")
+		require.NoError(t, rc.allocateResource(ctx, log, &obj, nil))
+		lst, err := ad.List(ctx, nil)
 		require.NoError(t, err)
 
 		// Assert
@@ -33,14 +33,14 @@ func TestAllocate(t *testing.T) {
 		createSAKeyRequireNoError(ctx, t, cl, "sakey", "default")
 		obj1 := createDefaultQueue("obj1", "default", "sakey", "first-queue")
 		require.NoError(t, cl.Create(ctx, &obj1))
-		require.NoError(t, rc.allocateResource(ctx, log, &obj1))
+		require.NoError(t, rc.allocateResource(ctx, log, &obj1, nil))
 
 		obj2 := createDefaultQueue("obj2", "default", "sakey", "second-queue")
 		require.NoError(t, cl.Create(ctx, &obj2))
 
 		// Act
-		require.NoError(t, rc.allocateResource(ctx, log, &obj2))
-		lst, err := ad.List(ctx, "test-key", "test-secret")
+		require.NoError(t, rc.allocateResource(ctx, log, &obj2, nil))
+		lst, err := ad.List(ctx, nil)
 		require.NoError(t, err)
 
 		// Assert
@@ -53,14 +53,14 @@ func TestAllocate(t *testing.T) {
 		createSAKeyRequireNoError(ctx, t, cl, "sakey", "default")
 		obj1 := createDefaultQueue("obj1", "default", "sakey", "queue")
 		require.NoError(t, cl.Create(ctx, &obj1))
-		require.NoError(t, rc.allocateResource(ctx, log, &obj1))
+		require.NoError(t, rc.allocateResource(ctx, log, &obj1, nil))
 
 		obj2 := createDefaultQueue("obj2", "default", "sakey", "queue")
 		require.NoError(t, cl.Create(ctx, &obj2))
 
 		// Act
-		require.NoError(t, rc.allocateResource(ctx, log, &obj2))
-		lst, err := ad.List(ctx, "test-key", "test-secret")
+		require.NoError(t, rc.allocateResource(ctx, log, &obj2, nil))
+		lst, err := ad.List(ctx, nil)
 		require.NoError(t, err)
 
 		// Assert
@@ -73,15 +73,15 @@ func TestAllocate(t *testing.T) {
 		createSAKeyRequireNoError(ctx, t, cl, "sakey", "default")
 		obj1 := createDefaultQueue("obj1", "default", "sakey", "queue")
 		require.NoError(t, cl.Create(ctx, &obj1))
-		require.NoError(t, rc.allocateResource(ctx, log, &obj1))
+		require.NoError(t, rc.allocateResource(ctx, log, &obj1, nil))
 
 		obj2 := createDefaultQueue("obj2", "default", "sakey", "queue")
 		obj2.Spec.DelaySeconds = 1
 		require.NoError(t, cl.Create(ctx, &obj2))
 
 		// Act
-		err1 := rc.allocateResource(ctx, log, &obj2)
-		lst, err := ad.List(ctx, "test-key", "test-secret")
+		err1 := rc.allocateResource(ctx, log, &obj2, nil)
+		lst, err := ad.List(ctx, nil)
 		require.NoError(t, err)
 
 		// Assert
@@ -101,8 +101,8 @@ func TestDeallocate(t *testing.T) {
 		require.NoError(t, cl.Create(ctx, &obj))
 
 		// Act
-		require.NoError(t, rc.deallocateResource(ctx, log, &obj))
-		lst, err := ad.List(ctx, "test-key", "test-secret")
+		require.NoError(t, rc.deallocateResource(ctx, log, &obj, nil))
+		lst, err := ad.List(ctx, nil)
 		require.NoError(t, err)
 
 		// Assert
@@ -115,11 +115,11 @@ func TestDeallocate(t *testing.T) {
 		createSAKeyRequireNoError(ctx, t, cl, "sakey", "default")
 		obj := createDefaultQueue("obj", "default", "sakey", "queue")
 		require.NoError(t, cl.Create(ctx, &obj))
-		require.NoError(t, rc.allocateResource(ctx, log, &obj))
+		require.NoError(t, rc.allocateResource(ctx, log, &obj, nil))
 
 		// Act
-		require.NoError(t, rc.deallocateResource(ctx, log, &obj))
-		lst, err := ad.List(ctx, "test-key", "test-secret")
+		require.NoError(t, rc.deallocateResource(ctx, log, &obj, nil))
+		lst, err := ad.List(ctx, nil)
 		require.NoError(t, err)
 
 		// Assert

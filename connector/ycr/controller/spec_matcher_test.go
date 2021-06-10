@@ -19,11 +19,12 @@ func TestMatchSpec(t *testing.T) {
 			ctx, log, cl, ad, rc := setup(t)
 			obj := createObject("resource", "folder", "obj", "default")
 			require.NoError(t, cl.Create(ctx, &obj))
-			require.NoError(t, rc.allocateResource(ctx, log, &obj))
+			res, err := rc.allocateResource(ctx, log, &obj)
+			require.NoError(t, err)
 
 			// Act
 			obj.Spec.Name = "resource-upd"
-			require.NoError(t, rc.matchSpec(ctx, log, &obj))
+			require.NoError(t, rc.matchSpec(ctx, log, &obj, res))
 
 			ycr, err := util.GetRegistry(ctx, "", "folder", "obj", "test-cluster", ad)
 			require.NoError(t, err)

@@ -68,6 +68,9 @@ issues:
     - linters:
         - lll
       source: "^// "
+    - linters:
+        - govet
+      text: 'declaration of "(err|ctx)" shadows declaration at'
 
 linters-settings:
   dupl:

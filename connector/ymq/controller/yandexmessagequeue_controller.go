@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -15,6 +16,8 @@ import (
 	connectorsv1 "k8s-connectors/connector/ymq/api/v1"
 	"k8s-connectors/connector/ymq/controller/adapter"
 	ymqconfig "k8s-connectors/connector/ymq/pkg/config"
+	ymqutils "k8s-connectors/connector/ymq/pkg/util"
+	"k8s-connectors/pkg/awsutils"
 	"k8s-connectors/pkg/config"
 	"k8s-connectors/pkg/phase"
 	"k8s-connectors/pkg/util"
@@ -65,13 +68,22 @@ func (r *yandexMessageQueueReconciler) Reconcile(ctx context.Context, req ctrl.R
 		return config.GetErroredResult(fmt.Errorf("unable to get object from k8s: %v", err))
 	}
 
+	cred, err := awsutils.CredentialsFromStaticAccessKey(ctx, object.Namespace, object.Spec.SAKeyName, r.Client)
+	if err != nil {
+		return config.GetErroredResult(fmt.Errorf("unable to retrieve credentials: %v", err))
+	}
+	sdk, err := ymqutils.NewSQSClient(ctx, cred)
+	if err != nil {
+		return config.GetErroredResult(fmt.Errorf("unable to build sdk: %v", err))
+	}
+
 	// If object must be currently finalized, do it and quit
 	mustBeFinalized, err := r.mustBeFinalized(&object)
 	if err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %v", err))
 	}
 	if mustBeFinalized {
-		if err := r.finalize(ctx, log.WithName("finalize"), &object); err != nil {
+		if err := r.finalize(ctx, log.WithName("finalize"), &object, sdk); err != nil {
 			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %v", err))
 		}
 		return config.GetNormalResult()
@@ -83,11 +95,11 @@ func (r *yandexMessageQueueReconciler) Reconcile(ctx context.Context, req ctrl.R
 		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %v", err))
 	}
 
-	if err := r.allocateResource(ctx, log.WithName("allocate-resource"), &object); err != nil {
+	if err := r.allocateResource(ctx, log.WithName("allocate-resource"), &object, sdk); err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to allocate resource: %v", err))
 	}
 
-	if err := r.matchSpec(ctx, log.WithName("match-spec"), &object); err != nil {
+	if err := r.matchSpec(ctx, log.WithName("match-spec"), &object, sdk); err != nil {
 		return config.GetErroredResult(fmt.Errorf("unable to match spec: %v", err))
 	}
 
@@ -112,7 +124,10 @@ func (r *yandexMessageQueueReconciler) mustBeFinalized(object *connectorsv1.Yand
 }
 
 func (r *yandexMessageQueueReconciler) finalize(
-	ctx context.Context, log logr.Logger, object *connectorsv1.YandexMessageQueue,
+	ctx context.Context,
+	log logr.Logger,
+	object *connectorsv1.YandexMessageQueue,
+	sdk *sqs.SQS,
 ) error {
 	log.V(1).Info("started")
 
@@ -125,7 +140,7 @@ func (r *yandexMessageQueueReconciler) finalize(
 		return fmt.Errorf("unable to remove configmap: %v", err)
 	}
 
-	if err := r.deallocateResource(ctx, log.WithName("deallocate-resource"), object); err != nil {
+	if err := r.deallocateResource(ctx, log.WithName("deallocate-resource"), object, sdk); err != nil {
 		return fmt.Errorf("unable to deallocate resource: %v", err)
 	}
 

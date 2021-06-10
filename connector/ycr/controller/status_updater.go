@@ -8,25 +8,15 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
 
 	connectorsv1 "k8s-connectors/connector/ycr/api/v1"
-	ycrutils "k8s-connectors/connector/ycr/pkg/util"
 )
 
 func (r *yandexContainerRegistryReconciler) updateStatus(
-	ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry,
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry, res *containerregistry.Registry,
 ) error {
 	log.V(1).Info("started")
-
-	res, err := ycrutils.GetRegistry(
-		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, r.clusterID, r.adapter,
-	)
-	if err != nil {
-		return fmt.Errorf("unable to get resource: %v", err)
-	}
-	if res == nil {
-		return fmt.Errorf("resource not found in the cloud")
-	}
 
 	object.Status.ID = res.Id
 	// TODO (covariance) decide what to do with object.Status.Status

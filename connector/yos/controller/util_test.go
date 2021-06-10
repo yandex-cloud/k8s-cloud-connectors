@@ -27,12 +27,12 @@ func setup(t *testing.T) (
 	adapter.YandexObjectStorageAdapter,
 	yandexObjectStorageReconciler,
 ) {
-	ad := adapter.NewFakeYandexObjectStorageAdapter("test-key", "test-secret")
+	ad := adapter.NewFakeYandexObjectStorageAdapter()
 	cl := k8sfake.NewFakeClient()
 	log := logrfake.NewFakeLogger(t)
-	return context.Background(), log, cl, &ad, yandexObjectStorageReconciler{
+	return context.Background(), log, cl, ad, yandexObjectStorageReconciler{
 		cl,
-		&ad,
+		ad,
 		log,
 	}
 }

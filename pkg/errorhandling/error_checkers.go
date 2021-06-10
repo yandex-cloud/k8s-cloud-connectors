@@ -36,10 +36,19 @@ func CheckRPCErrorNotFound(err error) bool {
 	}
 	return s.Code() == codes.NotFound
 }
+
 func CheckRPCErrorAlreadyExists(err error) bool {
 	s, ok := status.FromError(err)
 	if !ok {
 		return false
 	}
 	return s.Code() == codes.AlreadyExists
+}
+
+func CheckConnectorErrorCode(err error, code string) bool {
+	s, ok := err.(ConnectorError)
+	if !ok {
+		return false
+	}
+	return s.Code() == code
 }

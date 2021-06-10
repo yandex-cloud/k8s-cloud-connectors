@@ -10,6 +10,7 @@ import (
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
 
 	"k8s-connectors/connector/ycr/controller/adapter"
+	ycrconfig "k8s-connectors/connector/ycr/pkg/config"
 	"k8s-connectors/pkg/config"
 	"k8s-connectors/pkg/errorhandling"
 )
@@ -58,5 +59,5 @@ func GetRegistry(
 	}
 
 	// Nothing found, no such registry
-	return nil, nil
+	return nil, errorhandling.New("unable to find resource in the cloud", ycrconfig.ErrCodeYCRNotFound, nil)
 }

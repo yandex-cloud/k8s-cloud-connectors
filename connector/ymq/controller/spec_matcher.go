@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/go-logr/logr"
 
 	connectorsv1 "k8s-connectors/connector/ymq/api/v1"
@@ -14,16 +15,12 @@ import (
 )
 
 func (r *yandexMessageQueueReconciler) matchSpec(
-	ctx context.Context, log logr.Logger, object *connectorsv1.YandexMessageQueue,
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexMessageQueue, sdk *sqs.SQS,
 ) error {
 	log.V(1).Info("started")
-	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, object, r.Client)
-	if err != nil {
-		return fmt.Errorf("unable to retrieve key and secret: %v", err)
-	}
 
 	attributes := ymqutils.AttributesFromSpec(&object.Spec)
-	oldAttributes, err := r.adapter.GetAttributes(ctx, key, secret, object.Status.QueueURL)
+	oldAttributes, err := r.adapter.GetAttributes(ctx, sdk, object.Status.QueueURL)
 	if err != nil {
 		return fmt.Errorf("unable to get queue attributes: %v", err)
 	}
@@ -31,7 +28,7 @@ func (r *yandexMessageQueueReconciler) matchSpec(
 	for k, v := range attributes {
 		if *oldAttributes[k] != *v {
 			log.V(1).Info("arguments do not match, updating")
-			if err := r.adapter.UpdateAttributes(ctx, key, secret, attributes, object.Status.QueueURL); err != nil {
+			if err := r.adapter.UpdateAttributes(ctx, sdk, attributes, object.Status.QueueURL); err != nil {
 				return fmt.Errorf("unable to update attributes: %v", err)
 			}
 			log.Info("successful")

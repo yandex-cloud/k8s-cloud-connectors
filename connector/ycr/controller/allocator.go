@@ -11,26 +11,28 @@ import (
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
 
 	connectorsv1 "k8s-connectors/connector/ycr/api/v1"
+	ycrconfig "k8s-connectors/connector/ycr/pkg/config"
 	ycrutils "k8s-connectors/connector/ycr/pkg/util"
 	"k8s-connectors/pkg/config"
+	"k8s-connectors/pkg/errorhandling"
 )
 
 func (r *yandexContainerRegistryReconciler) allocateResource(
 	ctx context.Context, log logr.Logger, object *connectorsv1.YandexContainerRegistry,
-) error {
+) (*containerregistry.Registry, error) {
 	log.V(1).Info("started")
 
 	res, err := ycrutils.GetRegistry(
 		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, r.clusterID, r.adapter,
 	)
-	if err != nil {
-		return fmt.Errorf("unable to get resource: %v", err)
+	if err == nil {
+		return res, nil
 	}
-	if res != nil {
-		return nil
+	if !errorhandling.CheckConnectorErrorCode(err, ycrconfig.ErrCodeYCRNotFound) {
+		return nil, fmt.Errorf("unable to get resource: %v", err)
 	}
 
-	if _, err := r.adapter.Create(
+	resp, err := r.adapter.Create(
 		ctx, &containerregistry.CreateRegistryRequest{
 			FolderId: object.Spec.FolderID,
 			Name:     object.Spec.Name,
@@ -39,11 +41,12 @@ func (r *yandexContainerRegistryReconciler) allocateResource(
 				config.CloudNameLabel:    object.Name,
 			},
 		},
-	); err != nil {
-		return fmt.Errorf("unable to create resource: %v", err)
+	)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create resource: %v", err)
 	}
 	log.Info("successful")
-	return nil
+	return resp, nil
 }
 
 func (r *yandexContainerRegistryReconciler) deallocateResource(
@@ -55,11 +58,11 @@ func (r *yandexContainerRegistryReconciler) deallocateResource(
 		ctx, object.Status.ID, object.Spec.FolderID, object.ObjectMeta.Name, r.clusterID, r.adapter,
 	)
 	if err != nil {
+		if errorhandling.CheckConnectorErrorCode(err, ycrconfig.ErrCodeYCRNotFound) {
+			log.Info("already deleted")
+			return nil
+		}
 		return fmt.Errorf("unable to get resource: %v", err)
-	}
-	if ycr == nil {
-		log.Info("registry deleted externally")
-		return nil
 	}
 
 	if err := r.adapter.Delete(ctx, ycr.Id); err != nil {

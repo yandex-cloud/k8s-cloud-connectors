@@ -47,5 +47,5 @@ func GetStaticAccessKey(
 		}
 	}
 
-	return nil, nil
+	return nil, errorhandling.New("unable to find resource in the cloud", sakeyconfig.ErrCodeSAKeyNotFound, nil)
 }

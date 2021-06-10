@@ -7,23 +7,20 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/go-logr/logr"
 
 	connectorsv1 "k8s-connectors/connector/ymq/api/v1"
 	ymqutils "k8s-connectors/connector/ymq/pkg/util"
+	"k8s-connectors/pkg/awsutils"
 )
 
 func (r *yandexMessageQueueReconciler) allocateResource(
-	ctx context.Context, log logr.Logger, object *connectorsv1.YandexMessageQueue,
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexMessageQueue, sdk *sqs.SQS,
 ) error {
 	log.V(1).Info("started")
 
-	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, object, r.Client)
-	if err != nil {
-		return fmt.Errorf("unable to retrieve key and secret: %v", err)
-	}
-
-	lst, err := r.adapter.List(ctx, key, secret)
+	lst, err := r.adapter.List(ctx, sdk)
 	if err != nil {
 		return fmt.Errorf("unable to list resources: %v", err)
 	}
@@ -33,7 +30,7 @@ func (r *yandexMessageQueueReconciler) allocateResource(
 		}
 	}
 
-	res, err := r.adapter.Create(ctx, key, secret, ymqutils.AttributesFromSpec(&object.Spec), object.Spec.Name)
+	res, err := r.adapter.Create(ctx, sdk, ymqutils.AttributesFromSpec(&object.Spec), object.Spec.Name)
 	if err != nil {
 		return fmt.Errorf("ubable to create resource: %v", err)
 	}
@@ -48,17 +45,16 @@ func (r *yandexMessageQueueReconciler) allocateResource(
 }
 
 func (r *yandexMessageQueueReconciler) deallocateResource(
-	ctx context.Context, log logr.Logger, object *connectorsv1.YandexMessageQueue,
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexMessageQueue, sdk *sqs.SQS,
 ) error {
 	log.V(1).Info("started")
 
-	key, secret, err := ymqutils.KeyAndSecretFromStaticAccessKey(ctx, object, r.Client)
+	err := r.adapter.Delete(ctx, sdk, object.Status.QueueURL)
 	if err != nil {
-		return fmt.Errorf("unable to retrieve key and secret: %v", err)
-	}
-
-	err = r.adapter.Delete(ctx, key, secret, object.Status.QueueURL)
-	if err != nil {
+		if awsutils.CheckSQSDoesNotExist(err) {
+			log.Info("already deleted")
+			return nil
+		}
 		return fmt.Errorf("unable to delete resource: %v", err)
 	}
 

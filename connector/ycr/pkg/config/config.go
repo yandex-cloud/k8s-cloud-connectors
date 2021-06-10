@@ -7,4 +7,6 @@ const (
 	FinalizerName = "finalizer.ycr.connectors.cloud.yandex.com"
 	LongName      = "YandexContainerRegistry"
 	ShortName     = "ycr"
+
+	ErrCodeYCRNotFound = "yc.ycr.not-found"
 )

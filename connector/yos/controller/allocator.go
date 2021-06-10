@@ -7,25 +7,22 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/go-logr/logr"
 
 	connectorsv1 "k8s-connectors/connector/yos/api/v1"
-	yosutils "k8s-connectors/connector/yos/pkg/util"
+	"k8s-connectors/pkg/awsutils"
 )
 
 func (r *yandexObjectStorageReconciler) allocateResource(
-	ctx context.Context, log logr.Logger, object *connectorsv1.YandexObjectStorage,
+	ctx context.Context,
+	log logr.Logger,
+	object *connectorsv1.YandexObjectStorage,
+	sdk *s3.S3,
 ) error {
 	log.V(1).Info("started")
 
-	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, object, r.Client)
-	if err != nil {
-		return fmt.Errorf("unable to retrieve key and secret: %v", err)
-	}
-
-	lst, err := r.adapter.List(ctx, key, secret)
+	lst, err := r.adapter.List(ctx, sdk)
 	if err != nil {
 		return fmt.Errorf("unable to list resources: %v", err)
 	}
@@ -36,7 +33,7 @@ func (r *yandexObjectStorageReconciler) allocateResource(
 		}
 	}
 
-	err = r.adapter.Create(ctx, key, secret, object.Spec.Name)
+	err = r.adapter.Create(ctx, sdk, object.Spec.Name)
 	if err != nil {
 		return fmt.Errorf("unable to create resource: %v", err)
 	}
@@ -45,18 +42,14 @@ func (r *yandexObjectStorageReconciler) allocateResource(
 }
 
 func (r *yandexObjectStorageReconciler) deallocateResource(
-	ctx context.Context, log logr.Logger, object *connectorsv1.YandexObjectStorage,
+	ctx context.Context, log logr.Logger, object *connectorsv1.YandexObjectStorage, sdk *s3.S3,
 ) error {
 	log.V(1).Info("started")
 
-	key, secret, err := yosutils.KeyAndSecretFromStaticAccessKey(ctx, object, r.Client)
+	err := r.adapter.Delete(ctx, sdk, object.Spec.Name)
 	if err != nil {
-		return fmt.Errorf("unable to retrieve key and secret: %v", err)
-	}
-
-	err = r.adapter.Delete(ctx, key, secret, object.Spec.Name)
-	if err != nil {
-		if aer, ok := err.(awserr.Error); ok && aer.Code() == s3.ErrCodeNoSuchBucket {
+		if awsutils.CheckS3DoesNotExist(err) {
+			log.Info("already deleted")
 			return nil
 		}
 		return fmt.Errorf("unable to delete resource: %v", err)
