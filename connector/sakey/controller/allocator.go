@@ -45,12 +45,12 @@ func (r *staticAccessKeyReconciler) allocateResource(
 			"secret": response.Secret,
 		},
 	); err != nil {
-		// This exact error is a disaster - we have created key, but
-		// have not provided secret with secret key and therefore
-		// we will inevitably lose it.
-		// TODO (covariance) we either need to make some retries here
-		//  or delete the key itself because it is useless and possibly dangerous.
-		return nil, fmt.Errorf("unable to create secret, this is fatal: %v", err)
+		// If we cannot create secret, we will just delete key
+		// and try again on the next reconciliation
+		if err2 := r.adapter.Delete(ctx, response.AccessKey.KeyId); err2 != nil {
+			return nil, fmt.Errorf("unable to create secret: %v\nunable to delete SAKey in the cloud: %v", err, err2)
+		}
+		return nil, fmt.Errorf("unable to create secret: %v", err)
 	}
 
 	// And we need to update status
