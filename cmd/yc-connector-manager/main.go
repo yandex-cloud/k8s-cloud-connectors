@@ -12,10 +12,8 @@ import (
 	"os"
 
 	"github.com/go-logr/logr"
-	"github.com/go-logr/zapr"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/compute/v1"
 	ycsdk "github.com/yandex-cloud/go-sdk"
-	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -35,6 +33,7 @@ import (
 	yos "k8s-connectors/connector/yos/api/v1"
 	yosconnector "k8s-connectors/connector/yos/controller"
 	yosconfig "k8s-connectors/connector/yos/pkg/config"
+	"k8s-connectors/pkg/util"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -138,18 +137,12 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "Enable debug logging for this connector manager.")
 	flag.Parse()
 
-	var log *zap.Logger
-	var err error
-	if debug {
-		log, err = zap.NewDevelopment()
-	} else {
-		log, err = zap.NewProduction()
-	}
+	log, err := util.NewZaprLogger(debug)
 	if err != nil {
 		fmt.Printf("unable to set up logger: %v", err)
 		os.Exit(1)
 	}
-	ctrl.SetLogger(zapr.NewLogger(log.WithOptions(zap.AddCallerSkip(1))))
+	ctrl.SetLogger(log)
 	setupLog.Info("starting manager setup")
 
 	if clusterID == "" {
