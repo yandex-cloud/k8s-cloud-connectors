@@ -4,30 +4,23 @@
 package main
 
 import (
-	"bytes"
-	cryptorand "crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"crypto/x509/pkix"
-	"encoding/pem"
+	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"math/big"
 	"os"
+	"os/exec"
 	"time"
 
 	"github.com/go-logr/logr"
+	certificates "k8s.io/api/certificates/v1beta1"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"k8s-connectors/pkg/util"
-)
-
-var (
-	serverSerial = big.NewInt(1984)
-	caSerial     = big.NewInt(2020)
-	organization = "connectors.cloud.yandex.com"
 )
 
 type argList []string
@@ -60,7 +53,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := createCertificates(log, serviceName, namespaceName); err != nil {
+	csr, err := createCertificates(log, serviceName, namespaceName)
+	if err != nil {
 		log.Error(err, "unable to create certificate")
 		os.Exit(1)
 	}
@@ -77,137 +71,201 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := signCertificate(client); err != nil {
+	cert, err := signCertificate(log, client, serviceName, namespaceName, csr)
+	if err != nil {
 		log.Error(err, "unable to sign certificate")
 		os.Exit(1)
 	}
 
-	if err := createSecret(client); err != nil {
+	if err := createSecret(log, client, namespaceName, secretName, csr, cert); err != nil {
 		log.Error(err, "unable to create secret with certificate")
 		os.Exit(1)
 	}
-
-	if err := patchConfig(client); err != nil {
-		log.Error(err, "unable to patch config")
-		os.Exit(1)
-	}
 }
 
-func createCertificates(log logr.Logger, service, namespace string) error {
-	var caPEM, serverCertPEM, serverPrivateKeyPEM *bytes.Buffer
-	// CA config
-	ca := &x509.Certificate{
-		SerialNumber: caSerial,
-		Subject: pkix.Name{
-			Organization: []string{organization},
+func createCertificates(log logr.Logger, service, namespace string) ([]byte, error) {
+	tmpdir, err := ioutil.TempDir("", "cert_tmp_*")
+	if err != nil {
+		return nil, fmt.Errorf("unable to create temporary directory: %v", err)
+	}
+
+	csrConf := fmt.Sprintf("[req]\n" +
+		"req_extensions = v3_req\n" +
+		"distinguished_name = req_distinguished_name\n" +
+		"[req_distinguished_name]\n" +
+		"[ v3_req ]\n" +
+		"basicConstraints = CA:FALSE\n" +
+		"keyUsage = nonRepudiation, digitalSignature, keyEncipherment\n" +
+		"extendedKeyUsage = serverAuth\n" +
+		"subjectAltName = @alt_names\n" +
+		"[alt_names]\n" +
+		"DNS.1 = " + service + "\n" +
+		"DNS.2 = " + service + "." + namespace + "\n" +
+		"DNS.3 = " + service + "." + namespace + ".svc\n")
+
+	if err := ioutil.WriteFile(tmpdir+"/csr.conf", []byte(csrConf), 0600); err != nil {
+		return nil, fmt.Errorf("unable to create csr configuration file: %v", err)
+	}
+	log.Info("certificate configuration created")
+
+	genRSACmd := exec.Command("openssl", "genrsa",
+		"-out", "server-key.pem",
+		"2048",
+	)
+	genRSACmd.Dir = tmpdir
+	if err := genRSACmd.Run(); err != nil {
+		return nil, fmt.Errorf("unable to generate RSA key: %v", err)
+	}
+	log.Info("RSA key generated")
+
+	createReq := exec.Command("openssl", "req",
+		"-new",
+		"-key", "server-key.pem",
+		"-subj", "/CN="+service+"."+namespace+".svc",
+		"-config", "csr.conf",
+		"-out", "server.csr",
+	)
+	createReq.Dir = tmpdir
+	if err := createReq.Run(); err != nil {
+		return nil, fmt.Errorf("unable to create server csr: %v", err)
+	}
+	log.Info("server CSR created")
+
+	csr, err := ioutil.ReadFile(tmpdir + "/server.csr")
+	if err != nil {
+		return nil, fmt.Errorf("unable to read created CSR: %v", err)
+	}
+
+	return csr, nil
+}
+
+// TODO (covariance) write logging instead of comments
+func signCertificate(_ logr.Logger, cl *kubernetes.Clientset, namespace, service string, csrBytes []byte) (
+	[]byte, error,
+) {
+	csrName := service + "." + namespace + ".csr"
+
+	csrClient := cl.CertificatesV1beta1().CertificateSigningRequests()
+	csrTypeMeta := metav1.TypeMeta{
+		Kind:       "CertificateSigningRequest",
+		APIVersion: "certificates.k8s.io/v1beta1",
+	}
+
+	// We delete old CSR
+	if err := csrClient.Delete(
+		context.TODO(),
+		csrName,
+		metav1.DeleteOptions{
+			TypeMeta: csrTypeMeta,
+		}); err != nil {
+		// If it is present, and something failed, we exit with error
+		if !errors.IsNotFound(err) {
+			return nil, fmt.Errorf("unable to delete previous CSR %v", err)
+		}
+	} else {
+		// Otherwise, deletion was successful, so we need to wait for its completion
+		for {
+			time.Sleep(time.Second)
+			_, err := csrClient.Get(context.TODO(), csrName, metav1.GetOptions{
+				TypeMeta: csrTypeMeta,
+			})
+			if err != nil {
+				if errors.IsNotFound(err) {
+					break
+				}
+				return nil, fmt.Errorf("unable to get CSR: %v", err)
+			}
+		}
+	}
+
+	// We create new CSR
+	csr, err := csrClient.Create(context.TODO(), &certificates.CertificateSigningRequest{
+		TypeMeta: csrTypeMeta,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      csrName,
+			Namespace: namespace,
 		},
-		NotBefore:             time.Now(),
-		NotAfter:              time.Now().AddDate(1, 0, 0),
-		IsCA:                  true,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		BasicConstraintsValid: true,
-	}
-
-	// CA private key
-	caPrivateKey, err := rsa.GenerateKey(cryptorand.Reader, 2048)
-	if err != nil {
-		return fmt.Errorf("unable to generate RSA private key: %v", err)
-	}
-	log.Info("CA private key created")
-
-	// Self signed CA certificate
-	caBytes, err := x509.CreateCertificate(cryptorand.Reader, ca, ca, &caPrivateKey.PublicKey, caPrivateKey)
-	if err != nil {
-		return fmt.Errorf("unable to create self-signed certificate: %v", err)
-	}
-	log.Info("self-signed CA certificate created")
-
-	// PEM encode CA cert
-	caPEM = new(bytes.Buffer)
-	err = pem.Encode(caPEM, &pem.Block{
-		Type:  "CERTIFICATE",
-		Bytes: caBytes,
-	})
-	if err != nil {
-		return fmt.Errorf("unable to PEM encode self-signed certificate: %v", err)
-	}
-
-	dnsNames := []string{
-		service,
-		service + "." + namespace,
-		service + "." + namespace + ".svc",
-	}
-	commonName := service + "." + namespace + ".svc"
-
-	// server cert config
-	cert := &x509.Certificate{
-		DNSNames:     dnsNames,
-		SerialNumber: serverSerial,
-		Subject: pkix.Name{
-			CommonName:   commonName,
-			Organization: []string{organization},
+		Spec: certificates.CertificateSigningRequestSpec{
+			Request: csrBytes,
+			Usages: []certificates.KeyUsage{
+				certificates.UsageDigitalSignature,
+				certificates.UsageKeyEncipherment,
+				certificates.UsageServerAuth,
+			},
+			Groups: []string{"system:authenticated"},
 		},
-		NotBefore: time.Now(),
-		NotAfter:  time.Now().AddDate(1, 0, 0),
-		// TODO (covariance) read about magic number ang generate it safely
-		SubjectKeyId: []byte{1, 2, 3, 4, 6},
-		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage:     x509.KeyUsageDigitalSignature,
-	}
-
-	// server private key
-	serverPrivateKey, err := rsa.GenerateKey(cryptorand.Reader, 2048)
+	}, metav1.CreateOptions{})
 	if err != nil {
-		return fmt.Errorf("unable to generate RSA server secret key: %v", err)
+		return nil, fmt.Errorf("unable to create CSR: %v", err)
 	}
-	log.Info("server private key created")
 
-	// sign the server cert
-	serverCertBytes, err := x509.CreateCertificate(cryptorand.Reader, cert, ca, &serverPrivateKey.PublicKey, caPrivateKey)
-	if err != nil {
-		return fmt.Errorf("unable to create server certificate: %v", err)
+	// Again, need to wait some time for operation to finish
+	for {
+		time.Sleep(time.Second)
+		_, err := csrClient.Get(context.TODO(), csrName, metav1.GetOptions{
+			TypeMeta: csrTypeMeta,
+		})
+		if err != nil {
+			if errors.IsNotFound(err) {
+				continue
+			}
+			return nil, fmt.Errorf("unable to get CSR: %v", err)
+		}
+		break
 	}
-	log.Info("server certificate created")
 
-	// PEM encode the server cert and key
-	serverCertPEM = new(bytes.Buffer)
-	err = pem.Encode(serverCertPEM, &pem.Block{
-		Type:  "CERTIFICATE",
-		Bytes: serverCertBytes,
+	// Then we try to approve CSR
+	csr.Status.Conditions = append(csr.Status.Conditions, certificates.CertificateSigningRequestCondition{
+		Type:               certificates.CertificateApproved,
+		LastUpdateTime:     metav1.Now(),
 	})
-	if err != nil {
-		return fmt.Errorf("unable to PEM encode public key: %v", err)
+
+	if _, err := csrClient.UpdateApproval(context.TODO(), csr, metav1.UpdateOptions{
+		TypeMeta: csrTypeMeta,
+	}); err != nil {
+		return nil, fmt.Errorf("unable to approve CSR: %v", err)
 	}
 
-	serverPrivateKeyPEM = new(bytes.Buffer)
-	err = pem.Encode(serverPrivateKeyPEM, &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(serverPrivateKey),
-	})
-	if err != nil {
-		return fmt.Errorf("unable to PEM encode secret key: %v", err)
+	// And again, wait for changes to propagate
+	var cert []byte
+	for {
+		time.Sleep(time.Second)
+		res, err := csrClient.Get(context.TODO(), csrName, metav1.GetOptions{
+			TypeMeta: csrTypeMeta,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("unable to get CSR: %v", err)
+		}
+		if res.Status.Certificate != nil && len(res.Status.Certificate) != 0 {
+			cert = res.Status.Certificate
+			break
+		}
 	}
 
-	if err := ioutil.WriteFile("/etc/webhook/certs/tls.crt", serverCertPEM.Bytes(), 0600); err != nil {
-		return fmt.Errorf("unable to write public key: %v", err)
-	}
-	if err := ioutil.WriteFile("/etc/webhook/certs/tls.key", serverPrivateKeyPEM.Bytes(), 0600); err != nil {
-		return fmt.Errorf("unable to write secret key: %v", err)
-	}
-
-	return nil
+	return cert, nil
 }
 
-func signCertificate(cl *kubernetes.Clientset) error {
+func createSecret(_ logr.Logger, cl *kubernetes.Clientset, namespace, secret string, key, cert []byte) error {
+	secretTypeMeta := metav1.TypeMeta{
+		Kind:       "Secret",
+		APIVersion: "v1",
+	}
 
-	return nil
-}
+	if _, err := cl.CoreV1().Secrets(namespace).Create(context.TODO(), &v1.Secret{
+		TypeMeta: secretTypeMeta,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secret,
+			Namespace: namespace,
+		},
+		Data: map[string][]byte{
+			"tls.key": key,
+			"tls.crt": cert,
+		},
+	}, metav1.CreateOptions{
+		TypeMeta: secretTypeMeta,
+	}); err != nil {
+		return fmt.Errorf("unable to create secret: %v", err)
+	}
 
-func createSecret(cl *kubernetes.Clientset) error {
-	return nil
-}
-
-func patchConfig(cl *kubernetes.Clientset) error {
 	return nil
 }

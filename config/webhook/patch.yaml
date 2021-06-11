@@ -5,7 +5,7 @@
 - op: add
   path: /webhooks/0/clientConfig/caBundle
   value: |
-    ${CA_BUNDLE}
+    IA==
 
 - op: replace
   path: /webhooks/1/clientConfig/service/namespace
@@ -13,14 +13,15 @@
 - op: add
   path: /webhooks/1/clientConfig/caBundle
   value: |
-    ${CA_BUNDLE}
+    IA==
+
 - op: replace
   path: /webhooks/2/clientConfig/service/namespace
   value: yandex-cloud-connectors
 - op: add
   path: /webhooks/2/clientConfig/caBundle
   value: |
-    ${CA_BUNDLE}
+    IA==
 
 - op: replace
   path: /webhooks/3/clientConfig/service/namespace
@@ -28,4 +29,4 @@
 - op: add
   path: /webhooks/3/clientConfig/caBundle
   value: |
-    ${CA_BUNDLE}
+    IA==
