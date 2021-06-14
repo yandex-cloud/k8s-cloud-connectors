@@ -47,12 +47,14 @@ func main() {
 	var secretName string
 	var serviceName string
 	var namespaceName string
-	var webhooks argList
+	var mutatingWebhooks argList
+	var validatingWebhooks argList
 	var debug bool
 	flag.StringVar(&secretName, "secret", "secret", "Secret to place cert information")
 	flag.StringVar(&serviceName, "service", "webhook-service", "Service that is an entrypoint for webhooks")
 	flag.StringVar(&namespaceName, "namespace", "default", "Namespace of the service")
-	flag.Var(&webhooks, "webhooks", "Names of webhook configurations to be patched")
+	flag.Var(&mutatingWebhooks, "mw", "Names of webhook configurations to be patched")
+	flag.Var(&validatingWebhooks, "vw", "Names of webhook configurations to be patched")
 	flag.BoolVar(&debug, "debug", false, "Enable debug logging for this connector certifier.")
 	flag.Parse()
 
@@ -64,7 +66,6 @@ func main() {
 
 	tmpdir, err := ioutil.TempDir("", "cert_tmp_*")
 	logAndExitOnError(log, err, "unable to create temporary directory")
-
 	defer func() { _ = os.RemoveAll(tmpdir) }()
 
 	key, err := createSecretKey(log, tmpdir)
@@ -87,6 +88,22 @@ func main() {
 		createSecret(log, client, namespaceName, secretName, key, cert),
 		"unable to create secret with certificate",
 	)
+
+	for _, mutatingWebhook := range mutatingWebhooks {
+		logAndExitOnError(
+			log,
+			patchMutatingConfig(client, mutatingWebhook, cert),
+			"unable to patch config",
+		)
+	}
+
+	for _, validatingWebhook := range validatingWebhooks {
+		logAndExitOnError(
+			log,
+			patchValidatingConfig(client, validatingWebhook, cert),
+			"unable to patch config",
+		)
+	}
 }
 
 func createSecretKey(log logr.Logger, tmpdir string) ([]byte, error) {
@@ -183,15 +200,14 @@ func signCertificate(
 	csrBytes []byte,
 ) ([]byte, error) {
 	csrName := service + "." + namespace + ".csr"
-	csrTypeMeta := metav1.TypeMeta{
-		Kind:       "CertificateSigningRequest",
-		APIVersion: "certificates.k8s.io/v1beta1",
-	}
 	csrClient := cl.CertificatesV1beta1().CertificateSigningRequests()
 
 	getCsr := func() (*certificates.CertificateSigningRequest, error) {
 		return csrClient.Get(context.TODO(), csrName, metav1.GetOptions{
-			TypeMeta: csrTypeMeta,
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "CertificateSigningRequest",
+				APIVersion: "certificates.k8s.io/v1beta1",
+			},
 		})
 	}
 
@@ -199,7 +215,10 @@ func signCertificate(
 		context.TODO(),
 		csrName,
 		metav1.DeleteOptions{
-			TypeMeta: csrTypeMeta,
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "CertificateSigningRequest",
+				APIVersion: "certificates.k8s.io/v1beta1",
+			},
 		},
 	); err != nil {
 		if !errors.IsNotFound(err) {
@@ -248,7 +267,10 @@ func signCertificate(
 	})
 
 	if _, err := csrClient.UpdateApproval(context.TODO(), csr, metav1.UpdateOptions{
-		TypeMeta: csrTypeMeta,
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "CertificateSigningRequest",
+			APIVersion: "certificates.k8s.io/v1beta1",
+		},
 	}); err != nil {
 		return nil, fmt.Errorf("unable to approve CSR: %v", err)
 	}
@@ -294,6 +316,60 @@ func createSecret(log logr.Logger, cl *kubernetes.Clientset, namespace, secret s
 		return fmt.Errorf("unable to create secret: %v", err)
 	}
 	log.Info("secret with key and cert successfully created")
+
+	return nil
+}
+
+func patchMutatingConfig(cl *kubernetes.Clientset, webhook string, caBundle []byte) error {
+	confClient := cl.AdmissionregistrationV1().MutatingWebhookConfigurations()
+	confTypeMeta := metav1.TypeMeta{
+		Kind:       "MutatingWebhookConfiguration",
+		APIVersion: "admissionregistration.k8s.io/v1",
+	}
+
+	conf, err := confClient.Get(context.TODO(), webhook, metav1.GetOptions{
+		TypeMeta: confTypeMeta,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to get webhook configuration: %v", err)
+	}
+
+	for i := range conf.Webhooks {
+		conf.Webhooks[i].ClientConfig.CABundle = caBundle
+	}
+
+	if _, err := confClient.Update(context.TODO(), conf, metav1.UpdateOptions{
+		TypeMeta: confTypeMeta,
+	}); err != nil {
+		return fmt.Errorf("unable to update webhook configuration: %v", err)
+	}
+
+	return nil
+}
+
+func patchValidatingConfig(cl *kubernetes.Clientset, webhook string, caBundle []byte) error {
+	confClient := cl.AdmissionregistrationV1().ValidatingWebhookConfigurations()
+	confTypeMeta := metav1.TypeMeta{
+		Kind:       "ValidatingWebhookConfiguration",
+		APIVersion: "admissionregistration.k8s.io/v1",
+	}
+
+	conf, err := confClient.Get(context.TODO(), webhook, metav1.GetOptions{
+		TypeMeta: confTypeMeta,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to get webhook configuration: %v", err)
+	}
+
+	for i := range conf.Webhooks {
+		conf.Webhooks[i].ClientConfig.CABundle = caBundle
+	}
+
+	if _, err := confClient.Update(context.TODO(), conf, metav1.UpdateOptions{
+		TypeMeta: confTypeMeta,
+	}); err != nil {
+		return fmt.Errorf("unable to update webhook configuration: %v", err)
+	}
 
 	return nil
 }
