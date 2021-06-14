@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/typed/certificates/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"k8s-connectors/pkg/util"
@@ -143,82 +144,104 @@ func createCertificates(log logr.Logger, tmpdir, service, namespace string) ([]b
 	return csr, nil
 }
 
-// TODO (covariance) write logging instead of comments
-func signCertificate(_ logr.Logger, cl *kubernetes.Clientset, namespace, service string, csrBytes []byte) (
-	[]byte, error,
-) {
-	csrName := service + "." + namespace + ".csr"
+func createCSR(
+	cl v1beta1.CertificateSigningRequestInterface,
+	name,
+	namespace string,
+	bytes []byte,
+) (*certificates.CertificateSigningRequest, error) {
+	return cl.Create(
+		context.TODO(),
+		&certificates.CertificateSigningRequest{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "CertificateSigningRequest",
+				APIVersion: "certificates.k8s.io/v1beta1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: namespace,
+			},
+			Spec: certificates.CertificateSigningRequestSpec{
+				Request: bytes,
+				Usages: []certificates.KeyUsage{
+					certificates.UsageDigitalSignature,
+					certificates.UsageKeyEncipherment,
+					certificates.UsageServerAuth,
+				},
+				Groups: []string{"system:authenticated"},
+			},
+		},
+		metav1.CreateOptions{},
+	)
+}
 
-	csrClient := cl.CertificatesV1beta1().CertificateSigningRequests()
+func signCertificate(
+	log logr.Logger,
+	cl *kubernetes.Clientset,
+	namespace,
+	service string,
+	csrBytes []byte,
+) ([]byte, error) {
+	csrName := service + "." + namespace + ".csr"
 	csrTypeMeta := metav1.TypeMeta{
 		Kind:       "CertificateSigningRequest",
 		APIVersion: "certificates.k8s.io/v1beta1",
 	}
+	csrClient := cl.CertificatesV1beta1().CertificateSigningRequests()
 
-	// We delete old CSR
+	getCsr := func() (*certificates.CertificateSigningRequest, error) {
+		return csrClient.Get(context.TODO(), csrName, metav1.GetOptions{
+			TypeMeta: csrTypeMeta,
+		})
+	}
+
 	if err := csrClient.Delete(
 		context.TODO(),
 		csrName,
 		metav1.DeleteOptions{
 			TypeMeta: csrTypeMeta,
-		}); err != nil {
-		// If it is present, and something failed, we exit with error
+		},
+	); err != nil {
 		if !errors.IsNotFound(err) {
 			return nil, fmt.Errorf("unable to delete previous CSR %v", err)
 		}
+		log.Info("old CSR not found")
 	} else {
-		// Otherwise, deletion was successful, so we need to wait for its completion
+		log.Info("old CSR found, waiting for its deletion to be completed")
 		for {
 			time.Sleep(time.Second)
-			_, err := csrClient.Get(context.TODO(), csrName, metav1.GetOptions{
-				TypeMeta: csrTypeMeta,
-			})
-			if err != nil {
+			if _, err := getCsr(); err != nil {
 				if errors.IsNotFound(err) {
+					log.Info("deletion is completed")
 					break
 				}
-				return nil, fmt.Errorf("unable to get CSR: %v", err)
+				return nil, fmt.Errorf("unable wait for old CSR deletion: %v", err)
 			}
+			log.Info("deletion is not completed, waiting")
 		}
 	}
 
-	// We create new CSR
-	csr, err := csrClient.Create(context.TODO(), &certificates.CertificateSigningRequest{
-		TypeMeta: csrTypeMeta,
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      csrName,
-			Namespace: namespace,
-		},
-		Spec: certificates.CertificateSigningRequestSpec{
-			Request: csrBytes,
-			Usages: []certificates.KeyUsage{
-				certificates.UsageDigitalSignature,
-				certificates.UsageKeyEncipherment,
-				certificates.UsageServerAuth,
-			},
-			Groups: []string{"system:authenticated"},
-		},
-	}, metav1.CreateOptions{})
+	log.Info("creating new CSR")
+	csr, err := createCSR(csrClient, csrName, namespace, csrBytes)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create CSR: %v", err)
 	}
 
-	// Again, need to wait some time for operation to finish
+	log.Info("waiting for CSR creation")
 	for {
 		time.Sleep(time.Second)
-		_, err := csrClient.Get(context.TODO(), csrName, metav1.GetOptions{
-			TypeMeta: csrTypeMeta,
-		})
-		if err != nil {
+		if _, err := getCsr(); err != nil {
 			if errors.IsNotFound(err) {
+				log.Info("creation is not completed, waiting")
 				continue
 			}
 			return nil, fmt.Errorf("unable to get CSR: %v", err)
 		}
+		log.Info("creation is completed")
 		break
 	}
 
-	// Then we try to approve CSR
+	log.Info("approving CSR")
 	csr.Status.Conditions = append(csr.Status.Conditions, certificates.CertificateSigningRequestCondition{
 		Type:           certificates.CertificateApproved,
 		LastUpdateTime: metav1.Now(),
@@ -230,26 +253,26 @@ func signCertificate(_ logr.Logger, cl *kubernetes.Clientset, namespace, service
 		return nil, fmt.Errorf("unable to approve CSR: %v", err)
 	}
 
-	// And again, wait for changes to propagate
+	log.Info("waiting for CSR to be approved")
 	var cert []byte
 	for {
 		time.Sleep(time.Second)
-		res, err := csrClient.Get(context.TODO(), csrName, metav1.GetOptions{
-			TypeMeta: csrTypeMeta,
-		})
+		res, err := getCsr()
 		if err != nil {
 			return nil, fmt.Errorf("unable to get CSR: %v", err)
 		}
 		if res.Status.Certificate != nil && len(res.Status.Certificate) != 0 {
 			cert = res.Status.Certificate
+			log.Info("CSR is approved")
 			break
 		}
+		log.Info("CSR approval is not completed, waiting")
 	}
 
 	return cert, nil
 }
 
-func createSecret(_ logr.Logger, cl *kubernetes.Clientset, namespace, secret string, key, cert []byte) error {
+func createSecret(log logr.Logger, cl *kubernetes.Clientset, namespace, secret string, key, cert []byte) error {
 	secretTypeMeta := metav1.TypeMeta{
 		Kind:       "Secret",
 		APIVersion: "v1",
@@ -270,6 +293,7 @@ func createSecret(_ logr.Logger, cl *kubernetes.Clientset, namespace, secret str
 	}); err != nil {
 		return fmt.Errorf("unable to create secret: %v", err)
 	}
+	log.Info("secret with key and cert successfully created")
 
 	return nil
 }
