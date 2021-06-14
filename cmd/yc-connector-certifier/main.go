@@ -90,6 +90,7 @@ func main() {
 	)
 
 	for _, mutatingWebhook := range mutatingWebhooks {
+		log.Info("patching mutating webhook: " + mutatingWebhook)
 		logAndExitOnError(
 			log,
 			patchMutatingConfig(client, mutatingWebhook, cert),
@@ -98,6 +99,7 @@ func main() {
 	}
 
 	for _, validatingWebhook := range validatingWebhooks {
+		log.Info("patching validating webhook: " + validatingWebhook)
 		logAndExitOnError(
 			log,
 			patchValidatingConfig(client, validatingWebhook, cert),
