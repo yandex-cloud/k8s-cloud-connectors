@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -34,6 +35,13 @@ func (r *argList) Set(val string) error {
 	return nil
 }
 
+func logAndExitOnError(log logr.Logger, err error, msg string) {
+	if err != nil {
+		log.Error(err, msg)
+		os.Exit(1)
+	}
+}
+
 func main() {
 	var secretName string
 	var serviceName string
@@ -53,42 +61,48 @@ func main() {
 		os.Exit(1)
 	}
 
-	csr, err := createCertificates(log, serviceName, namespaceName)
-	if err != nil {
-		log.Error(err, "unable to create certificate")
-		os.Exit(1)
-	}
+	tmpdir, err := ioutil.TempDir("", "cert_tmp_*")
+	logAndExitOnError(log, err, "unable to create temporary directory")
+
+	defer func() { _ = os.RemoveAll(tmpdir) }()
+
+	key, err := createSecretKey(log, tmpdir)
+	logAndExitOnError(log, err, "unable to generate secret key")
+
+	csr, err := createCertificates(log, tmpdir, serviceName, namespaceName)
+	logAndExitOnError(log, err, "unable to create certificate")
 
 	config, err := ctrl.GetConfig()
-	if err != nil {
-		log.Error(err, "unable to get kubernetes config")
-		os.Exit(1)
-	}
+	logAndExitOnError(log, err, "unable to get kubernetes config")
 
 	client, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		log.Error(err, "unable to create kubernetes client from config")
-		os.Exit(1)
-	}
+	logAndExitOnError(log, err, "unable to create kubernetes client from config")
 
 	cert, err := signCertificate(log, client, serviceName, namespaceName, csr)
-	if err != nil {
-		log.Error(err, "unable to sign certificate")
-		os.Exit(1)
-	}
+	logAndExitOnError(log, err, "unable to sign certificate")
 
-	if err := createSecret(log, client, namespaceName, secretName, csr, cert); err != nil {
-		log.Error(err, "unable to create secret with certificate")
-		os.Exit(1)
-	}
+	logAndExitOnError(
+		log,
+		createSecret(log, client, namespaceName, secretName, key, cert),
+		"unable to create secret with certificate",
+	)
 }
 
-func createCertificates(log logr.Logger, service, namespace string) ([]byte, error) {
-	tmpdir, err := ioutil.TempDir("", "cert_tmp_*")
-	if err != nil {
-		return nil, fmt.Errorf("unable to create temporary directory: %v", err)
+func createSecretKey(log logr.Logger, tmpdir string) ([]byte, error) {
+	genRSACmd := exec.Command("openssl", "genrsa",
+		"-out", "server-key.pem",
+		"2048",
+	)
+	genRSACmd.Dir = tmpdir
+	if err := genRSACmd.Run(); err != nil {
+		return nil, fmt.Errorf("unable to generate RSA key: %v", err)
 	}
+	log.Info("RSA key generated")
 
+	return ioutil.ReadFile(filepath.Clean(filepath.Join(tmpdir, "server-key.pem")))
+}
+
+func createCertificates(log logr.Logger, tmpdir, service, namespace string) ([]byte, error) {
 	csrConf := fmt.Sprintf("[req]\n" +
 		"req_extensions = v3_req\n" +
 		"distinguished_name = req_distinguished_name\n" +
@@ -108,30 +122,20 @@ func createCertificates(log logr.Logger, service, namespace string) ([]byte, err
 	}
 	log.Info("certificate configuration created")
 
-	genRSACmd := exec.Command("openssl", "genrsa",
-		"-out", "server-key.pem",
-		"2048",
-	)
-	genRSACmd.Dir = tmpdir
-	if err := genRSACmd.Run(); err != nil {
-		return nil, fmt.Errorf("unable to generate RSA key: %v", err)
-	}
-	log.Info("RSA key generated")
-
 	createReq := exec.Command("openssl", "req",
 		"-new",
 		"-key", "server-key.pem",
 		"-subj", "/CN="+service+"."+namespace+".svc",
 		"-config", "csr.conf",
 		"-out", "server.csr",
-	)
+	) // #nosec G204
 	createReq.Dir = tmpdir
 	if err := createReq.Run(); err != nil {
 		return nil, fmt.Errorf("unable to create server csr: %v", err)
 	}
 	log.Info("server CSR created")
 
-	csr, err := ioutil.ReadFile(tmpdir + "/server.csr")
+	csr, err := ioutil.ReadFile(filepath.Clean(filepath.Join(tmpdir, "server.csr")))
 	if err != nil {
 		return nil, fmt.Errorf("unable to read created CSR: %v", err)
 	}
@@ -216,8 +220,8 @@ func signCertificate(_ logr.Logger, cl *kubernetes.Clientset, namespace, service
 
 	// Then we try to approve CSR
 	csr.Status.Conditions = append(csr.Status.Conditions, certificates.CertificateSigningRequestCondition{
-		Type:               certificates.CertificateApproved,
-		LastUpdateTime:     metav1.Now(),
+		Type:           certificates.CertificateApproved,
+		LastUpdateTime: metav1.Now(),
 	})
 
 	if _, err := csrClient.UpdateApproval(context.TODO(), csr, metav1.UpdateOptions{
