@@ -126,19 +126,21 @@ func createSecretKey(log logr.Logger, tmpdir string) ([]byte, error) {
 }
 
 func createCertificates(log logr.Logger, tmpdir, service, namespace string) ([]byte, error) {
-	csrConf := fmt.Sprintf("[req]\n" +
-		"req_extensions = v3_req\n" +
-		"distinguished_name = req_distinguished_name\n" +
-		"[req_distinguished_name]\n" +
-		"[ v3_req ]\n" +
-		"basicConstraints = CA:FALSE\n" +
-		"keyUsage = nonRepudiation, digitalSignature, keyEncipherment\n" +
-		"extendedKeyUsage = serverAuth\n" +
-		"subjectAltName = @alt_names\n" +
-		"[alt_names]\n" +
-		"DNS.1 = " + service + "\n" +
-		"DNS.2 = " + service + "." + namespace + "\n" +
-		"DNS.3 = " + service + "." + namespace + ".svc\n")
+	csrTemplate :=
+		`[req]
+req_extensions = v3_req
+distinguished_name = req_distinguished_name
+[req_distinguished_name]
+[ v3_req ]
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = @alt_names
+DNS.1 = %s
+DNS.2 = %s
+DNS.3 = %s
+`
+	csrConf := fmt.Sprintf(csrTemplate, service, service+"."+namespace, service+"."+namespace+".svc")
 
 	if err := ioutil.WriteFile(tmpdir+"/csr.conf", []byte(csrConf), 0600); err != nil {
 		return nil, fmt.Errorf("unable to create csr configuration file: %v", err)
