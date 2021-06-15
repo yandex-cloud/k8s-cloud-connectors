@@ -43,6 +43,25 @@ func logAndExitOnError(log logr.Logger, err error, msg string) {
 	}
 }
 
+const (
+	serverKeyFile     = "server-key.pem"
+	serverCSRFile     = "server.csr"
+	CSRConfigFile     = "csr.conf"
+	CSRConfigTemplate = `[req]
+req_extensions = v3_req
+distinguished_name = req_distinguished_name
+[req_distinguished_name]
+[ v3_req ]
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = @alt_names
+DNS.1 = %s
+DNS.2 = %s
+DNS.3 = %s
+`
+)
+
 func main() {
 	var secretName string
 	var serviceName string
@@ -113,7 +132,7 @@ func main() {
 
 func createSecretKey(log logr.Logger, tmpdir string) ([]byte, error) {
 	genRSACmd := exec.Command("openssl", "genrsa",
-		"-out", "server-key.pem",
+		"-out", serverKeyFile,
 		"2048",
 	)
 	genRSACmd.Dir = tmpdir
@@ -122,45 +141,31 @@ func createSecretKey(log logr.Logger, tmpdir string) ([]byte, error) {
 	}
 	log.Info("RSA key generated")
 
-	return ioutil.ReadFile(filepath.Clean(filepath.Join(tmpdir, "server-key.pem")))
+	return ioutil.ReadFile(filepath.Clean(filepath.Join(tmpdir, serverKeyFile)))
 }
 
 func createCertificates(log logr.Logger, tmpdir, service, namespace string) ([]byte, error) {
-	csrTemplate :=
-		`[req]
-req_extensions = v3_req
-distinguished_name = req_distinguished_name
-[req_distinguished_name]
-[ v3_req ]
-basicConstraints = CA:FALSE
-keyUsage = nonRepudiation, digitalSignature, keyEncipherment
-extendedKeyUsage = serverAuth
-subjectAltName = @alt_names
-DNS.1 = %s
-DNS.2 = %s
-DNS.3 = %s
-`
-	csrConf := fmt.Sprintf(csrTemplate, service, service+"."+namespace, service+"."+namespace+".svc")
+	csrConf := fmt.Sprintf(CSRConfigTemplate, service, service+"."+namespace, service+"."+namespace+".svc")
 
-	if err := ioutil.WriteFile(tmpdir+"/csr.conf", []byte(csrConf), 0600); err != nil {
-		return nil, fmt.Errorf("unable to create csr configuration file: %v", err)
+	if err := ioutil.WriteFile(filepath.Clean(filepath.Join(tmpdir, CSRConfigFile)), []byte(csrConf), 0600); err != nil {
+		return nil, fmt.Errorf("unable to create CSR configuration file: %v", err)
 	}
 	log.Info("certificate configuration created")
 
 	createReq := exec.Command("openssl", "req",
 		"-new",
-		"-key", "server-key.pem",
+		"-key", serverKeyFile,
 		"-subj", "/CN="+service+"."+namespace+".svc",
-		"-config", "csr.conf",
-		"-out", "server.csr",
+		"-config", CSRConfigFile,
+		"-out", serverCSRFile,
 	) // #nosec G204
 	createReq.Dir = tmpdir
 	if err := createReq.Run(); err != nil {
-		return nil, fmt.Errorf("unable to create server csr: %v", err)
+		return nil, fmt.Errorf("unable to create server CSR: %v", err)
 	}
 	log.Info("server CSR created")
 
-	csr, err := ioutil.ReadFile(filepath.Clean(filepath.Join(tmpdir, "server.csr")))
+	csr, err := ioutil.ReadFile(filepath.Clean(filepath.Join(tmpdir, serverCSRFile)))
 	if err != nil {
 		return nil, fmt.Errorf("unable to read created CSR: %v", err)
 	}
