@@ -236,7 +236,7 @@ func signCertificate(
 					log.Info("deletion is completed")
 					break
 				}
-				return nil, fmt.Errorf("unable wait for old CSR deletion: %v", err)
+				return nil, fmt.Errorf("error while waiting for old CSR deletion: %v", err)
 			}
 			log.Info("deletion is not completed, waiting")
 		}
@@ -256,7 +256,7 @@ func signCertificate(
 				log.Info("creation is not completed, waiting")
 				continue
 			}
-			return nil, fmt.Errorf("unable to get CSR: %v", err)
+			return nil, fmt.Errorf("error while waiting for CSR creation: %v", err)
 		}
 		log.Info("creation is completed")
 		break
@@ -283,7 +283,7 @@ func signCertificate(
 		time.Sleep(time.Second)
 		res, err := getCsr()
 		if err != nil {
-			return nil, fmt.Errorf("unable to get CSR: %v", err)
+			return nil, fmt.Errorf("error while waiting for CSR approval: %v", err)
 		}
 		if res.Status.Certificate != nil && len(res.Status.Certificate) != 0 {
 			cert = res.Status.Certificate
