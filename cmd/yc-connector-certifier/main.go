@@ -64,6 +64,9 @@ func main() {
 		os.Exit(1)
 	}
 
+	ctx, ctxCancel := context.WithCancel(context.Background())
+	defer ctxCancel()
+
 	tmpdir, err := ioutil.TempDir("", "cert_tmp_*")
 	logAndExitOnError(log, err, "unable to create temporary directory")
 	defer func() { _ = os.RemoveAll(tmpdir) }()
@@ -80,12 +83,12 @@ func main() {
 	client, err := kubernetes.NewForConfig(config)
 	logAndExitOnError(log, err, "unable to create kubernetes client from config")
 
-	cert, err := signCertificate(log, client, serviceName, namespaceName, csr)
+	cert, err := signCertificate(ctx, log, client, serviceName, namespaceName, csr)
 	logAndExitOnError(log, err, "unable to sign certificate")
 
 	logAndExitOnError(
 		log,
-		createSecret(log, client, namespaceName, secretName, key, cert),
+		createSecret(ctx, log, client, namespaceName, secretName, key, cert),
 		"unable to create secret with certificate",
 	)
 
@@ -93,7 +96,7 @@ func main() {
 		log.Info("patching mutating webhook: " + mutatingWebhook)
 		logAndExitOnError(
 			log,
-			patchMutatingConfig(client, mutatingWebhook, cert),
+			patchMutatingConfig(ctx, client, mutatingWebhook, cert),
 			"unable to patch config",
 		)
 	}
@@ -102,7 +105,7 @@ func main() {
 		log.Info("patching validating webhook: " + validatingWebhook)
 		logAndExitOnError(
 			log,
-			patchValidatingConfig(client, validatingWebhook, cert),
+			patchValidatingConfig(ctx, client, validatingWebhook, cert),
 			"unable to patch config",
 		)
 	}
@@ -164,13 +167,14 @@ func createCertificates(log logr.Logger, tmpdir, service, namespace string) ([]b
 }
 
 func createCSR(
+	ctx context.Context,
 	cl v1beta1.CertificateSigningRequestInterface,
 	name,
 	namespace string,
 	bytes []byte,
 ) (*certificates.CertificateSigningRequest, error) {
 	return cl.Create(
-		context.TODO(),
+		ctx,
 		&certificates.CertificateSigningRequest{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "CertificateSigningRequest",
@@ -195,6 +199,7 @@ func createCSR(
 }
 
 func signCertificate(
+	ctx context.Context,
 	log logr.Logger,
 	cl *kubernetes.Clientset,
 	namespace,
@@ -205,7 +210,7 @@ func signCertificate(
 	csrClient := cl.CertificatesV1beta1().CertificateSigningRequests()
 
 	getCsr := func() (*certificates.CertificateSigningRequest, error) {
-		return csrClient.Get(context.TODO(), csrName, metav1.GetOptions{
+		return csrClient.Get(ctx, csrName, metav1.GetOptions{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "CertificateSigningRequest",
 				APIVersion: "certificates.k8s.io/v1beta1",
@@ -214,7 +219,7 @@ func signCertificate(
 	}
 
 	if err := csrClient.Delete(
-		context.TODO(),
+		ctx,
 		csrName,
 		metav1.DeleteOptions{
 			TypeMeta: metav1.TypeMeta{
@@ -243,7 +248,7 @@ func signCertificate(
 	}
 
 	log.Info("creating new CSR")
-	csr, err := createCSR(csrClient, csrName, namespace, csrBytes)
+	csr, err := createCSR(ctx, csrClient, csrName, namespace, csrBytes)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create CSR: %v", err)
 	}
@@ -268,7 +273,7 @@ func signCertificate(
 		LastUpdateTime: metav1.Now(),
 	})
 
-	if _, err := csrClient.UpdateApproval(context.TODO(), csr, metav1.UpdateOptions{
+	if _, err := csrClient.UpdateApproval(ctx, csr, metav1.UpdateOptions{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "CertificateSigningRequest",
 			APIVersion: "certificates.k8s.io/v1beta1",
@@ -296,13 +301,21 @@ func signCertificate(
 	return cert, nil
 }
 
-func createSecret(log logr.Logger, cl *kubernetes.Clientset, namespace, secret string, key, cert []byte) error {
+func createSecret(
+	ctx context.Context,
+	log logr.Logger,
+	cl *kubernetes.Clientset,
+	namespace,
+	secret string,
+	key,
+	cert []byte,
+) error {
 	secretTypeMeta := metav1.TypeMeta{
 		Kind:       "Secret",
 		APIVersion: "v1",
 	}
 
-	if _, err := cl.CoreV1().Secrets(namespace).Create(context.TODO(), &v1.Secret{
+	if _, err := cl.CoreV1().Secrets(namespace).Create(ctx, &v1.Secret{
 		TypeMeta: secretTypeMeta,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secret,
@@ -322,14 +335,14 @@ func createSecret(log logr.Logger, cl *kubernetes.Clientset, namespace, secret s
 	return nil
 }
 
-func patchMutatingConfig(cl *kubernetes.Clientset, webhook string, caBundle []byte) error {
+func patchMutatingConfig(ctx context.Context, cl *kubernetes.Clientset, webhook string, caBundle []byte) error {
 	confClient := cl.AdmissionregistrationV1().MutatingWebhookConfigurations()
 	confTypeMeta := metav1.TypeMeta{
 		Kind:       "MutatingWebhookConfiguration",
 		APIVersion: "admissionregistration.k8s.io/v1",
 	}
 
-	conf, err := confClient.Get(context.TODO(), webhook, metav1.GetOptions{
+	conf, err := confClient.Get(ctx, webhook, metav1.GetOptions{
 		TypeMeta: confTypeMeta,
 	})
 	if err != nil {
@@ -340,7 +353,7 @@ func patchMutatingConfig(cl *kubernetes.Clientset, webhook string, caBundle []by
 		conf.Webhooks[i].ClientConfig.CABundle = caBundle
 	}
 
-	if _, err := confClient.Update(context.TODO(), conf, metav1.UpdateOptions{
+	if _, err := confClient.Update(ctx, conf, metav1.UpdateOptions{
 		TypeMeta: confTypeMeta,
 	}); err != nil {
 		return fmt.Errorf("unable to update webhook configuration: %v", err)
@@ -349,14 +362,14 @@ func patchMutatingConfig(cl *kubernetes.Clientset, webhook string, caBundle []by
 	return nil
 }
 
-func patchValidatingConfig(cl *kubernetes.Clientset, webhook string, caBundle []byte) error {
+func patchValidatingConfig(ctx context.Context, cl *kubernetes.Clientset, webhook string, caBundle []byte) error {
 	confClient := cl.AdmissionregistrationV1().ValidatingWebhookConfigurations()
 	confTypeMeta := metav1.TypeMeta{
 		Kind:       "ValidatingWebhookConfiguration",
 		APIVersion: "admissionregistration.k8s.io/v1",
 	}
 
-	conf, err := confClient.Get(context.TODO(), webhook, metav1.GetOptions{
+	conf, err := confClient.Get(ctx, webhook, metav1.GetOptions{
 		TypeMeta: confTypeMeta,
 	})
 	if err != nil {
@@ -367,7 +380,7 @@ func patchValidatingConfig(cl *kubernetes.Clientset, webhook string, caBundle []
 		conf.Webhooks[i].ClientConfig.CABundle = caBundle
 	}
 
-	if _, err := confClient.Update(context.TODO(), conf, metav1.UpdateOptions{
+	if _, err := confClient.Update(ctx, conf, metav1.UpdateOptions{
 		TypeMeta: confTypeMeta,
 	}); err != nil {
 		return fmt.Errorf("unable to update webhook configuration: %v", err)
