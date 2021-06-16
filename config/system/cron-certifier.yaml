@@ -10,9 +10,10 @@ spec:
     spec:
       template:
         spec:
+          restartPolicy: OnFailure
           containers:
             - name: certifier
-              image: cr.yandex/crptp7j81e7caog8r6gq/yc-connector-certifier
+              image: cr.yandex/crptp7j81e7caog8r6gq/yc-connector-certifier:latest
               args:
                 - --namespace=yandex-cloud-connectors
                 - --service=webhook-service

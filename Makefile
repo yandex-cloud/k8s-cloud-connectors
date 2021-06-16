@@ -10,8 +10,6 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-all: build
-
 ##@ General
 
 # The help target prints out all targets with their descriptions organized
@@ -25,7 +23,7 @@ all: build
 # More info on the awk command:
 # http://linuxcommand.org/lc3_adv_awk.php
 
-help: ## Display this help.
+help: ## Display this message.
 	@awk 'BEGIN { \
 		FS = ":.*##";\
 		printf "Usage:\n  make \033[36m<target>\033[0m\n" \
@@ -63,13 +61,13 @@ test: manifests generate fmt vet lint ## Run tests for this connector and common
 
 ##@ Build
 
-local-build-manager: test ## Build manager binary.
+local-build-manager: test ## Build manager binary locally.
 	go build -o ./bin/manager ./cmd/yc-connector-manager/main.go
 
-local-build-certifier: test ## Build manager binary.
+local-build-certifier: test ## Build manager binary locally.
 	go build -o ./bin/certifier ./cmd/yc-connector-certifier/main.go
 
-local-build: local-build-manager local-build-certifier
+local-build: local-build-manager local-build-certifier ## Build all binaries locally.
 
 ## Version of an images, can be set up externally
 IMG_TAG ?= latest
@@ -84,25 +82,25 @@ docker-build-manager: test ## Build docker image with the manager.
 ## Image name of a certifier binary
 CERTIFIER_IMG_NAME := yc-connector-certifier
 ## Resulting tag of a certifier binary
-CERTIFIER_IMG := $(MANAGER_IMG_NAME):$(IMG_TAG)
+CERTIFIER_IMG := $(CERTIFIER_IMG_NAME):$(IMG_TAG)
 docker-build-certifier: test ## Build docker image with the certifier.
 	docker build -t $(CERTIFIER_IMG) --file certifier.dockerfile .
 
-docker-push-manager: docker-build-manager ## Push docker image with the manager.
+docker-push-manager: docker-build-manager ## Push docker image with the manager. <REGISTRY> must be specified.
 ifndef REGISTRY
 	$(error "You must set REGISTRY in order to push")
 endif
 	docker tag $(MANAGER_IMG) $(REGISTRY)/$(MANAGER_IMG)
 	docker push $(REGISTRY)/$(MANAGER_IMG)
 
-docker-push-certifier: docker-build-certifier ## Push docker image with the certifier.
+docker-push-certifier: docker-build-certifier ## Push docker image with the certifier. <REGISTRY> must be specified.
 ifndef REGISTRY
 	$(error "You must set REGISTRY in order to push")
 endif
 	docker tag $(CERTIFIER_IMG) $(REGISTRY)/$(CERTIFIER_IMG)
 	docker push $(REGISTRY)/$(CERTIFIER_IMG)
 
-docker-push: docker-push-manager docker-push-certifier
+docker-push: docker-push-manager docker-push-certifier ## Push all images to docker. <REGISTRY> must be specified.
 
 ##@ Deployment
 
