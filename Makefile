@@ -58,36 +58,58 @@ vet: ## Run go vet against code.
 lint: ensure-linter ## Run golangci-lint (https://golangci-lint.run/) against code.
 	$(GOLANGCI-LINT) run ./... --verbose
 
-test: generate fmt vet lint ## Run tests for this connector and common packages.
+test: manifests generate fmt vet lint ## Run tests for this connector and common packages.
 	go test ./... -coverprofile cover.out
 
 ##@ Build
 
-build: manifests generate test ## Build manager binary.
+local-build-manager: test ## Build manager binary.
 	go build -o ./bin/manager ./cmd/yc-connector-manager/main.go
 
-## Image name of a manager binary
-IMG_NAME := yc-connector-manager
-## Version of a manager binary, can be set up externally
-IMG_TAG ?= latest
-## Resulting tag of a manager binary
-IMG := $(IMG_NAME):$(IMG_TAG)
-docker-build: build ## test Build docker image with the manager.
-	docker build -t $(IMG) .
+local-build-certifier: test ## Build manager binary.
+	go build -o ./bin/certifier ./cmd/yc-connector-certifier/main.go
 
-docker-push: docker-build ## Push docker image with the manager.
+local-build: local-build-manager local-build-certifier
+
+## Version of an images, can be set up externally
+IMG_TAG ?= latest
+
+## Image name of a manager binary
+MANAGER_IMG_NAME := yc-connector-manager
+## Resulting tag of a manager binary
+MANAGER_IMG := $(MANAGER_IMG_NAME):$(IMG_TAG)
+docker-build-manager: test ## Build docker image with the manager.
+	docker build -t $(MANAGER_IMG) --file manager.dockerfile .
+
+## Image name of a certifier binary
+CERTIFIER_IMG_NAME := yc-connector-certifier
+## Resulting tag of a certifier binary
+CERTIFIER_IMG := $(MANAGER_IMG_NAME):$(IMG_TAG)
+docker-build-certifier: test ## Build docker image with the certifier.
+	docker build -t $(CERTIFIER_IMG) --file certifier.dockerfile .
+
+docker-push-manager: docker-build-manager ## Push docker image with the manager.
 ifndef REGISTRY
 	$(error "You must set REGISTRY in order to push")
 endif
-	docker tag $(IMG) $(REGISTRY)/$(IMG)
-	docker push $(REGISTRY)/$(IMG)
+	docker tag $(MANAGER_IMG) $(REGISTRY)/$(MANAGER_IMG)
+	docker push $(REGISTRY)/$(MANAGER_IMG)
+
+docker-push-certifier: docker-build-certifier ## Push docker image with the certifier.
+ifndef REGISTRY
+	$(error "You must set REGISTRY in order to push")
+endif
+	docker tag $(CERTIFIER_IMG) $(REGISTRY)/$(CERTIFIER_IMG)
+	docker push $(REGISTRY)/$(CERTIFIER_IMG)
+
+docker-push: docker-push-manager docker-push-certifier
 
 ##@ Deployment
 
-install: manifests ensure-kustomize ## Deploy controller to the k8s cluster specified in ~/.kube/config.
+install: manifests ensure-kustomize ## Deploy to the k8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build ./config/base | kubectl apply -f -
 
-uninstall: ensure-kustomize ## Undeploy controller from the k8s cluster specified in ~/.kube/config.
+uninstall: ensure-kustomize ## Undeploy from the k8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build ./config/base | kubectl delete -f -
 
 ##@ Dependencies

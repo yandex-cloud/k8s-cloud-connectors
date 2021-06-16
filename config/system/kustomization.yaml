@@ -3,7 +3,9 @@ kind: Kustomization
 images:
   - newTag: latest
 resources:
+  - init-certifier.yaml
   - system-namespace.yaml
   - deployment.yaml
   - role.yaml
   - role-binding.yaml
+  - cron-certifier.yaml

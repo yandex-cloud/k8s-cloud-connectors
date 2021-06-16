@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  namespace: yandex-cloud-connectors
+  name: initial-certifier
+spec:
+  template:
+    spec:
+      containers:
+        - name: certifier
+          image: cr.yandex/crptp7j81e7caog8r6gq/yc-connector-certifier
+          args:
+            - --namespace=yandex-cloud-connectors
+            - --service=webhook-service
+            - --secret=webhook-tls-cert
+            - --mw=mutating-webhook-configuration
+            - --vw=validating-webhook-configuration

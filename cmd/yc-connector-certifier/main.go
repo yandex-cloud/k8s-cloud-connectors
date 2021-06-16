@@ -66,7 +66,7 @@ DNS.3 = %s
 
 const (
 	kubernetesPollInterval = time.Second
-	certifierTotalTimeout = 5 * time.Minute
+	certifierTotalTimeout  = 5 * time.Minute
 )
 
 func main() {
@@ -212,6 +212,55 @@ func createCSR(
 	)
 }
 
+func waitForDeletion(
+	ctx context.Context,
+	log logr.Logger,
+	getter func(innerCtx context.Context) (*certificates.CertificateSigningRequest, error),
+) error {
+	log.Info("old CSR found, waiting for its deletion to be completed")
+	for {
+		if _, err := getter(ctx); err != nil {
+			if errors.IsNotFound(err) {
+				break
+			}
+			return err
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(kubernetesPollInterval):
+			log.Info("deletion is not completed, waiting")
+		}
+	}
+	log.Info("deletion is completed")
+	return nil
+}
+
+func waitForCreation(
+	ctx context.Context,
+	log logr.Logger,
+	getter func(innerCtx context.Context) (*certificates.CertificateSigningRequest, error),
+) error {
+	log.Info("waiting for CSR creation")
+	for {
+		_, err := getter(ctx)
+		if err == nil {
+			break
+		}
+		if !errors.IsNotFound(err) {
+			return err
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(kubernetesPollInterval):
+			log.Info("creation is not completed, waiting")
+		}
+	}
+	log.Info("creation is completed")
+	return nil
+}
+
 func signCertificate(
 	ctx context.Context,
 	log logr.Logger,
@@ -246,23 +295,8 @@ func signCertificate(
 			return nil, fmt.Errorf("unable to delete previous CSR %v", err)
 		}
 		log.Info("old CSR not found")
-	} else {
-		log.Info("old CSR found, waiting for its deletion to be completed")
-		for {
-			if _, err := getCsr(ctx); err != nil {
-				if errors.IsNotFound(err) {
-					log.Info("deletion is completed")
-					break
-				}
-				return nil, fmt.Errorf("error while waiting for old CSR deletion: %v", err)
-			}
-			select {
-			case <-ctx.Done():
-				return nil, fmt.Errorf("waiting for old CSR deletion interrupted: %v", ctx.Err())
-			case <-time.After(kubernetesPollInterval):
-				log.Info("deletion is not completed, waiting")
-			}
-		}
+	} else if err := waitForDeletion(ctx, log, getCsr); err != nil {
+		return nil, fmt.Errorf("error while waiting for old CSR deletion: %v", err)
 	}
 
 	log.Info("creating new CSR")
@@ -271,22 +305,8 @@ func signCertificate(
 		return nil, fmt.Errorf("unable to create CSR: %v", err)
 	}
 
-	log.Info("waiting for CSR creation")
-	for {
-		_, err := getCsr(ctx)
-		if err == nil {
-			log.Info("creation is completed")
-			break
-		}
-		if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("error while waiting for CSR creation: %v", err)
-		}
-		select {
-		case <-ctx.Done():
-			return nil, fmt.Errorf("waiting for CSR creation interrupted: %v", ctx.Err())
-		case <-time.After(kubernetesPollInterval):
-			log.Info("creation is not completed, waiting")
-		}
+	if err := waitForCreation(ctx, log, getCsr); err != nil {
+		return nil, fmt.Errorf("error while waiting for CSR creation: %v", err)
 	}
 
 	log.Info("approving CSR")
@@ -361,7 +381,13 @@ func createSecret(
 	return nil
 }
 
-func patchMutatingConfig(ctx context.Context, cl *kubernetes.Clientset, webhook, namespace string, caBundle []byte) error {
+func patchMutatingConfig(
+	ctx context.Context,
+	cl *kubernetes.Clientset,
+	webhook,
+	namespace string,
+	caBundle []byte,
+) error {
 	confClient := cl.AdmissionregistrationV1().MutatingWebhookConfigurations()
 	confTypeMeta := metav1.TypeMeta{
 		Kind:       "MutatingWebhookConfiguration",
@@ -389,7 +415,13 @@ func patchMutatingConfig(ctx context.Context, cl *kubernetes.Clientset, webhook,
 	return nil
 }
 
-func patchValidatingConfig(ctx context.Context, cl *kubernetes.Clientset, webhook, namespace string, caBundle []byte) error {
+func patchValidatingConfig(
+	ctx context.Context,
+	cl *kubernetes.Clientset,
+	webhook,
+	namespace string,
+	caBundle []byte,
+) error {
 	confClient := cl.AdmissionregistrationV1().ValidatingWebhookConfigurations()
 	confTypeMeta := metav1.TypeMeta{
 		Kind:       "ValidatingWebhookConfiguration",
