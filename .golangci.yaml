@@ -74,7 +74,7 @@ issues:
 
 linters-settings:
   dupl:
-    threshold: 100
+    threshold: 1000000 # Disabled for now
   funlen:
     lines: 100
     statements: 50
