@@ -222,11 +222,17 @@ func createCSR(
 func waitForDeletion(
 	ctx context.Context,
 	log logr.Logger,
-	getter func(innerCtx context.Context) (*certificates.CertificateSigningRequest, error),
+	csrClient v1beta1.CertificateSigningRequestInterface,
+	csrName string,
 ) error {
 	log.Info("old CSR found, waiting for its deletion to be completed")
 	for {
-		if _, err := getter(ctx); err != nil {
+		if _, err := csrClient.Get(ctx, csrName, metav1.GetOptions{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "CertificateSigningRequest",
+				APIVersion: "certificates.k8s.io/v1beta1",
+			},
+		}); err != nil {
 			if errors.IsNotFound(err) {
 				break
 			}
@@ -246,11 +252,17 @@ func waitForDeletion(
 func waitForCreation(
 	ctx context.Context,
 	log logr.Logger,
-	getter func(innerCtx context.Context) (*certificates.CertificateSigningRequest, error),
+	csrClient v1beta1.CertificateSigningRequestInterface,
+	csrName string,
 ) error {
 	log.Info("waiting for CSR creation")
 	for {
-		_, err := getter(ctx)
+		_, err := csrClient.Get(ctx, csrName, metav1.GetOptions{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "CertificateSigningRequest",
+				APIVersion: "certificates.k8s.io/v1beta1",
+			},
+		})
 		if err == nil {
 			break
 		}
@@ -279,15 +291,6 @@ func signCertificate(
 	csrName := service + "." + namespace + ".csr"
 	csrClient := cl.CertificatesV1beta1().CertificateSigningRequests()
 
-	getCsr := func(innerCtx context.Context) (*certificates.CertificateSigningRequest, error) {
-		return csrClient.Get(innerCtx, csrName, metav1.GetOptions{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "CertificateSigningRequest",
-				APIVersion: "certificates.k8s.io/v1beta1",
-			},
-		})
-	}
-
 	if err := csrClient.Delete(
 		ctx,
 		csrName,
@@ -302,7 +305,7 @@ func signCertificate(
 			return nil, fmt.Errorf("unable to delete previous CSR %v", err)
 		}
 		log.Info("old CSR not found")
-	} else if err := waitForDeletion(ctx, log, getCsr); err != nil {
+	} else if err := waitForDeletion(ctx, log, csrClient, csrName); err != nil {
 		return nil, fmt.Errorf("error while waiting for old CSR deletion: %v", err)
 	}
 
@@ -312,7 +315,7 @@ func signCertificate(
 		return nil, fmt.Errorf("unable to create CSR: %v", err)
 	}
 
-	if err := waitForCreation(ctx, log, getCsr); err != nil {
+	if err := waitForCreation(ctx, log, csrClient, csrName); err != nil {
 		return nil, fmt.Errorf("error while waiting for CSR creation: %v", err)
 	}
 
@@ -334,7 +337,12 @@ func signCertificate(
 	log.Info("waiting for CSR to be approved")
 	var cert []byte
 	for {
-		res, err := getCsr(ctx)
+		res, err := csrClient.Get(ctx, csrName, metav1.GetOptions{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "CertificateSigningRequest",
+				APIVersion: "certificates.k8s.io/v1beta1",
+			},
+		})
 		if err != nil {
 			return nil, fmt.Errorf("error while waiting for CSR approval: %v", err)
 		}
