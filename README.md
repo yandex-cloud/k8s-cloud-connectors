@@ -26,24 +26,10 @@ yc resource-manager folder add-access-binding --id $folder_id --role container-r
 # Добавляем в кластер все необходимые сущности и контроллер
 make install
 ```
-Можно заметить, что все сущности появились, однако под повис в состоянии Container Creating. Это происходит из-за того,
-что он не может получить TLS сертификат, чтобы контроллер мог использовать механизм вебхуков. Скрипт, выписывающий этот
-сертификат, взят из [этого репозитория](https://github.com/morvencao/kube-mutating-webhook-tutorial).
+
+Теперь попробуем создать какой-нибудь облачный ресурс, например, **Yandex Container Registry**:
 
 ```shell
-./scripts/webhook-create-signed-cert.sh --namespace yandex-cloud-connectors \
-                                        --service webhook-service \
-                                        --secret webhook-tls-cert
-
-kubectl -n yandex-cloud-connectors get secret webhook-tls-cert -o json | jq '.data["tls.crt"]' | tr -d '"'
-```
-
-Полученный при помощи второй команды ключ вставляем в [patch.yaml](config/webhook/patch.yaml) вместо `${CA_BUNDLE}`.
-Теперь повторяем инсталляцию, kustomize сам пропатчит нужный ресурс:
-
-```shell
-make install
-
 folder_id=$folder_id envsubst < ./connectors/ycr/examples/test-registry.yaml.tmpl | kubectl apply -f -
 ```
 
@@ -53,8 +39,13 @@ folder_id=$folder_id envsubst < ./connectors/ycr/examples/test-registry.yaml.tmp
 
 ```shell
 folder_id=$folder_id envsubst < ./connectors/ycr/examples/test-registry.yaml.tmpl | kubectl delete -f -
-make uninstall
 ```
 
 Повторно сходив в веб-интерфейс или исполнив команду `yc container registry list` можно увидеть, что Registry
 удалён.
+
+Чтобы удалить связку коннекторов из кластера, достаточно выполнить команду:
+
+```shell
+make uninstall
+```

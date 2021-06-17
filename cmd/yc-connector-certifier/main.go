@@ -66,8 +66,15 @@ DNS.3 = %s
 
 const (
 	kubernetesPollInterval = time.Second
-	certifierTotalTimeout = 5 * time.Minute
+	certifierTotalTimeout  = 5 * time.Minute
 )
+
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=mutatingwebhookconfigurations,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=validatingwebhookconfigurations,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=certificates.k8s.io,resources=certificatesigningrequests,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=certificates.k8s.io,resources=certificatesigningrequests/approval,verbs=update
+// +kubebuilder:rbac:groups=certificates.k8s.io,resources=signers,resourceNames=kubernetes.io/*,verbs=approve
 
 func main() {
 	var secretName string
@@ -212,6 +219,67 @@ func createCSR(
 	)
 }
 
+func waitForDeletion(
+	ctx context.Context,
+	log logr.Logger,
+	csrClient v1beta1.CertificateSigningRequestInterface,
+	csrName string,
+) error {
+	log.Info("old CSR found, waiting for its deletion to be completed")
+	for {
+		if _, err := csrClient.Get(ctx, csrName, metav1.GetOptions{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "CertificateSigningRequest",
+				APIVersion: "certificates.k8s.io/v1beta1",
+			},
+		}); err != nil {
+			if errors.IsNotFound(err) {
+				break
+			}
+			return err
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(kubernetesPollInterval):
+			log.Info("deletion is not completed, waiting")
+		}
+	}
+	log.Info("deletion is completed")
+	return nil
+}
+
+func waitForCreation(
+	ctx context.Context,
+	log logr.Logger,
+	csrClient v1beta1.CertificateSigningRequestInterface,
+	csrName string,
+) error {
+	log.Info("waiting for CSR creation")
+	for {
+		_, err := csrClient.Get(ctx, csrName, metav1.GetOptions{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "CertificateSigningRequest",
+				APIVersion: "certificates.k8s.io/v1beta1",
+			},
+		})
+		if err == nil {
+			break
+		}
+		if !errors.IsNotFound(err) {
+			return err
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(kubernetesPollInterval):
+			log.Info("creation is not completed, waiting")
+		}
+	}
+	log.Info("creation is completed")
+	return nil
+}
+
 func signCertificate(
 	ctx context.Context,
 	log logr.Logger,
@@ -222,15 +290,6 @@ func signCertificate(
 ) ([]byte, error) {
 	csrName := service + "." + namespace + ".csr"
 	csrClient := cl.CertificatesV1beta1().CertificateSigningRequests()
-
-	getCsr := func(innerCtx context.Context) (*certificates.CertificateSigningRequest, error) {
-		return csrClient.Get(innerCtx, csrName, metav1.GetOptions{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "CertificateSigningRequest",
-				APIVersion: "certificates.k8s.io/v1beta1",
-			},
-		})
-	}
 
 	if err := csrClient.Delete(
 		ctx,
@@ -246,23 +305,8 @@ func signCertificate(
 			return nil, fmt.Errorf("unable to delete previous CSR %v", err)
 		}
 		log.Info("old CSR not found")
-	} else {
-		log.Info("old CSR found, waiting for its deletion to be completed")
-		for {
-			if _, err := getCsr(ctx); err != nil {
-				if errors.IsNotFound(err) {
-					log.Info("deletion is completed")
-					break
-				}
-				return nil, fmt.Errorf("error while waiting for old CSR deletion: %v", err)
-			}
-			select {
-			case <-ctx.Done():
-				return nil, fmt.Errorf("waiting for old CSR deletion interrupted: %v", ctx.Err())
-			case <-time.After(kubernetesPollInterval):
-				log.Info("deletion is not completed, waiting")
-			}
-		}
+	} else if err := waitForDeletion(ctx, log, csrClient, csrName); err != nil {
+		return nil, fmt.Errorf("error while waiting for old CSR deletion: %v", err)
 	}
 
 	log.Info("creating new CSR")
@@ -271,22 +315,8 @@ func signCertificate(
 		return nil, fmt.Errorf("unable to create CSR: %v", err)
 	}
 
-	log.Info("waiting for CSR creation")
-	for {
-		_, err := getCsr(ctx)
-		if err == nil {
-			log.Info("creation is completed")
-			break
-		}
-		if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("error while waiting for CSR creation: %v", err)
-		}
-		select {
-		case <-ctx.Done():
-			return nil, fmt.Errorf("waiting for CSR creation interrupted: %v", ctx.Err())
-		case <-time.After(kubernetesPollInterval):
-			log.Info("creation is not completed, waiting")
-		}
+	if err := waitForCreation(ctx, log, csrClient, csrName); err != nil {
+		return nil, fmt.Errorf("error while waiting for CSR creation: %v", err)
 	}
 
 	log.Info("approving CSR")
@@ -307,7 +337,12 @@ func signCertificate(
 	log.Info("waiting for CSR to be approved")
 	var cert []byte
 	for {
-		res, err := getCsr(ctx)
+		res, err := csrClient.Get(ctx, csrName, metav1.GetOptions{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "CertificateSigningRequest",
+				APIVersion: "certificates.k8s.io/v1beta1",
+			},
+		})
 		if err != nil {
 			return nil, fmt.Errorf("error while waiting for CSR approval: %v", err)
 		}
@@ -361,7 +396,13 @@ func createSecret(
 	return nil
 }
 
-func patchMutatingConfig(ctx context.Context, cl *kubernetes.Clientset, webhook, namespace string, caBundle []byte) error {
+func patchMutatingConfig(
+	ctx context.Context,
+	cl *kubernetes.Clientset,
+	webhook,
+	namespace string,
+	caBundle []byte,
+) error {
 	confClient := cl.AdmissionregistrationV1().MutatingWebhookConfigurations()
 	confTypeMeta := metav1.TypeMeta{
 		Kind:       "MutatingWebhookConfiguration",
@@ -389,7 +430,13 @@ func patchMutatingConfig(ctx context.Context, cl *kubernetes.Clientset, webhook,
 	return nil
 }
 
-func patchValidatingConfig(ctx context.Context, cl *kubernetes.Clientset, webhook, namespace string, caBundle []byte) error {
+func patchValidatingConfig(
+	ctx context.Context,
+	cl *kubernetes.Clientset,
+	webhook,
+	namespace string,
+	caBundle []byte,
+) error {
 	confClient := cl.AdmissionregistrationV1().ValidatingWebhookConfigurations()
 	confTypeMeta := metav1.TypeMeta{
 		Kind:       "ValidatingWebhookConfiguration",
