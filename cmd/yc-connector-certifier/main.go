@@ -162,7 +162,8 @@ func createSecretKey(log logr.Logger, tmpdir string) ([]byte, error) {
 func createCertificates(log logr.Logger, tmpdir, service, namespace string) ([]byte, error) {
 	csrConf := fmt.Sprintf(CSRConfigTemplate, service, service+"."+namespace, service+"."+namespace+".svc")
 
-	if err := ioutil.WriteFile(filepath.Clean(filepath.Join(tmpdir, CSRConfigFile)), []byte(csrConf), 0600); err != nil {
+	if err := ioutil.WriteFile(filepath.Clean(filepath.Join(tmpdir, CSRConfigFile)), []byte(csrConf), 0600); //nolint:gomnd
+	err != nil {
 		return nil, fmt.Errorf("unable to create CSR configuration file: %w", err)
 	}
 	log.Info("certificate configuration created")
