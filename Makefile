@@ -122,7 +122,7 @@ ensure-linter: ## Download golangci-lint if necessary.
 
 CONTROLLER_GEN := $(ROOT)/bin/controller-gen ## Location of controller-gen binary
 ensure-controller-gen: ## Download controller-gen locally if necessary.
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.5.0)
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.0)
 
 KUSTOMIZE := $(ROOT)/bin/kustomize ## Location of kustomize binary
 ensure-kustomize: ## Download kustomize locally if necessary.

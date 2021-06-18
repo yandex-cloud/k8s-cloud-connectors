@@ -4,7 +4,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.5.0
+    controller-gen.kubebuilder.io/version: v0.6.0
   creationTimestamp: null
   name: yandexmessagequeues.connectors.cloud.yandex.com
 spec:
@@ -19,13 +19,18 @@ spec:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: YandexMessageQueue is the Schema for the yandex object storage API
+        description: YandexMessageQueue is the Schema for the yandex object storage
+          API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -33,40 +38,55 @@ spec:
             description: YandexMessageQueueSpec defines the desired state of YandexMessageQueue
             properties:
               SAKeyName:
-                description: 'SAKeyName: specifies name of the Static Access Key that is used to authenticate this Yandex Object Storage in the cloud.'
+                description: 'SAKeyName: specifies name of the Static Access Key that
+                  is used to authenticate this Yandex Object Storage in the cloud.'
                 type: string
               contentBasedDeduplication:
                 default: false
-                description: 'ContentBasedDeduplication: flag that enables deduplication by message contents.'
+                description: 'ContentBasedDeduplication: flag that enables deduplication
+                  by message contents.'
                 type: boolean
               delaySeconds:
                 default: 0
-                description: 'DelaySeconds: Time in seconds for which messages are hidden after sending. Can be from 0 to 900 seconds (15 minutes). Defaults to 0.'
+                description: 'DelaySeconds: Time in seconds for which messages are
+                  hidden after sending. Can be from 0 to 900 seconds (15 minutes).
+                  Defaults to 0.'
                 type: integer
               fifoQueue:
                 default: false
-                description: 'FifoQueue: flag that states whether queue is FIFO or not. Must be immutable.'
+                description: 'FifoQueue: flag that states whether queue is FIFO or
+                  not. Must be immutable.'
                 type: boolean
               maximumMessageSize:
                 default: 262144
-                description: 'MaximumMessageSize: maximal size of message in bytes. Can vary from 1024 (1 KiB) to 262144 bytes (256 KiB). Defaults to 262144 (256 KiB).'
+                description: 'MaximumMessageSize: maximal size of message in bytes.
+                  Can vary from 1024 (1 KiB) to 262144 bytes (256 KiB). Defaults to
+                  262144 (256 KiB).'
                 type: integer
               messageRetentionPeriod:
                 default: 345600
-                description: 'MessageRetentionPeriod: duration of message storing. Can vary from 60 seconds (1 minute) to 1209600 seconds (14 days). Defaults to: 345600 (4 days).'
+                description: 'MessageRetentionPeriod: duration of message storing.
+                  Can vary from 60 seconds (1 minute) to 1209600 seconds (14 days).
+                  Defaults to: 345600 (4 days).'
                 type: integer
               name:
-                description: 'Name: must be unique in Yandex Cloud. Can consist of lowercase latin letters, dashes, dots and numbers and must be up to 80 characters long. Name of FIFO queue must end with ".fifo". Must be immutable.'
+                description: 'Name: must be unique in Yandex Cloud. Can consist of
+                  lowercase latin letters, dashes, dots and numbers and must be up
+                  to 80 characters long. Name of FIFO queue must end with ".fifo".
+                  Must be immutable.'
                 maxLength: 80
                 pattern: '[a-z0-9][a-z0-9-_]*[a-z0-9]'
                 type: string
               receiveMessageWaitTimeSeconds:
                 default: 0
-                description: 'ReceiveMessageWaitTimeSeconds: timeout for method "ReceiveMessage" measured in seconds. Can vary from 0 to 20 seconds. Defaults to 0.'
+                description: 'ReceiveMessageWaitTimeSeconds: timeout for method "ReceiveMessage"
+                  measured in seconds. Can vary from 0 to 20 seconds. Defaults to
+                  0.'
                 type: integer
               visibilityTimeout:
                 default: 30
-                description: 'VisibilityTimeout: timeout of messages visibility timeout. Can vary from 0 to 43000 seconds. Defaults to 30.'
+                description: 'VisibilityTimeout: timeout of messages visibility timeout.
+                  Can vary from 0 to 43000 seconds. Defaults to 30.'
                 type: integer
             required:
             - SAKeyName
