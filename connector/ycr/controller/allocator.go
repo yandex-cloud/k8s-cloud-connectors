@@ -29,7 +29,7 @@ func (r *yandexContainerRegistryReconciler) allocateResource(
 		return res, nil
 	}
 	if !errorhandling.CheckConnectorErrorCode(err, ycrconfig.ErrCodeYCRNotFound) {
-		return nil, fmt.Errorf("unable to get resource: %v", err)
+		return nil, fmt.Errorf("unable to get resource: %w", err)
 	}
 
 	resp, err := r.adapter.Create(
@@ -43,7 +43,7 @@ func (r *yandexContainerRegistryReconciler) allocateResource(
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create resource: %v", err)
+		return nil, fmt.Errorf("unable to create resource: %w", err)
 	}
 	log.Info("successful")
 	return resp, nil
@@ -62,11 +62,11 @@ func (r *yandexContainerRegistryReconciler) deallocateResource(
 			log.Info("already deleted")
 			return nil
 		}
-		return fmt.Errorf("unable to get resource: %v", err)
+		return fmt.Errorf("unable to get resource: %w", err)
 	}
 
 	if err := r.adapter.Delete(ctx, ycr.Id); err != nil {
-		return fmt.Errorf("unable to delete resource: %v", err)
+		return fmt.Errorf("unable to delete resource: %w", err)
 	}
 	log.Info("successful")
 	return nil

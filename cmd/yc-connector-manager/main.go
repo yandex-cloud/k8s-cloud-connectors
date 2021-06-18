@@ -60,12 +60,12 @@ func getClusterIDFromNodeMetadata() (string, error) {
 		nil,
 	)
 	if err != nil {
-		return "", fmt.Errorf("cannot make request to metadata: %v", err)
+		return "", fmt.Errorf("cannot make request to metadata: %w", err)
 	}
 
 	instanceIDResp, err := http.DefaultClient.Do(instanceIDReq)
 	if err != nil {
-		return "", fmt.Errorf("error while making request to metadata: %v", err)
+		return "", fmt.Errorf("error while making request to metadata: %w", err)
 	}
 
 	if instanceIDResp.StatusCode != http.StatusOK {
@@ -74,7 +74,7 @@ func getClusterIDFromNodeMetadata() (string, error) {
 
 	instanceID, err := ioutil.ReadAll(instanceIDResp.Body)
 	if err != nil {
-		return "", fmt.Errorf("cannot read instanceID from metadata: %v", err)
+		return "", fmt.Errorf("cannot read instanceID from metadata: %w", err)
 	}
 
 	// TODO (covariance) maybe we need to create one YCSDK and just pass it everywhere?
@@ -82,7 +82,7 @@ func getClusterIDFromNodeMetadata() (string, error) {
 		Credentials: ycsdk.InstanceServiceAccount(),
 	})
 	if err != nil {
-		return "", fmt.Errorf("unable to create ycsdk: %v", err)
+		return "", fmt.Errorf("unable to create ycsdk: %w", err)
 	}
 
 	instance, err := yc.Compute().Instance().Get(ctx, &compute.GetInstanceRequest{
@@ -90,7 +90,7 @@ func getClusterIDFromNodeMetadata() (string, error) {
 		View:       compute.InstanceView_BASIC,
 	})
 	if err != nil {
-		return "", fmt.Errorf("unable to get instance: %v", err)
+		return "", fmt.Errorf("unable to get instance: %w", err)
 	}
 
 	clusterID, ok := instance.Labels["managed-kubernetes-cluster-id"]
@@ -99,7 +99,7 @@ func getClusterIDFromNodeMetadata() (string, error) {
 	}
 
 	if err = instanceIDResp.Body.Close(); err != nil {
-		return "", fmt.Errorf("unable to close response body: %v", err)
+		return "", fmt.Errorf("unable to close response body: %w", err)
 	}
 
 	return clusterID, nil

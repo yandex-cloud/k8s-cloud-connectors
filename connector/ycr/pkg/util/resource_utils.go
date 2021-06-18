@@ -34,7 +34,7 @@ func GetRegistry(
 			// but this error is not fatal, just a mismatch between
 			// out status and real world state.
 			if !errorhandling.CheckRPCErrorNotFound(err) {
-				return nil, fmt.Errorf("cannot get registry from cloud: %v", err)
+				return nil, fmt.Errorf("cannot get registry from cloud: %w", err)
 			}
 		} else if checkRegistryMatchWithYcr(ycr, metaName, clusterName) {
 			// If labels do match with our object, then we have found it
@@ -48,7 +48,7 @@ func GetRegistry(
 	list, err := ad.List(ctx, folderID)
 	if err != nil {
 		// This error is fatal
-		return nil, fmt.Errorf("cannot list registries in folder: %v", err)
+		return nil, fmt.Errorf("cannot list registries in folder: %w", err)
 	}
 
 	for _, res := range list {

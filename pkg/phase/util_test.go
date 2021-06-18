@@ -15,5 +15,6 @@ import (
 )
 
 func setup(t *testing.T) (context.Context, logr.Logger, client.Client) {
+	t.Helper()
 	return context.Background(), logrfake.NewFakeLogger(t), k8sfake.NewFakeClient()
 }

@@ -17,6 +17,7 @@ type FakeLogger struct {
 }
 
 func NewFakeLogger(t *testing.T) logr.Logger {
+	t.Helper()
 	return FakeLogger{
 		Level: 0,
 		Name:  "",

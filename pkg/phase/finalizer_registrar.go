@@ -24,7 +24,7 @@ func RegisterFinalizer(
 	}
 	meta.Finalizers = append(meta.Finalizers, finalizer)
 	if err := cl.Update(ctx, object); err != nil {
-		return fmt.Errorf("unable to register finalizer: %v", err)
+		return fmt.Errorf("unable to register finalizer: %w", err)
 	}
 	log.Info("successful")
 	return nil
@@ -37,7 +37,7 @@ func DeregisterFinalizer(
 	log.V(1).Info("started")
 	meta.Finalizers = util.RemoveString(meta.Finalizers, finalizer)
 	if err := cl.Update(ctx, object); err != nil {
-		return fmt.Errorf("unable to deregister finalizer: %v", err)
+		return fmt.Errorf("unable to deregister finalizer: %w", err)
 	}
 
 	log.Info("successful")

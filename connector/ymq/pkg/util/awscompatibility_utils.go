@@ -32,7 +32,7 @@ func NewSQSClient(_ context.Context, cred *credentials.Credentials) (*sqs.SQS, e
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to get %s sdk: %v", config.ShortName, err)
+		return nil, fmt.Errorf("unable to get %s sdk: %w", config.ShortName, err)
 	}
 
 	return sqs.New(ses), nil

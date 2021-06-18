@@ -24,7 +24,7 @@ func (r *yandexObjectStorageReconciler) allocateResource(
 
 	lst, err := r.adapter.List(ctx, sdk)
 	if err != nil {
-		return fmt.Errorf("unable to list resources: %v", err)
+		return fmt.Errorf("unable to list resources: %w", err)
 	}
 	for _, bucket := range lst {
 		if *bucket.Name == object.Name {
@@ -35,7 +35,7 @@ func (r *yandexObjectStorageReconciler) allocateResource(
 
 	err = r.adapter.Create(ctx, sdk, object.Spec.Name)
 	if err != nil {
-		return fmt.Errorf("unable to create resource: %v", err)
+		return fmt.Errorf("unable to create resource: %w", err)
 	}
 	log.Info("successful")
 	return nil
@@ -52,7 +52,7 @@ func (r *yandexObjectStorageReconciler) deallocateResource(
 			log.Info("already deleted")
 			return nil
 		}
-		return fmt.Errorf("unable to delete resource: %v", err)
+		return fmt.Errorf("unable to delete resource: %w", err)
 	}
 
 	log.Info("successful")

@@ -4,6 +4,8 @@
 package errorhandling
 
 import (
+	"errors"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -46,7 +48,8 @@ func CheckRPCErrorAlreadyExists(err error) bool {
 }
 
 func CheckConnectorErrorCode(err error, code string) bool {
-	s, ok := err.(ConnectorError)
+	var s ConnectorError
+	ok := errors.As(err, &s)
 	if !ok {
 		return false
 	}

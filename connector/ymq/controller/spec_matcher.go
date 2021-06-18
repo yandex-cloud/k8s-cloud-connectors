@@ -22,14 +22,14 @@ func (r *yandexMessageQueueReconciler) matchSpec(
 	attributes := ymqutils.AttributesFromSpec(&object.Spec)
 	oldAttributes, err := r.adapter.GetAttributes(ctx, sdk, object.Status.QueueURL)
 	if err != nil {
-		return fmt.Errorf("unable to get queue attributes: %v", err)
+		return fmt.Errorf("unable to get queue attributes: %w", err)
 	}
 
 	for k, v := range attributes {
 		if *oldAttributes[k] != *v {
 			log.V(1).Info("arguments do not match, updating")
 			if err := r.adapter.UpdateAttributes(ctx, sdk, attributes, object.Status.QueueURL); err != nil {
-				return fmt.Errorf("unable to update attributes: %v", err)
+				return fmt.Errorf("unable to update attributes: %w", err)
 			}
 			log.Info("successful")
 			return nil

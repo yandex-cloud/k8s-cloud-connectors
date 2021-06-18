@@ -32,7 +32,7 @@ func NewS3Client(_ context.Context, cred *credentials.Credentials) (*s3.S3, erro
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to get yos sdk: %v", err)
+		return nil, fmt.Errorf("unable to get yos sdk: %w", err)
 	}
 
 	return s3.New(ses), nil

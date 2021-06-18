@@ -22,7 +22,7 @@ func (r *yandexMessageQueueReconciler) allocateResource(
 
 	lst, err := r.adapter.List(ctx, sdk)
 	if err != nil {
-		return fmt.Errorf("unable to list resources: %v", err)
+		return fmt.Errorf("unable to list resources: %w", err)
 	}
 	for _, queue := range lst {
 		if *queue == object.Status.QueueURL {
@@ -32,12 +32,12 @@ func (r *yandexMessageQueueReconciler) allocateResource(
 
 	res, err := r.adapter.Create(ctx, sdk, ymqutils.AttributesFromSpec(&object.Spec), object.Spec.Name)
 	if err != nil {
-		return fmt.Errorf("ubable to create resource: %v", err)
+		return fmt.Errorf("ubable to create resource: %w", err)
 	}
 
 	object.Status.QueueURL = res
 	if err := r.Client.Status().Update(ctx, object); err != nil {
-		return fmt.Errorf("unable to update object status: %v", err)
+		return fmt.Errorf("unable to update object status: %w", err)
 	}
 
 	log.Info("successful")
@@ -55,7 +55,7 @@ func (r *yandexMessageQueueReconciler) deallocateResource(
 			log.Info("already deleted")
 			return nil
 		}
-		return fmt.Errorf("unable to delete resource: %v", err)
+		return fmt.Errorf("unable to delete resource: %w", err)
 	}
 
 	log.Info("successful")

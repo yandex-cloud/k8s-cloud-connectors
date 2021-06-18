@@ -27,6 +27,7 @@ func setup(t *testing.T) (
 	adapter.YandexContainerRegistryAdapter,
 	yandexContainerRegistryReconciler,
 ) {
+	t.Helper()
 	ad := adapter.NewFakeYandexContainerRegistryAdapter()
 	cl := k8sfake.NewFakeClient()
 	log := logrfake.NewFakeLogger(t)
@@ -52,9 +53,15 @@ func createObject(specName, folderID, metaName, namespace string) connectorsv1.Y
 }
 
 func createResourceRequireNoError(
-	ctx context.Context, ad adapter.YandexContainerRegistryAdapter, t *testing.T,
-	specName, folderID, metaName, clusterName string,
+	ctx context.Context,
+	t *testing.T,
+	ad adapter.YandexContainerRegistryAdapter,
+	specName,
+	folderID,
+	metaName,
+	clusterName string,
 ) *containerregistry.Registry {
+	t.Helper()
 	res, err := ad.Create(
 		ctx, &containerregistry.CreateRegistryRequest{
 			FolderId: folderID,

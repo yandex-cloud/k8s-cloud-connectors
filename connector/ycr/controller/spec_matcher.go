@@ -30,7 +30,7 @@ func (r *yandexContainerRegistryReconciler) matchSpec(
 			Name:       object.Spec.Name,
 		},
 	); err != nil {
-		return fmt.Errorf("unable to update resource: %v", err)
+		return fmt.Errorf("unable to update resource: %w", err)
 	}
 	log.Info("successful")
 	return nil

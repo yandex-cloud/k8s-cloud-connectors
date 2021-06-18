@@ -52,11 +52,11 @@ func Put(ctx context.Context, cl rtcl.Client, objectName, namespace, kind string
 	}
 	if errors.IsNotFound(err) {
 		if err := cl.Create(ctx, &newState); err != nil {
-			return fmt.Errorf("cannot create configmap: %v", err)
+			return fmt.Errorf("cannot create configmap: %w", err)
 		}
 	} else {
 		if err := cl.Update(ctx, &newState); err != nil {
-			return fmt.Errorf("cannot update configmap: %v", err)
+			return fmt.Errorf("cannot update configmap: %w", err)
 		}
 	}
 	return nil
@@ -71,11 +71,11 @@ func Remove(ctx context.Context, cl rtcl.Client, objectName, namespace, kind str
 		if errors.IsNotFound(err) {
 			return nil
 		}
-		return fmt.Errorf("cannot get configmap: %v", err)
+		return fmt.Errorf("cannot get configmap: %w", err)
 	}
 
 	if err := cl.Delete(ctx, &cmapObj); err != nil {
-		return fmt.Errorf("cannot delete configmap: %v", err)
+		return fmt.Errorf("cannot delete configmap: %w", err)
 	}
 
 	return nil

@@ -24,7 +24,7 @@ func ProvideConfigmap(
 
 	exists, err := configmap.Exists(ctx, cl, objectName, namespace, kindName)
 	if err != nil {
-		return fmt.Errorf("unable to check configmap existence: %v", err)
+		return fmt.Errorf("unable to check configmap existence: %w", err)
 	}
 	if exists {
 		return nil
@@ -47,7 +47,7 @@ func RemoveConfigmap(
 	log.V(1).Info("started")
 
 	if err := configmap.Remove(ctx, cl, objectName, namespace, kindName); err != nil {
-		return fmt.Errorf("unable to remove configmap: %v", err)
+		return fmt.Errorf("unable to remove configmap: %w", err)
 	}
 
 	log.Info("successful")

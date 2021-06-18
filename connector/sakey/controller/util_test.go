@@ -18,8 +18,13 @@ import (
 )
 
 func setup(t *testing.T) (
-	context.Context, logr.Logger, client.Client, adapter.StaticAccessKeyAdapter, staticAccessKeyReconciler,
+	context.Context,
+	logr.Logger,
+	client.Client,
+	adapter.StaticAccessKeyAdapter,
+	staticAccessKeyReconciler,
 ) {
+	t.Helper()
 	ad := adapter.NewFakeStaticAccessKeyAdapter()
 	cl := k8sfake.NewFakeClient()
 	log := logrfake.NewFakeLogger(t)
