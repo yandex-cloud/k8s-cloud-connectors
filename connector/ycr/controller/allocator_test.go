@@ -46,8 +46,8 @@ func TestAllocate(t *testing.T) {
 			ctx, log, _, ad, rc := setup(t)
 			obj := createObject("resource", "folder", "obj", "default")
 
-			_ = createResourceRequireNoError(ctx, ad, t, "resource1", "folder", "obj1", "")
-			_ = createResourceRequireNoError(ctx, ad, t, "resource2", "other-folder", "obj2", "")
+			_ = createResourceRequireNoError(ctx, t, ad, "resource1", "folder", "obj1", "")
+			_ = createResourceRequireNoError(ctx, t, ad, "resource2", "other-folder", "obj2", "")
 
 			// Act
 			_, err := rc.allocateResource(ctx, log, &obj)

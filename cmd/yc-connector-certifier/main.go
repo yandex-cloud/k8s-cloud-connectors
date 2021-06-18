@@ -33,6 +33,7 @@ func (r *argList) String() string {
 
 func (r *argList) Set(val string) error {
 	*r = append(*r, val)
+
 	return nil
 }
 
@@ -151,7 +152,7 @@ func createSecretKey(log logr.Logger, tmpdir string) ([]byte, error) {
 	)
 	genRSACmd.Dir = tmpdir
 	if err := genRSACmd.Run(); err != nil {
-		return nil, fmt.Errorf("unable to generate RSA key: %v", err)
+		return nil, fmt.Errorf("unable to generate RSA key: %w", err)
 	}
 	log.Info("RSA key generated")
 
@@ -161,8 +162,9 @@ func createSecretKey(log logr.Logger, tmpdir string) ([]byte, error) {
 func createCertificates(log logr.Logger, tmpdir, service, namespace string) ([]byte, error) {
 	csrConf := fmt.Sprintf(CSRConfigTemplate, service, service+"."+namespace, service+"."+namespace+".svc")
 
-	if err := ioutil.WriteFile(filepath.Clean(filepath.Join(tmpdir, CSRConfigFile)), []byte(csrConf), 0600); err != nil {
-		return nil, fmt.Errorf("unable to create CSR configuration file: %v", err)
+	if err := ioutil.WriteFile(filepath.Clean(filepath.Join(tmpdir, CSRConfigFile)), []byte(csrConf), 0600); //nolint:gomnd
+	err != nil {
+		return nil, fmt.Errorf("unable to create CSR configuration file: %w", err)
 	}
 	log.Info("certificate configuration created")
 
@@ -175,13 +177,13 @@ func createCertificates(log logr.Logger, tmpdir, service, namespace string) ([]b
 	) // #nosec G204
 	createReq.Dir = tmpdir
 	if err := createReq.Run(); err != nil {
-		return nil, fmt.Errorf("unable to create server CSR: %v", err)
+		return nil, fmt.Errorf("unable to create server CSR: %w", err)
 	}
 	log.Info("server CSR created")
 
 	csr, err := ioutil.ReadFile(filepath.Clean(filepath.Join(tmpdir, serverCSRFile)))
 	if err != nil {
-		return nil, fmt.Errorf("unable to read created CSR: %v", err)
+		return nil, fmt.Errorf("unable to read created CSR: %w", err)
 	}
 
 	return csr, nil
@@ -302,21 +304,21 @@ func signCertificate(
 		},
 	); err != nil {
 		if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("unable to delete previous CSR %v", err)
+			return nil, fmt.Errorf("unable to delete previous CSR %w", err)
 		}
 		log.Info("old CSR not found")
 	} else if err := waitForDeletion(ctx, log, csrClient, csrName); err != nil {
-		return nil, fmt.Errorf("error while waiting for old CSR deletion: %v", err)
+		return nil, fmt.Errorf("error while waiting for old CSR deletion: %w", err)
 	}
 
 	log.Info("creating new CSR")
 	csr, err := createCSR(ctx, csrClient, csrName, namespace, csrBytes)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create CSR: %v", err)
+		return nil, fmt.Errorf("unable to create CSR: %w", err)
 	}
 
 	if err := waitForCreation(ctx, log, csrClient, csrName); err != nil {
-		return nil, fmt.Errorf("error while waiting for CSR creation: %v", err)
+		return nil, fmt.Errorf("error while waiting for CSR creation: %w", err)
 	}
 
 	log.Info("approving CSR")
@@ -331,7 +333,7 @@ func signCertificate(
 			APIVersion: "certificates.k8s.io/v1beta1",
 		},
 	}); err != nil {
-		return nil, fmt.Errorf("unable to approve CSR: %v", err)
+		return nil, fmt.Errorf("unable to approve CSR: %w", err)
 	}
 
 	log.Info("waiting for CSR to be approved")
@@ -344,7 +346,7 @@ func signCertificate(
 			},
 		})
 		if err != nil {
-			return nil, fmt.Errorf("error while waiting for CSR approval: %v", err)
+			return nil, fmt.Errorf("error while waiting for CSR approval: %w", err)
 		}
 		if res.Status.Certificate != nil && len(res.Status.Certificate) != 0 {
 			cert = res.Status.Certificate
@@ -353,7 +355,7 @@ func signCertificate(
 		}
 		select {
 		case <-ctx.Done():
-			return nil, fmt.Errorf("waiting for CSR approval interrupted: %v", ctx.Err())
+			return nil, fmt.Errorf("waiting for CSR approval interrupted: %w", ctx.Err())
 		case <-time.After(kubernetesPollInterval):
 			log.Info("CSR approval is not completed, waiting")
 		}
@@ -389,7 +391,7 @@ func createSecret(
 	}, metav1.CreateOptions{
 		TypeMeta: secretTypeMeta,
 	}); err != nil {
-		return fmt.Errorf("unable to create secret: %v", err)
+		return fmt.Errorf("unable to create secret: %w", err)
 	}
 	log.Info("secret with key and cert successfully created")
 
@@ -413,7 +415,7 @@ func patchMutatingConfig(
 		TypeMeta: confTypeMeta,
 	})
 	if err != nil {
-		return fmt.Errorf("unable to get webhook configuration: %v", err)
+		return fmt.Errorf("unable to get webhook configuration: %w", err)
 	}
 
 	for i := range conf.Webhooks {
@@ -424,7 +426,7 @@ func patchMutatingConfig(
 	if _, err := confClient.Update(ctx, conf, metav1.UpdateOptions{
 		TypeMeta: confTypeMeta,
 	}); err != nil {
-		return fmt.Errorf("unable to update webhook configuration: %v", err)
+		return fmt.Errorf("unable to update webhook configuration: %w", err)
 	}
 
 	return nil
@@ -447,7 +449,7 @@ func patchValidatingConfig(
 		TypeMeta: confTypeMeta,
 	})
 	if err != nil {
-		return fmt.Errorf("unable to get webhook configuration: %v", err)
+		return fmt.Errorf("unable to get webhook configuration: %w", err)
 	}
 
 	for i := range conf.Webhooks {
@@ -458,7 +460,7 @@ func patchValidatingConfig(
 	if _, err := confClient.Update(ctx, conf, metav1.UpdateOptions{
 		TypeMeta: confTypeMeta,
 	}); err != nil {
-		return fmt.Errorf("unable to update webhook configuration: %v", err)
+		return fmt.Errorf("unable to update webhook configuration: %w", err)
 	}
 
 	return nil

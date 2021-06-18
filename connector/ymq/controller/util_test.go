@@ -27,6 +27,7 @@ func setup(t *testing.T) (
 	adapter.YandexMessageQueueAdapter,
 	yandexMessageQueueReconciler,
 ) {
+	t.Helper()
 	ad := adapter.NewFakeYandexMessageQueueAdapter()
 	cl := k8sfake.NewFakeClient()
 	log := logrfake.NewFakeLogger(t)
@@ -38,6 +39,7 @@ func setup(t *testing.T) (
 }
 
 func createSAKeyRequireNoError(ctx context.Context, t *testing.T, cl client.Client, name, namespace string) {
+	t.Helper()
 	secretName := name + "/" + namespace + "/secret"
 	secret := v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{

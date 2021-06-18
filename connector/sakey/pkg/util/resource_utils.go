@@ -24,7 +24,7 @@ func GetStaticAccessKey(
 			// but this error is not fatal, just a mismatch between
 			// out status and real world state.
 			if !errorhandling.CheckRPCErrorNotFound(err) {
-				return nil, fmt.Errorf("cannot get resource from cloud: %v", err)
+				return nil, fmt.Errorf("cannot get resource from cloud: %w", err)
 			}
 		} else {
 			// Everything is fine, we have found it
@@ -37,7 +37,7 @@ func GetStaticAccessKey(
 	// TODO (covariance) pagination
 	lst, err := ad.List(ctx, saID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list resources in cloud: %v", err)
+		return nil, fmt.Errorf("cannot list resources in cloud: %w", err)
 	}
 
 	for _, res := range lst {

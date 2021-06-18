@@ -117,7 +117,7 @@ ensure-linter: ## Download golangci-lint if necessary.
 	@if [ ! -x "$(command -v golangci-lint)" ] && [ ! -x $(GOLANGCI-LINT) ]; \
  	then \
   		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
-                         | sh -s -- -b $(ROOT)/bin v1.39.0; \
+                         | sh -s -- -b $(ROOT)/bin v1.41.0; \
   	fi
 
 CONTROLLER_GEN := $(ROOT)/bin/controller-gen ## Location of controller-gen binary

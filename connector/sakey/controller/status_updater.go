@@ -26,7 +26,7 @@ func (r *staticAccessKeyReconciler) updateStatus(
 	object.Status.KeyID = res.Id
 
 	if err := r.Client.Update(ctx, object); err != nil {
-		return fmt.Errorf("unable to update object status: %v", err)
+		return fmt.Errorf("unable to update object status: %w", err)
 	}
 
 	log.Info("successful")

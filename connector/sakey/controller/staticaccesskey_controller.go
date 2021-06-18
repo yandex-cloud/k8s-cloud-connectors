@@ -62,17 +62,17 @@ func (r *staticAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 			return config.GetNeverResult()
 		}
 
-		return config.GetErroredResult(fmt.Errorf("unable to get object from k8s: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to get object from k8s: %w", err))
 	}
 
 	// If object must be currently finalized, do it and quit
 	mustBeFinalized, err := r.mustBeFinalized(&object)
 	if err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %w", err))
 	}
 	if mustBeFinalized {
 		if err := r.finalize(ctx, log.WithName("finalize"), &object); err != nil {
-			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %v", err))
+			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %w", err))
 		}
 		return config.GetNormalResult()
 	}
@@ -80,16 +80,16 @@ func (r *staticAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	if err := phase.RegisterFinalizer(
 		ctx, r.Client, log.WithName("register-finalizer"), &object.ObjectMeta, &object, sakeyconfig.FinalizerName,
 	); err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %w", err))
 	}
 
 	res, err := r.allocateResource(ctx, log.WithName("allocate-resource"), &object)
 	if err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to allocate resource: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to allocate resource: %w", err))
 	}
 
 	if err := r.updateStatus(ctx, log.WithName("update-status"), &object, res); err != nil {
-		return config.GetErroredResult(fmt.Errorf("unble to update status: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unble to update status: %w", err))
 	}
 
 	log.V(1).Info("finished reconciliation")
@@ -106,13 +106,13 @@ func (r *staticAccessKeyReconciler) finalize(
 	log.V(1).Info("started")
 
 	if err := r.deallocateResource(ctx, log.WithName("deallocate-resource"), object); err != nil {
-		return fmt.Errorf("unable to deallocate resource: %v", err)
+		return fmt.Errorf("unable to deallocate resource: %w", err)
 	}
 
 	if err := phase.DeregisterFinalizer(
 		ctx, r.Client, log.WithName("deregister-finalizer"), &object.ObjectMeta, object, sakeyconfig.FinalizerName,
 	); err != nil {
-		return fmt.Errorf("unable to deregister finalizer: %v", err)
+		return fmt.Errorf("unable to deregister finalizer: %w", err)
 	}
 
 	log.Info("successful")

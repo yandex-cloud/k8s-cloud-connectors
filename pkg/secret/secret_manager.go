@@ -25,7 +25,7 @@ func Exists(ctx context.Context, client rtcl.Client, object *metav1.ObjectMeta, 
 	if errors.IsNotFound(err) {
 		return false, nil
 	}
-	return true, fmt.Errorf("cannot get secret: %v", err)
+	return true, fmt.Errorf("cannot get secret: %w", err)
 }
 
 func Put(
@@ -52,11 +52,11 @@ func Put(
 
 	if errors.IsNotFound(err) {
 		if err = client.Create(ctx, &newState); err != nil {
-			return fmt.Errorf("cannot create secret: %v", err)
+			return fmt.Errorf("cannot create secret: %w", err)
 		}
 	} else {
 		if err = client.Update(ctx, &newState); err != nil {
-			return fmt.Errorf("cannot update secret: %v", err)
+			return fmt.Errorf("cannot update secret: %w", err)
 		}
 	}
 	return nil
@@ -68,7 +68,7 @@ func Remove(ctx context.Context, client rtcl.Client, object *metav1.ObjectMeta, 
 	var secretObj v1.Secret
 	err := client.Get(ctx, rtcl.ObjectKey{Namespace: object.Namespace, Name: secretName}, &secretObj)
 	if err != nil && !errors.IsNotFound(err) {
-		return fmt.Errorf("cannot get secret: %v", err)
+		return fmt.Errorf("cannot get secret: %w", err)
 	}
 
 	if errors.IsNotFound(err) {
@@ -76,7 +76,7 @@ func Remove(ctx context.Context, client rtcl.Client, object *metav1.ObjectMeta, 
 	}
 
 	if err = client.Delete(ctx, &secretObj); err != nil {
-		return fmt.Errorf("cannot delete secret: %v", err)
+		return fmt.Errorf("cannot delete secret: %w", err)
 	}
 
 	return nil

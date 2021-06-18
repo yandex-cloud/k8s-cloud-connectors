@@ -25,7 +25,7 @@ func CredentialsFromStaticAccessKey(
 			Name:      sakeyName,
 		}, &key,
 	); err != nil {
-		return nil, fmt.Errorf("unable to retrieve corresponding SAKey: %v", err)
+		return nil, fmt.Errorf("unable to retrieve corresponding SAKey: %w", err)
 	}
 
 	var secret v1.Secret
@@ -35,7 +35,7 @@ func CredentialsFromStaticAccessKey(
 			Name:      key.Status.SecretName,
 		}, &secret,
 	); err != nil {
-		return nil, fmt.Errorf("unable to retrieve corresponding secret: %v", err)
+		return nil, fmt.Errorf("unable to retrieve corresponding secret: %w", err)
 	}
 
 	return credentials.NewStaticCredentials(string(secret.Data["key"]), string(secret.Data["secret"]), ""), nil

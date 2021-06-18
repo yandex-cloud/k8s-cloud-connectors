@@ -25,7 +25,7 @@ func (r *yandexContainerRegistryReconciler) updateStatus(
 	object.Status.Labels = res.Labels
 
 	if err := r.Client.Update(ctx, object); err != nil {
-		return fmt.Errorf("unable to update object status: %v", err)
+		return fmt.Errorf("unable to update object status: %w", err)
 	}
 
 	log.Info("successful")

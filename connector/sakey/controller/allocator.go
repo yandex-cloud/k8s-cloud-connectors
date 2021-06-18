@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/iam/v1/awscompatibility"
+	"go.uber.org/multierr"
 
 	connectorsv1 "k8s-connectors/connector/sakey/api/v1"
 	sakeyconfig "k8s-connectors/connector/sakey/pkg/config"
@@ -29,13 +30,13 @@ func (r *staticAccessKeyReconciler) allocateResource(
 		return res, nil
 	}
 	if !errorhandling.CheckConnectorErrorCode(err, sakeyconfig.ErrCodeSAKeyNotFound) {
-		return nil, fmt.Errorf("unable to get resource: %v", err)
+		return nil, fmt.Errorf("unable to get resource: %w", err)
 	}
 	response, err := r.adapter.Create(
 		ctx, object.Spec.ServiceAccountID, sakeyconfig.GetStaticAccessKeyDescription(r.clusterID, object.Name),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create resource: %v", err)
+		return nil, fmt.Errorf("unable to create resource: %w", err)
 	}
 
 	// Now we need to create a secret with the key
@@ -47,16 +48,17 @@ func (r *staticAccessKeyReconciler) allocateResource(
 	); err != nil {
 		// If we cannot create secret, we will just delete key
 		// and try again on the next reconciliation
+		err := fmt.Errorf("unable to create secret: %w", err)
 		if err2 := r.adapter.Delete(ctx, response.AccessKey.KeyId); err2 != nil {
-			return nil, fmt.Errorf("unable to create secret: %v\nunable to delete SAKey in the cloud: %v", err, err2)
+			return nil, multierr.Append(err, fmt.Errorf("unable to delete SAKey in the cloud: %w", err2))
 		}
-		return nil, fmt.Errorf("unable to create secret: %v", err)
+		return nil, err
 	}
 
 	// And we need to update status
 	object.Status.SecretName = secret.Name(&object.ObjectMeta, sakeyconfig.ShortName)
 	if err := r.Client.Update(ctx, object); err != nil {
-		return nil, fmt.Errorf("unable to update object status: %v", err)
+		return nil, fmt.Errorf("unable to update object status: %w", err)
 	}
 
 	log.Info("successful")
@@ -69,7 +71,7 @@ func (r *staticAccessKeyReconciler) deallocateResource(
 	log.V(1).Info("started")
 
 	if err := secret.Remove(ctx, r.Client, &object.ObjectMeta, sakeyconfig.ShortName); err != nil {
-		return fmt.Errorf("unable to delete secret: %v", err)
+		return fmt.Errorf("unable to delete secret: %w", err)
 	}
 
 	res, err := sakeyutils.GetStaticAccessKey(
@@ -80,11 +82,11 @@ func (r *staticAccessKeyReconciler) deallocateResource(
 			log.Info("already deleted")
 			return nil
 		}
-		return fmt.Errorf("unable to get resource: %v", err)
+		return fmt.Errorf("unable to get resource: %w", err)
 	}
 
 	if err := r.adapter.Delete(ctx, res.Id); err != nil {
-		return fmt.Errorf("unable to delete resource: %v", err)
+		return fmt.Errorf("unable to delete resource: %w", err)
 	}
 
 	log.Info("successful")

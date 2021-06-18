@@ -19,6 +19,7 @@ linters:
     - dogsled
     - dupl
     - errcheck
+    - errorlint
     - exportloopref
     - exhaustive
     - funlen
@@ -42,6 +43,8 @@ linters:
     - staticcheck
     - structcheck
     - stylecheck
+    - thelper
+    - tparallel
     - typecheck
     - unconvert
     - unused
@@ -52,6 +55,7 @@ issues:
   exclude-use-default: false
   max-per-linter: 0
   max-same-issues: 0
+  new: false
   exclude-rules:
     - path: _test\.go
       linters:
@@ -74,7 +78,7 @@ issues:
 
 linters-settings:
   dupl:
-    threshold: 1000000 # Disabled for now
+    threshold: 150 # Disabled for now
   funlen:
     lines: 100
     statements: 50

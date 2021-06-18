@@ -65,26 +65,26 @@ func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.
 			return config.GetNeverResult()
 		}
 
-		return config.GetErroredResult(fmt.Errorf("unable to get object from k8s: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to get object from k8s: %w", err))
 	}
 
 	cred, err := awsutils.CredentialsFromStaticAccessKey(ctx, object.Namespace, object.Spec.SAKeyName, r.Client)
 	if err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to retrieve credentials: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to retrieve credentials: %w", err))
 	}
 	sdk, err := yosutils.NewS3Client(ctx, cred)
 	if err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to build sdk: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to build sdk: %w", err))
 	}
 
 	// If object must be currently finalized, do it and quit
 	mustBeFinalized, err := r.mustBeFinalized(&object)
 	if err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %w", err))
 	}
 	if mustBeFinalized {
 		if err := r.finalize(ctx, log.WithName("finalize"), &object, sdk); err != nil {
-			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %v", err))
+			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %w", err))
 		}
 		return config.GetNormalResult()
 	}
@@ -92,11 +92,11 @@ func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err := phase.RegisterFinalizer(
 		ctx, r.Client, log.WithName("register-finalizer"), &object.ObjectMeta, &object, yosconfig.FinalizerName,
 	); err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %w", err))
 	}
 
 	if err := r.allocateResource(ctx, log.WithName("allocate-resource"), &object, sdk); err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to allocate resource: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to allocate resource: %w", err))
 	}
 
 	if err := phase.ProvideConfigmap(
@@ -106,7 +106,7 @@ func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.
 		object.Name, yosconfig.ShortName, object.Namespace,
 		map[string]string{"name": object.Spec.Name},
 	); err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to provide configmap: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to provide configmap: %w", err))
 	}
 
 	log.V(1).Info("finished reconciliation")
@@ -133,17 +133,17 @@ func (r *yandexObjectStorageReconciler) finalize(
 		log.WithName("provide-configmap"),
 		object.Name, yosconfig.ShortName, object.Namespace,
 	); err != nil {
-		return fmt.Errorf("unable to remove configmap: %v", err)
+		return fmt.Errorf("unable to remove configmap: %w", err)
 	}
 
 	if err := r.deallocateResource(ctx, log.WithName("deallocate-resource"), object, sdk); err != nil {
-		return fmt.Errorf("unable to deallocate resource: %v", err)
+		return fmt.Errorf("unable to deallocate resource: %w", err)
 	}
 
 	if err := phase.DeregisterFinalizer(
 		ctx, r.Client, log.WithName("finalizer-deregister"), &object.ObjectMeta, object, yosconfig.FinalizerName,
 	); err != nil {
-		return fmt.Errorf("unable to deregister finalizer: %v", err)
+		return fmt.Errorf("unable to deregister finalizer: %w", err)
 	}
 
 	log.Info("successful")

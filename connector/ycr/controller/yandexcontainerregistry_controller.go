@@ -63,17 +63,17 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 			return config.GetNeverResult()
 		}
 
-		return config.GetErroredResult(fmt.Errorf("unable to get object from k8s: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to get object from k8s: %w", err))
 	}
 
 	// If object must be currently finalized, do it and quit
 	mustBeFinalized, err := r.mustBeFinalized(&object)
 	if err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %w", err))
 	}
 	if mustBeFinalized {
 		if err := r.finalize(ctx, log.WithName("finalize"), &object); err != nil {
-			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %v", err))
+			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %w", err))
 		}
 		return config.GetNormalResult()
 	}
@@ -81,20 +81,20 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 	if err := phase.RegisterFinalizer(
 		ctx, r.Client, log, &object.ObjectMeta, &object, ycrconfig.FinalizerName,
 	); err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to register finalizer: %w", err))
 	}
 
 	res, err := r.allocateResource(ctx, log.WithName("allocate-resource"), &object)
 	if err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to allocate resource: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to allocate resource: %w", err))
 	}
 
 	if err := r.matchSpec(ctx, log.WithName("match-spec"), &object, res); err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to match spec: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to match spec: %w", err))
 	}
 
 	if err := r.updateStatus(ctx, log.WithName("update-status"), &object, res); err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to update status: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to update status: %w", err))
 	}
 
 	if err := phase.ProvideConfigmap(
@@ -104,7 +104,7 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 		object.Name, ycrconfig.ShortName, object.Namespace,
 		map[string]string{"ID": object.Status.ID},
 	); err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to provide configmap: %v", err))
+		return config.GetErroredResult(fmt.Errorf("unable to provide configmap: %w", err))
 	}
 
 	log.V(1).Info("finished reconciliation")
@@ -130,17 +130,17 @@ func (r *yandexContainerRegistryReconciler) finalize(
 		log.WithName("remove-configmap"),
 		object.Name, ycrconfig.ShortName, object.Namespace,
 	); err != nil {
-		return fmt.Errorf("unable to remove configmap: %v", err)
+		return fmt.Errorf("unable to remove configmap: %w", err)
 	}
 
 	if err := r.deallocateResource(ctx, log.WithName("deallocate-resource"), object); err != nil {
-		return fmt.Errorf("unable to deallocate resource: %v", err)
+		return fmt.Errorf("unable to deallocate resource: %w", err)
 	}
 
 	if err := phase.DeregisterFinalizer(
 		ctx, r.Client, log.WithName("deregister-finalizer"), &object.ObjectMeta, object, ycrconfig.FinalizerName,
 	); err != nil {
-		return fmt.Errorf("unable to deregister finalizer: %v", err)
+		return fmt.Errorf("unable to deregister finalizer: %w", err)
 	}
 
 	log.Info("successful")
