@@ -20,6 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/typed/certificates/v1beta1"
+	typed "k8s.io/client-go/kubernetes/typed/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"k8s-connectors/pkg/util"
@@ -122,7 +123,7 @@ func main() {
 
 	logAndExitOnError(
 		log,
-		createSecret(ctx, log, client, namespaceName, secretName, key, cert),
+		putKeyAndCertToSecret(ctx, log, client.CoreV1().Secrets(namespaceName), namespaceName, secretName, key, cert),
 		"unable to create secret with certificate",
 	)
 
@@ -364,22 +365,22 @@ func signCertificate(
 	return cert, nil
 }
 
-func createSecret(
+func putKeyAndCertToSecret(
 	ctx context.Context,
 	log logr.Logger,
-	cl *kubernetes.Clientset,
+	si typed.SecretInterface,
 	namespace,
 	secret string,
 	key,
 	cert []byte,
 ) error {
-	secretTypeMeta := metav1.TypeMeta{
+	secretType := metav1.TypeMeta{
 		Kind:       "Secret",
 		APIVersion: "v1",
 	}
 
-	if _, err := cl.CoreV1().Secrets(namespace).Create(ctx, &v1.Secret{
-		TypeMeta: secretTypeMeta,
+	sec := v1.Secret{
+		TypeMeta: secretType,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secret,
 			Namespace: namespace,
@@ -388,8 +389,52 @@ func createSecret(
 			"tls.key": key,
 			"tls.crt": cert,
 		},
-	}, metav1.CreateOptions{
-		TypeMeta: secretTypeMeta,
+	}
+
+	if _, err := si.Get(ctx, secret, metav1.GetOptions{
+		TypeMeta: secretType,
+	}); err != nil {
+		if errors.IsNotFound(err) {
+			log.Info("secret does not exist, creating")
+			return createSecret(ctx, log, si, &sec)
+		}
+		return fmt.Errorf("unable to get secret: %w", err)
+	}
+
+	log.Info("secret already exists, updating")
+	return updateSecret(ctx, log, si, &sec)
+}
+
+func updateSecret(
+	ctx context.Context,
+	log logr.Logger,
+	si typed.SecretInterface,
+	sec *v1.Secret,
+) error {
+	if _, err := si.Update(ctx, sec, metav1.UpdateOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+	}); err != nil {
+		return fmt.Errorf("unable to update secret: %w", err)
+	}
+	log.Info("secret with key and cert successfully updated")
+
+	return nil
+}
+
+func createSecret(
+	ctx context.Context,
+	log logr.Logger,
+	si typed.SecretInterface,
+	sec *v1.Secret,
+) error {
+	if _, err := si.Create(ctx, sec, metav1.CreateOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
 	}); err != nil {
 		return fmt.Errorf("unable to create secret: %w", err)
 	}
