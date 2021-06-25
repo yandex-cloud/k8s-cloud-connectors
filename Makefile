@@ -126,7 +126,7 @@ ensure-controller-gen: ## Download controller-gen locally if necessary.
 
 KUSTOMIZE := $(ROOT)/bin/kustomize ## Location of kustomize binary
 ensure-kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.0.5)
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.1.3)
 
 define go-get-tool
 @[ -f $(1) ] || { \
