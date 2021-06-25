@@ -39,7 +39,7 @@ help: ## Display this message.
 
 ##@ Development
 
-manifests: ensure-controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects via controller-gen tool.
+manifest: ensure-controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects via controller-gen tool.
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=connector-manager-role webhook paths="./..." \
 			output:crd:artifacts:config=./config/base/crd \
 			output:rbac:artifacts:config=./config/system \
@@ -57,8 +57,24 @@ vet: ## Run go vet against code.
 lint: ensure-linter ## Run golangci-lint (https://golangci-lint.run/) against code.
 	$(GOLANGCI-LINT) run ./... --verbose
 
-test: manifests generate fmt vet lint ## Run tests for this connector and common packages.
+test: manifest generate fmt vet lint ## Run tests for this connector and common packages.
 	go test ./... -coverprofile cover.out
+
+##@ Helm
+
+CHART_NAME := yandex-cloud-connectors
+
+helm-manifest: ensure-controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects for chart via controller-gen tool.
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=connector-manager-role webhook paths="./..." \
+    			output:crd:artifacts:config=./helm/$(CHART_NAME)/crds \
+    			output:rbac:artifacts:config=./helm/$(CHART_NAME)/templates/system \
+    			output:webhook:artifacts:config=./helm/$(CHART_NAME)/templates/webhook
+
+helm-license: ## Copy project license into chart.
+	cp ./LICENSE ./helm/$(CHART_NAME)
+
+
+helm-generate: helm-manifest helm-license ## Execute all targets for helm chart creation.
 
 ##@ Build
 
@@ -105,7 +121,7 @@ docker-push: docker-push-manager docker-push-certifier ## Push all images to doc
 
 ##@ Deployment
 
-install: manifests ## Deploy to the k8s cluster specified in ~/.kube/config.
+install: manifest ## Deploy to the k8s cluster specified in ~/.kube/config.
 	kubectl apply -k ./config/base
 
 uninstall: ## Undeploy from the k8s cluster specified in ~/.kube/config.

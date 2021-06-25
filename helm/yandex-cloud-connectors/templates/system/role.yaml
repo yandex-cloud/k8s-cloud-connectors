@@ -1,0 +1,186 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: connector-manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - mutatingwebhookconfigurations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - validatingwebhookconfigurations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - certificates.k8s.io
+  resources:
+  - certificatesigningrequests
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - certificates.k8s.io
+  resources:
+  - certificatesigningrequests/approval
+  verbs:
+  - update
+- apiGroups:
+  - certificates.k8s.io
+  resourceNames:
+  - kubernetes.io/*
+  resources:
+  - signers
+  verbs:
+  - approve
+- apiGroups:
+  - connectors.cloud.yandex.com
+  resources:
+  - staticaccesskeys
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - connectors.cloud.yandex.com
+  resources:
+  - staticaccesskeys/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - connectors.cloud.yandex.com
+  resources:
+  - staticaccesskeys/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - connectors.cloud.yandex.com
+  resources:
+  - yandexcontainerregistries
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - connectors.cloud.yandex.com
+  resources:
+  - yandexcontainerregistries/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - connectors.cloud.yandex.com
+  resources:
+  - yandexcontainerregistries/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - connectors.cloud.yandex.com
+  resources:
+  - yandexmessagequeues
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - connectors.cloud.yandex.com
+  resources:
+  - yandexmessagequeues/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - connectors.cloud.yandex.com
+  resources:
+  - yandexmessagequeues/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - connectors.cloud.yandex.com
+  resources:
+  - yandexobjectstorages
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - connectors.cloud.yandex.com
+  resources:
+  - yandexobjectstorages/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - connectors.cloud.yandex.com
+  resources:
+  - yandexobjectstorages/status
+  verbs:
+  - get
+  - patch
+  - update
