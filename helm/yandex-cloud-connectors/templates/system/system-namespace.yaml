@@ -3,4 +3,4 @@ kind: Namespace
 metadata:
   labels:
     control-plane: connector-manager
-  name: yandex-cloud-connectors
+  name: {{ .Values.namespace }}

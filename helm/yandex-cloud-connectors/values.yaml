@@ -1,0 +1,4 @@
+namespace: yandex-cloud-connectors
+imageRegistry: cr.yandex/crptp7j81e7caog8r6gq
+imageTag: latest
+debug: false

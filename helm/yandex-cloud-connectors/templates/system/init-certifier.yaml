@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  namespace: yandex-cloud-connectors
+  namespace: {{ .Values.namespace }}
   name: initial-certifier
 spec:
   template:
@@ -9,9 +9,10 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: certifier
-          image: cr.yandex/crptp7j81e7caog8r6gq/yc-connector-certifier:latest
+          image: {{ .Values.imageRegistry }}/yc-connector-certifier:{{ .Values.imageTag }}
           args:
-            - --namespace=yandex-cloud-connectors
+            {{ if .Values.debug }}- --debug{{ end }}
+            - --namespace={{ .Values.namespace }}
             - --service=webhook-service
             - --secret=webhook-tls-cert
             - --mw=mutating-webhook-configuration

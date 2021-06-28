@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: connector-manager
-  namespace: yandex-cloud-connectors
+  namespace: {{ .Values.namespace }}
   labels:
     control-plane: connector-manager
 spec:
@@ -18,9 +18,9 @@ spec:
       securityContext:
         runAsNonRoot: true
       containers:
-        - image: cr.yandex/crptp7j81e7caog8r6gq/yc-connector-manager:latest
+        - image: {{ .Values.imageRegistry }}/yc-connector-manager:{{ .Values.imageTag }}
           args:
-            - --debug
+            {{ if .Values.debug }}- --debug{{ end }}
           name: manager
           securityContext:
             allowPrivilegeEscalation: false

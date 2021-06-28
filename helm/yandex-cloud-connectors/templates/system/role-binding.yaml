@@ -8,5 +8,5 @@ roleRef:
   name: connector-manager-role
 subjects:
   - kind: ServiceAccount
-    namespace: yandex-cloud-connectors
+    namespace: {{ .Values.namespace }}
     name: default
