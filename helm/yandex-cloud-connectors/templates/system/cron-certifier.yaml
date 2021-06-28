@@ -4,8 +4,8 @@ metadata:
   namespace: yandex-cloud-connectors
   name: cron-certifier
 spec:
-  # This is for running twice a year, on 1st of January and 1st of July
-  schedule: 0 0 1 1,7 *
+  # This is for running twice a year, on 29th of April and 29th of October
+  schedule: 0 0 29 4,10 *
   jobTemplate:
     spec:
       template:
