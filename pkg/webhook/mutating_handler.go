@@ -8,41 +8,61 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 type mutatingHandler struct {
 	object  runtime.Object
 	decoder *admission.Decoder
-	mutator func(old *runtime.Object) (runtime.Object, error)
+	log     logr.Logger
+	mutator Mutator
 }
 
-func (r mutatingHandler) InjectObject(obj runtime.Object) error {
+func NewMutatingHandler(m Mutator) admission.Handler {
+	return &mutatingHandler{
+		log:     logr.Discard(),
+		mutator: m,
+	}
+}
+
+func (r *mutatingHandler) RegisterForManager(mgr manager.Manager, obj runtime.Object) error {
+	return RegisterForManager(mgr, obj, r, "mutate")
+}
+
+func (r *mutatingHandler) InjectObject(obj runtime.Object) error {
 	r.object = obj
 	return nil
 }
 
-func (r mutatingHandler) InjectDecoder(decoder *admission.Decoder) error {
+func (r *mutatingHandler) InjectDecoder(decoder *admission.Decoder) error {
 	r.decoder = decoder
 	return nil
 }
 
-func (r mutatingHandler) Handle(_ context.Context, req admission.Request) admission.Response {
+func (r *mutatingHandler) InjectLogger(log logr.Logger) error {
+	r.log = log
+	return nil
+}
+
+func (r *mutatingHandler) Handle(ctx context.Context, req admission.Request) admission.Response { //nolint:gocritic
+	// GoCritic warns about `hugeParam` req, but it is an interface that we are obliged to follow
 	obj := r.object.DeepCopyObject()
 	if err := r.decoder.Decode(req, obj); err != nil {
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	res, err := r.mutator(&obj)
+	res, err := r.mutator.Mutate(ctx, r.log, obj)
 	if err != nil {
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
 
-	marshalled, err := json.Marshal(res)
+	marshaled, err := json.Marshal(res)
 	if err != nil {
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
 
-	return admission.PatchResponseFromRaw(req.Object.Raw, marshalled)
+	return admission.PatchResponseFromRaw(req.Object.Raw, marshaled)
 }
