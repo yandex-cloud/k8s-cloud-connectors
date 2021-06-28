@@ -5,6 +5,7 @@ package webhook
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -58,9 +59,7 @@ func (r *validatingHandler) Handle(ctx context.Context, req admission.Request) a
 		if err := r.decoder.Decode(req, obj); err != nil {
 			return admission.Errored(http.StatusBadRequest, err)
 		}
-		if err := r.validator.ValidateCreation(ctx, r.log, obj); err != nil {
-			return admission.Denied(err.Error())
-		}
+		return handleValidationError(r.validator.ValidateCreation(ctx, r.log, obj))
 	case v1.Update:
 		old := r.object.DeepCopyObject()
 		if err := r.decoder.DecodeRaw(req.Object, obj); err != nil {
@@ -69,18 +68,23 @@ func (r *validatingHandler) Handle(ctx context.Context, req admission.Request) a
 		if err := r.decoder.DecodeRaw(req.OldObject, old); err != nil {
 			return admission.Errored(http.StatusBadRequest, err)
 		}
-		if err := r.validator.ValidateUpdate(ctx, r.log, obj, old); err != nil {
-			return admission.Denied(err.Error())
-		}
+		return handleValidationError(r.validator.ValidateUpdate(ctx, r.log, obj, old))
 	case v1.Delete:
 		if err := r.decoder.DecodeRaw(req.OldObject, obj); err != nil {
 			return admission.Errored(http.StatusBadRequest, err)
 		}
-		if err := r.validator.ValidateDeletion(ctx, r.log, obj); err != nil {
-			return admission.Denied(err.Error())
-		}
+		return handleValidationError(r.validator.ValidateDeletion(ctx, r.log, obj))
 	default:
 		return admission.Errored(http.StatusBadRequest, fmt.Errorf("invalid request operation: %s", req.Operation))
+	}
+}
+
+func handleValidationError(err error) admission.Response {
+	if err != nil {
+		if errors.Is(err, ValidationError{}) {
+			return admission.Denied(err.Error())
+		}
+		return admission.Errored(http.StatusInternalServerError, err)
 	}
 
 	return admission.Allowed("")
