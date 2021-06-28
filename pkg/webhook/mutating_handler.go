@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -26,10 +25,6 @@ func NewMutatingHandler(m Mutator) admission.Handler {
 		log:     logr.Discard(),
 		mutator: m,
 	}
-}
-
-func (r *mutatingHandler) RegisterForManager(mgr manager.Manager, obj runtime.Object) error {
-	return RegisterForManager(mgr, obj, r, "mutate")
 }
 
 func (r *mutatingHandler) InjectObject(obj runtime.Object) error {

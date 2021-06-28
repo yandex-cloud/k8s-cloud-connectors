@@ -12,7 +12,6 @@ import (
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/admission/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -28,10 +27,6 @@ func NewValidatingHandler(m Validator) admission.Handler {
 		log:       logr.Discard(),
 		validator: m,
 	}
-}
-
-func (r *validatingHandler) RegisterForManager(mgr manager.Manager, obj runtime.Object) error {
-	return RegisterForManager(mgr, obj, r, "validate")
 }
 
 func (r *validatingHandler) InjectObject(obj runtime.Object) error {

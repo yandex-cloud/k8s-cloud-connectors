@@ -24,6 +24,7 @@ import (
 	sakey "k8s-connectors/connector/sakey/api/v1"
 	sakeyconnector "k8s-connectors/connector/sakey/controller"
 	sakeyconfig "k8s-connectors/connector/sakey/pkg/config"
+	sakeywebhook "k8s-connectors/connector/sakey/webhook"
 	ycr "k8s-connectors/connector/ycr/api/v1"
 	ycrconnector "k8s-connectors/connector/ycr/controller"
 	ycrconfig "k8s-connectors/connector/ycr/pkg/config"
@@ -34,6 +35,7 @@ import (
 	yosconnector "k8s-connectors/connector/yos/controller"
 	yosconfig "k8s-connectors/connector/yos/pkg/config"
 	"k8s-connectors/pkg/util"
+	"k8s-connectors/pkg/webhook"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -208,7 +210,14 @@ func setupSAKeyConnector(mgr ctrl.Manager, clusterID string) {
 
 func setupSAKeyWebhook(mgr ctrl.Manager) {
 	setupLog.V(1).Info("starting " + sakeyconfig.ShortName + " webhook")
-	webhookCreationErrorExit((&sakey.StaticAccessKey{}).SetupWebhookWithManager(mgr), sakeyconfig.LongName, setupLog)
+
+	validating := webhook.NewValidatingHandler(sakeywebhook.SAKeyValidator{})
+
+	webhookCreationErrorExit(
+		webhook.RegisterForManager(mgr, &sakey.StaticAccessKey{}, validating, "validate"),
+		sakeyconfig.LongName,
+		setupLog,
+	)
 }
 
 func setupYCRConnector(mgr ctrl.Manager, clusterID string) {

@@ -22,6 +22,10 @@ type ValidationError struct {
 	error
 }
 
+func NewValidationError(inner error) ValidationError {
+	return ValidationError{inner}
+}
+
 type Validator interface {
 	ValidateCreation(ctx context.Context, log logr.Logger, obj runtime.Object) error
 	ValidateUpdate(ctx context.Context, log logr.Logger, current, old runtime.Object) error
