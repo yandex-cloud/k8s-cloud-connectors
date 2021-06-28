@@ -1,6 +1,6 @@
 apiVersion: v2
 name: yandex-cloud-connectors
-description: Connectors to get control over lifetime of resources in Yandex Cloud from k8s.
+description: Connectors to get control over lifecycle of resources in Yandex Cloud from k8s.
 type: application
 
 # This is the chart version. This version number should be incremented each time you make changes
@@ -12,4 +12,4 @@ version: 0.1.0
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "1.16.0"
+appVersion: 0.1.0
