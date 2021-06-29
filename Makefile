@@ -39,10 +39,11 @@ help: ## Display this message.
 
 ##@ Development
 
-manifests: ensure-controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects via controller-gen tool.
+manifest: ensure-controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects via controller-gen tool.
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=connector-manager-role webhook paths="./..." \
 			output:crd:artifacts:config=./config/base/crd \
-			output:rbac:artifacts:config=./config/system
+			output:rbac:artifacts:config=./config/system \
+			output:webhook:artifacts:config=./config/webhook
 
 generate: ensure-controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="LICENSE" paths="./..."
@@ -56,8 +57,24 @@ vet: ## Run go vet against code.
 lint: ensure-linter ## Run golangci-lint (https://golangci-lint.run/) against code.
 	$(GOLANGCI-LINT) run ./... --verbose
 
-test: manifests generate fmt vet lint ## Run tests for this connector and common packages.
+test: manifest generate fmt vet lint ## Run tests for this connector and common packages.
 	go test ./... -coverprofile cover.out
+
+##@ Helm
+
+CHART_NAME := yandex-cloud-connectors
+
+helm-manifest: ensure-controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects for chart via controller-gen tool.
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=connector-manager-role webhook paths="./..." \
+    			output:crd:artifacts:config=./helm/$(CHART_NAME)/crds \
+    			output:rbac:artifacts:config=./helm/$(CHART_NAME)/templates/system \
+    			output:webhook:artifacts:config=./helm/$(CHART_NAME)/templates/webhook
+
+helm-license: ## Copy project license into chart.
+	cp ./LICENSE ./helm/$(CHART_NAME)
+
+
+helm-generate: helm-manifest helm-license ## Execute all targets for helm chart creation.
 
 ##@ Build
 
@@ -104,11 +121,11 @@ docker-push: docker-push-manager docker-push-certifier ## Push all images to doc
 
 ##@ Deployment
 
-install: manifests ensure-kustomize ## Deploy to the k8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build ./config/base | kubectl apply -f -
+install: manifest ## Deploy to the k8s cluster specified in ~/.kube/config.
+	kubectl apply -k ./config/base
 
-uninstall: ensure-kustomize ## Undeploy from the k8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build ./config/base | kubectl delete -f -
+uninstall: ## Undeploy from the k8s cluster specified in ~/.kube/config.
+	kubectl delete -k ./config/base
 
 ##@ Dependencies
 
@@ -123,10 +140,6 @@ ensure-linter: ## Download golangci-lint if necessary.
 CONTROLLER_GEN := $(ROOT)/bin/controller-gen ## Location of controller-gen binary
 ensure-controller-gen: ## Download controller-gen locally if necessary.
 	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.0)
-
-KUSTOMIZE := $(ROOT)/bin/kustomize ## Location of kustomize binary
-ensure-kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.1.3)
 
 define go-get-tool
 @[ -f $(1) ] || { \

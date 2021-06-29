@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhook-service
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    control-plane: connector-manager
+  ports:
+    - port: 443
+      targetPort: 9443
+      protocol: TCP
