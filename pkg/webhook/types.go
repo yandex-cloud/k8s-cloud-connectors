@@ -10,10 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-type ObjectInjector interface {
-	InjectObject(obj runtime.Object) error
-}
-
 type Mutator interface {
 	Mutate(ctx context.Context, log logr.Logger, obj runtime.Object) (runtime.Object, error)
 }

@@ -37,12 +37,6 @@ func RegisterForManager(
 		return nil
 	}
 
-	if casted, ok := handler.(ObjectInjector); ok {
-		if err := casted.InjectObject(obj); err != nil {
-			return fmt.Errorf("unable to inject object into handler: %w", err)
-		}
-	}
-
 	if casted, ok := handler.(inject.Logger); ok {
 		if err := casted.InjectLogger(mgr.GetLogger()); err != nil {
 			return fmt.Errorf("unable to inject logger into handler: %w", err)

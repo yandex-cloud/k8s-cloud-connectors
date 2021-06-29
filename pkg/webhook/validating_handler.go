@@ -12,6 +12,7 @@ import (
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/admission/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -22,25 +23,26 @@ type validatingHandler struct {
 	validator Validator
 }
 
-func NewValidatingHandler(m Validator) admission.Handler {
-	return &validatingHandler{
-		log:       logr.Discard(),
-		validator: m,
+func RegisterValidatingHandler(mgr manager.Manager, exemplar runtime.Object, v Validator) error {
+	decoder, err := admission.NewDecoder(mgr.GetScheme())
+	if err != nil {
+		return fmt.Errorf("unable to create decoder for scheme: %w", err)
 	}
-}
 
-func (r *validatingHandler) InjectObject(obj runtime.Object) error {
-	r.object = obj
-	return nil
-}
+	if err := RegisterForManager(
+		mgr,
+		exemplar,
+		&validatingHandler{
+			object:    exemplar,
+			decoder:   decoder,
+			log:       mgr.GetLogger(),
+			validator: v,
+		},
+		"validate",
+	); err != nil {
+		return err
+	}
 
-func (r *validatingHandler) InjectDecoder(decoder *admission.Decoder) error {
-	r.decoder = decoder
-	return nil
-}
-
-func (r *validatingHandler) InjectLogger(log logr.Logger) error {
-	r.log = log
 	return nil
 }
 

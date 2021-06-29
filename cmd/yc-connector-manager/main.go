@@ -211,10 +211,8 @@ func setupSAKeyConnector(mgr ctrl.Manager, clusterID string) {
 func setupSAKeyWebhook(mgr ctrl.Manager) {
 	setupLog.V(1).Info("starting " + sakeyconfig.ShortName + " webhook")
 
-	validating := webhook.NewValidatingHandler(sakeywebhook.SAKeyValidator{})
-
 	webhookCreationErrorExit(
-		webhook.RegisterForManager(mgr, &sakey.StaticAccessKey{}, validating, "validate"),
+		webhook.RegisterValidatingHandler(mgr, &sakey.StaticAccessKey{}, sakeywebhook.SAKeyValidator{}),
 		sakeyconfig.LongName,
 		setupLog,
 	)

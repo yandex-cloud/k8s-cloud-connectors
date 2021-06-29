@@ -6,10 +6,12 @@ package webhook
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -20,25 +22,26 @@ type mutatingHandler struct {
 	mutator Mutator
 }
 
-func NewMutatingHandler(m Mutator) admission.Handler {
-	return &mutatingHandler{
-		log:     logr.Discard(),
-		mutator: m,
+func RegisterMutatingHandler(mgr manager.Manager, exemplar runtime.Object, m Mutator) error {
+	decoder, err := admission.NewDecoder(mgr.GetScheme())
+	if err != nil {
+		return fmt.Errorf("unable to create decoder for scheme: %w", err)
 	}
-}
 
-func (r *mutatingHandler) InjectObject(obj runtime.Object) error {
-	r.object = obj
-	return nil
-}
+	if err := RegisterForManager(
+		mgr,
+		exemplar,
+		&mutatingHandler{
+			object:  exemplar,
+			decoder: decoder,
+			log:     mgr.GetLogger(),
+			mutator: m,
+		},
+		"mutate",
+	); err != nil {
+		return err
+	}
 
-func (r *mutatingHandler) InjectDecoder(decoder *admission.Decoder) error {
-	r.decoder = decoder
-	return nil
-}
-
-func (r *mutatingHandler) InjectLogger(log logr.Logger) error {
-	r.log = log
 	return nil
 }
 
