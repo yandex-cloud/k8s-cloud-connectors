@@ -14,12 +14,12 @@ type Mutator interface {
 	Mutate(ctx context.Context, log logr.Logger, obj runtime.Object) (runtime.Object, error)
 }
 
-type ValidationError struct {
-	error
-}
+type ValidationError struct{ err error }
 
-func NewValidationError(inner error) ValidationError {
-	return ValidationError{inner}
+func (v *ValidationError) Error() string { return v.err.Error() }
+
+func NewValidationError(inner error) *ValidationError {
+	return &ValidationError{inner}
 }
 
 type Validator interface {

@@ -19,25 +19,13 @@ import (
 type SAKeyValidator struct{}
 
 func (r SAKeyValidator) ValidateCreation(_ context.Context, log logr.Logger, obj runtime.Object) error {
-	castedObj, ok := obj.(*v1.StaticAccessKey)
-	if !ok {
-		return fmt.Errorf("object is not of the StaticAccessKey type")
-	}
-
-	log.Info("validate create", "name", castedObj.Name)
+	log.Info("validate create", "name", obj.(*v1.StaticAccessKey).Name)
 	return nil
 }
 
 func (r SAKeyValidator) ValidateUpdate(_ context.Context, log logr.Logger, current, old runtime.Object) error {
-	castedCurrent, ok := current.(*v1.StaticAccessKey)
-	if !ok {
-		return fmt.Errorf("object is not of the StaticAccessKey type")
-	}
-
-	castedOld, ok := old.(*v1.StaticAccessKey)
-	if !ok {
-		return fmt.Errorf("object is not of the StaticAccessKey type")
-	}
+	castedCurrent := current.(*v1.StaticAccessKey)
+	castedOld := old.(*v1.StaticAccessKey)
 
 	log.Info("validate update", "name", castedCurrent.Name)
 
@@ -55,11 +43,6 @@ func (r SAKeyValidator) ValidateUpdate(_ context.Context, log logr.Logger, curre
 }
 
 func (r SAKeyValidator) ValidateDeletion(_ context.Context, log logr.Logger, obj runtime.Object) error {
-	castedObj, ok := obj.(*v1.StaticAccessKey)
-	if !ok {
-		return fmt.Errorf("object is not of the StaticAccessKey type")
-	}
-
-	log.Info("validate delete", "name", castedObj.Name)
+	log.Info("validate delete", "name", obj.(*v1.StaticAccessKey).Name)
 	return nil
 }

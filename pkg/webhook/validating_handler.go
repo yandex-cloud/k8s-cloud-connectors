@@ -60,10 +60,10 @@ func (r *validatingHandler) Handle(ctx context.Context, req admission.Request) a
 	case v1.Update:
 		old := r.object.DeepCopyObject()
 		if err := r.decoder.DecodeRaw(req.Object, obj); err != nil {
-			return admission.Errored(http.StatusBadRequest, err)
+			return admission.Errored(http.StatusBadRequest, fmt.Errorf("unable to decode current object: %w", err))
 		}
 		if err := r.decoder.DecodeRaw(req.OldObject, old); err != nil {
-			return admission.Errored(http.StatusBadRequest, err)
+			return admission.Errored(http.StatusBadRequest, fmt.Errorf("unable to decode old object: %w", err))
 		}
 		return handleValidationError(r.validator.ValidateUpdate(ctx, r.log, obj, old))
 	case v1.Delete:
@@ -78,7 +78,7 @@ func (r *validatingHandler) Handle(ctx context.Context, req admission.Request) a
 
 func handleValidationError(err error) admission.Response {
 	if err != nil {
-		if errors.Is(err, ValidationError{}) {
+		if errors.Is(err, &ValidationError{}) {
 			return admission.Denied(err.Error())
 		}
 		return admission.Errored(http.StatusInternalServerError, err)

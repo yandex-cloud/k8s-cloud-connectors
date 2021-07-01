@@ -44,7 +44,7 @@ func RegisterForManager(
 	}
 
 	wh := admission.Webhook{
-		Handler: handler,
+		Handler: RecoveringWrapper{handler},
 	}
 
 	if err := wh.InjectScheme(mgr.GetScheme()); err != nil {
