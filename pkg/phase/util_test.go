@@ -10,8 +10,8 @@ import (
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	k8sfake "k8s-connectors/testing/k8s-fake"
-	logrfake "k8s-connectors/testing/logr-fake"
+	k8sfake "github.com/yandex-cloud/k8s-cloud-connectors/testing/k8s-fake"
+	logrfake "github.com/yandex-cloud/k8s-cloud-connectors/testing/logr-fake"
 )
 
 func setup(t *testing.T) (context.Context, logr.Logger, client.Client) {

@@ -12,12 +12,12 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	connectorsv1 "k8s-connectors/connector/sakey/api/v1"
-	"k8s-connectors/connector/sakey/controller/adapter"
-	sakeyconfig "k8s-connectors/connector/sakey/pkg/config"
-	"k8s-connectors/pkg/config"
-	"k8s-connectors/pkg/phase"
-	"k8s-connectors/pkg/util"
+	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/api/v1"
+	"github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/controller/adapter"
+	sakeyconfig "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/pkg/config"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/config"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/phase"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/util"
 )
 
 // staticAccessKeyReconciler reconciles a StaticAccessKey object

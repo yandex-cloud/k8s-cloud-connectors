@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	sakey "k8s-connectors/connector/sakey/api/v1"
+	sakey "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/api/v1"
 )
 
 func CredentialsFromStaticAccessKey(

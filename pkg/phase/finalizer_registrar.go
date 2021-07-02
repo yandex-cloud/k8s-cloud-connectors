@@ -11,7 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"k8s-connectors/pkg/util"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/util"
 )
 
 func RegisterFinalizer(

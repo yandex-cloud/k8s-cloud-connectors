@@ -23,7 +23,7 @@ import (
 	typed "k8s.io/client-go/kubernetes/typed/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"k8s-connectors/pkg/util"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/util"
 )
 
 type argList []string

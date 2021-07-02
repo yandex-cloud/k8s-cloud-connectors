@@ -1,12 +1,12 @@
-module k8s-connectors
+module github.com/yandex-cloud/k8s-cloud-connectors
 
 go 1.15
 
-exclude k8s-connectors/example v0.0.0
+// Exclude example directory
+exclude github.com/yandex-cloud/k8s-cloud-connectors/example v0.0.0
 
 require (
 	github.com/aws/aws-sdk-go v1.38.21
-	github.com/gin-gonic/gin v1.7.2
 	github.com/go-logr/logr v0.3.0
 	github.com/go-logr/zapr v0.2.0
 	github.com/golang/protobuf v1.4.3

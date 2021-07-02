@@ -10,7 +10,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
 
-	connectorsv1 "k8s-connectors/connector/ycr/api/v1"
+	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/api/v1"
 )
 
 func (r *yandexContainerRegistryReconciler) updateStatus(
