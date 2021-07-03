@@ -13,15 +13,15 @@ import (
 	rtcl "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func Name(object *metav1.ObjectMeta, kind string) string {
-	return kind + "-" + object.Name + "-" + "secret"
+func Name(objectName, kind string) string {
+	return kind + "-" + objectName + "-" + "secret"
 }
 
-func Exists(ctx context.Context, client rtcl.Client, object *metav1.ObjectMeta, kind string) (bool, error) {
-	secretName := Name(object, kind)
+func Exists(ctx context.Context, client rtcl.Client, objectName, namespace, kind string) (bool, error) {
+	secretName := Name(objectName, kind)
 
 	var secretObj v1.Secret
-	err := client.Get(ctx, rtcl.ObjectKey{Namespace: object.Namespace, Name: secretName}, &secretObj)
+	err := client.Get(ctx, rtcl.ObjectKey{Namespace: namespace, Name: secretName}, &secretObj)
 	if errors.IsNotFound(err) {
 		return false, nil
 	}
@@ -29,12 +29,12 @@ func Exists(ctx context.Context, client rtcl.Client, object *metav1.ObjectMeta, 
 }
 
 func Put(
-	ctx context.Context, client rtcl.Client, object *metav1.ObjectMeta, kind string, data map[string]string,
+	ctx context.Context, client rtcl.Client, objectName, namespace, kind string, data map[string]string,
 ) error {
-	secretName := Name(object, kind)
+	secretName := Name(objectName, kind)
 
 	var secretObj v1.Secret
-	err := client.Get(ctx, rtcl.ObjectKey{Namespace: object.Namespace, Name: secretName}, &secretObj)
+	err := client.Get(ctx, rtcl.ObjectKey{Namespace: namespace, Name: secretName}, &secretObj)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -42,7 +42,7 @@ func Put(
 	newState := v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
-			Namespace: object.Namespace,
+			Namespace: namespace,
 			Labels: map[string]string{
 				"kind": kind,
 			},
@@ -62,11 +62,11 @@ func Put(
 	return nil
 }
 
-func Remove(ctx context.Context, client rtcl.Client, object *metav1.ObjectMeta, kind string) error {
-	secretName := Name(object, kind)
+func Remove(ctx context.Context, client rtcl.Client, objectName, namespace, kind string) error {
+	secretName := Name(objectName, kind)
 
 	var secretObj v1.Secret
-	err := client.Get(ctx, rtcl.ObjectKey{Namespace: object.Namespace, Name: secretName}, &secretObj)
+	err := client.Get(ctx, rtcl.ObjectKey{Namespace: namespace, Name: secretName}, &secretObj)
 	if err != nil && !errors.IsNotFound(err) {
 		return fmt.Errorf("cannot get secret: %w", err)
 	}

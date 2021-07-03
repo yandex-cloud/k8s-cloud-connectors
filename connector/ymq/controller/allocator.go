@@ -36,7 +36,7 @@ func (r *yandexMessageQueueReconciler) allocateResource(
 	}
 
 	object.Status.QueueURL = res
-	if err := r.Client.Status().Update(ctx, object); err != nil {
+	if err := r.Client.Update(ctx, object); err != nil {
 		return fmt.Errorf("unable to update object status: %w", err)
 	}
 

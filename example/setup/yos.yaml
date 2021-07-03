@@ -1,0 +1,8 @@
+apiVersion: connectors.cloud.yandex.com/v1
+kind: YandexObjectStorage
+metadata:
+  namespace: yandex-cloud-connectors-example
+  name: example-object-storage
+spec:
+  name: ycc-example-object-storage
+  SAKeyName: example-sakey

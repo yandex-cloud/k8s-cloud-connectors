@@ -13,7 +13,7 @@ func ContainsString(haystack []string, needle string) bool {
 }
 
 func RemoveString(slice []string, s string) []string {
-	result := []string{}
+	var result []string
 	for _, item := range slice {
 		if item == s {
 			continue

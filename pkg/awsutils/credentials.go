@@ -31,7 +31,7 @@ func CredentialsFromStaticAccessKey(
 	var secret v1.Secret
 	if err := cl.Get(
 		ctx, types.NamespacedName{
-			Namespace: "default",
+			Namespace: namespace,
 			Name:      key.Status.SecretName,
 		}, &secret,
 	); err != nil {

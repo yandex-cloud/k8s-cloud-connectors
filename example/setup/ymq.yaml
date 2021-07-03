@@ -1,0 +1,8 @@
+apiVersion: connectors.cloud.yandex.com/v1
+kind: YandexMessageQueue
+metadata:
+  namespace: yandex-cloud-connectors-example
+  name: example-message-queue
+spec:
+  name: ycc-example-message-queue
+  SAKeyName: example-sakey

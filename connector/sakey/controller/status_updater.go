@@ -23,8 +23,11 @@ func (r *staticAccessKeyReconciler) updateStatus(
 
 	// Do not mess this fields up, KeyId in a cloud is
 	// another entity.
-	object.Status.KeyID = res.Id
+	if object.Status.KeyID == res.Id {
+		return nil
+	}
 
+	object.Status.KeyID = res.Id
 	if err := r.Client.Update(ctx, object); err != nil {
 		return fmt.Errorf("unable to update object status: %w", err)
 	}
