@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ycc-example-worker
+  namespace: yandex-cloud-connectors-example
+  labels:
+    control-plane: ycc-example-worker
+spec:
+  selector:
+    matchLabels:
+      control-plane: ycc-example-worker
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        control-plane: ycc-example-worker
+    spec:
+      containers:
+        - image: cr.yandex/crptp7j81e7caog8r6gq/ycc-example-worker:latest
+          name: worker
+          resources:
+            limits:
+              cpu: 100m
+              memory: 30Mi
+            requests:
+              cpu: 100m
+              memory: 20Mi
+          env:
+            - name: S3_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: yos-example-object-storage-configmap
+                  key: name
+            - name: YMQ_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ymq-example-message-queue-configmap
+                  key: URL
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: sakey-example-sakey-secret
+                  key: key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sakey-example-sakey-secret
+                  key: secret
+      terminationGracePeriodSeconds: 10
