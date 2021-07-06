@@ -16,10 +16,19 @@ type Mutator interface {
 
 type ValidationError struct{ err error }
 
-func (v *ValidationError) Error() string { return v.err.Error() }
+func (v ValidationError) Error() string { return v.err.Error() }
 
-func NewValidationError(inner error) *ValidationError {
-	return &ValidationError{inner}
+func (v ValidationError) Unwrap() error {
+	return v.err
+}
+
+func (v ValidationError) Is(err error) bool {
+	_, ok := err.(ValidationError) //nolint:errorlint
+	return ok
+}
+
+func NewValidationError(inner error) ValidationError {
+	return ValidationError{inner}
 }
 
 type Validator interface {
