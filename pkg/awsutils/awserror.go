@@ -27,3 +27,7 @@ func CheckSQSDoesNotExist(err error) bool {
 func CheckS3DoesNotExist(err error) bool {
 	return checkAWSErrorByCode(err, s3.ErrCodeNoSuchBucket)
 }
+
+func CheckS3AlreadyOwnedByYou(err error) bool {
+	return checkAWSErrorByCode(err, s3.ErrCodeBucketAlreadyOwnedByYou)
+}
