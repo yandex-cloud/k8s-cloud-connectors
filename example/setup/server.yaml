@@ -3,20 +3,18 @@ kind: Deployment
 metadata:
   name: ycc-example-server
   namespace: yandex-cloud-connectors-example
-  labels:
-    control-plane: ycc-example-server
 spec:
   selector:
     matchLabels:
-      control-plane: ycc-example-server
+      control-plane: server
   replicas: 1
   template:
     metadata:
       labels:
-        control-plane: ycc-example-server
+        control-plane: server
     spec:
       containers:
-        - image: cr.yandex/crptp7j81e7caog8r6gq/ycc-example-server:latest
+        - image: cr.yandex/crptp7j81e7caog8r6gq/ycc-example/server:latest
           name: server
           ports:
             - containerPort: 8080

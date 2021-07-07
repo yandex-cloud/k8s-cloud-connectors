@@ -6,7 +6,9 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"log"
+	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -15,60 +17,83 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 
 	"example/pkg/awscompatibility"
-	"example/pkg/util"
 )
 
-func processMessage(client *s3.S3, s3URL, msg *string) error {
-	_, err := client.PutObject(&s3.PutObjectInput{
-		Body:                      bytes.NewReader([]byte("message: " + *msg + "time: " + time.Now().String())),
-		Bucket:                    s3URL,
-		Key:                       util.StrPtr("msg.txt"),
-	})
+func getEnvOrDie(key string) string {
+	res, ok := os.LookupEnv(key)
+	if !ok {
+		log.Fatal("unable to get environmental variable \"" + key + "\"")
+	}
+	return res
+}
+
+func processMessage(client *s3.S3, s3URL, msg string) error {
+	var unencoded map[string]string
+	if err := json.Unmarshal([]byte(msg), &unencoded); err != nil {
+		return err
+	}
+
+	filename := unencoded["filename"]
+
+	_, err := client.PutObject(
+		&s3.PutObjectInput{
+			Body:   bytes.NewReader([]byte("time: " + time.Now().String() + "\nmessage: " + unencoded["content"])),
+			Bucket: &s3URL,
+			Key:    &filename,
+		},
+	)
 	return err
 }
 
+// main function of Worker infinitely polls YMQ specified by environmental variables and processes
+// queries placed there
 func main() {
-	key, secret := util.GetEnvOrDie("AWS_ACCESS_KEY_ID"), util.GetEnvOrDie("AWS_SECRET_ACCESS_KEY")
+	key, secret := getEnvOrDie("AWS_ACCESS_KEY_ID"), getEnvOrDie("AWS_SECRET_ACCESS_KEY")
 
 	ymq, err := awscompatibility.NewSQSClient(context.TODO(), credentials.NewStaticCredentials(key, secret, ""))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	ymqURL := util.StrPtr(util.GetEnvOrDie("YMQ_URL"))
+	ymqURL := getEnvOrDie("YMQ_URL")
 
 	s3Client, err := awscompatibility.NewS3Client(context.TODO(), credentials.NewStaticCredentials(key, secret, ""))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	s3Name := util.StrPtr(util.GetEnvOrDie("S3_URL"))
+	s3Name := getEnvOrDie("S3_URL")
 
 	for {
-		messages, err := ymq.ReceiveMessage(&sqs.ReceiveMessageInput{
-			AttributeNames: []*string{
-				aws.String(sqs.MessageSystemAttributeNameSentTimestamp),
+		numberOfMessages := int64(10)
+		messages, err := ymq.ReceiveMessage(
+			&sqs.ReceiveMessageInput{
+				AttributeNames: []*string{
+					aws.String(sqs.MessageSystemAttributeNameSentTimestamp),
+				},
+				MessageAttributeNames: []*string{
+					aws.String(sqs.QueueAttributeNameAll),
+				},
+				MaxNumberOfMessages: &numberOfMessages,
+				QueueUrl:            &ymqURL,
 			},
-			MessageAttributeNames: []*string{
-				aws.String(sqs.QueueAttributeNameAll),
-			},
-			MaxNumberOfMessages: util.Int64Ptr(10),
-			QueueUrl:            ymqURL,
-		})
+		)
 		if err != nil {
 			log.Print(err)
 			continue
 		}
 
 		for _, msg := range messages.Messages {
-			if err := processMessage(s3Client, s3Name, msg.Body); err != nil {
+			if err := processMessage(s3Client, s3Name, *msg.Body); err != nil {
 				log.Print(err)
 				continue
 			}
-			_, err = ymq.DeleteMessage(&sqs.DeleteMessageInput{
-				QueueUrl:      ymqURL,
-				ReceiptHandle: msg.ReceiptHandle,
-			})
+			_, err = ymq.DeleteMessage(
+				&sqs.DeleteMessageInput{
+					QueueUrl:      &ymqURL,
+					ReceiptHandle: msg.ReceiptHandle,
+				},
+			)
 			if err != nil {
 				log.Print(err)
 				continue

@@ -1,8 +1,8 @@
 # Тестовый сценарий
 
 ## Описание сценария
-Отправляете приложению `POST`-запрос `/report`, в `S3` кладётся файл, содержащий
-сообщение, переданное как аргумент запроса `message` и время обработки запроса.
+Отправляете запрос `/report`, в `S3` кладётся файл с именем, переданным как аргумент `filename` и содержащий
+сообщение, переданное в теле запроса и время обработки запроса.
 
 - Сервер принимает POST-запросы;
 - Кладёт таску в очередь;
@@ -17,36 +17,53 @@
 ```shell
 REGISTRY=cr.yandex/crptp7j81e7caog8r6gq
 
-docker build -t ${REGISTRY}/ycc-example-server:latest --file server.dockerfile .
-docker push ${REGISTRY}/ycc-example-server:latest
+docker build -t ${REGISTRY}/ycc-example/server:latest --file server.dockerfile .
+docker push ${REGISTRY}/ycc-example/server:latest
 
-docker build -t ${REGISTRY}/ycc-example-worker:latest --file worker.dockerfile .
-docker push ${REGISTRY}/ycc-example-worker:latest
+docker build -t ${REGISTRY}/ycc-example/worker:latest --file worker.dockerfile .
+docker push ${REGISTRY}/ycc-example/worker:latest
 ```
 
-*Не забудьте подставить этот реестр в `server.yaml` и `worker.yaml`, чтобы `Deployment`-ы брали его откуда нужно.*
+*P.S.: в дальнейшем эти образы будут лежать в общем реестре Yandex Cloud*
+
+*Не забудьте подставить этот реестр в `server.yaml` и `worker.yaml`, чтобы `Deployment`-ы брали образ откуда нужно.*
 
 Затем в нашем фолдере новый сервисный аккаунт, который будет ответственным за это приложение и выдать ему права `ymq.editor` и `storage.uploader`.
 
-После чего устанавливаем в кластер (предполагается, что он уже настроен, и его данные лежат в `~/.kube/config`) **YandexCloudConnectors**:
+После чего устанавливаем в кластер (предполагается, что он уже настроен) **YandexCloudConnectors**:
 
 ```shell
 TODO когда у нас появится итоговая инструкция, надо вставить её сюда
 ```
 
-Ждём, пока *pod* с менеджером перейдёт в состояние `Running`, затем применяем к кластеру `yaml`-ы с нашим приложением (не забывайте проставить свой реестр в подах):
+Ждём, пока *pod* с менеджером перейдёт в состояние `Running`, например, так:
 
 ```shell
-kubectl apply -f setup/ns.yaml
+#!/bin/bash
 
-kubectl apply -f setup/sakey.yaml
-kubectl apply -f setup/ycr.yaml
-kubectl apply -f setup/yos.yaml
-kubectl apply -f setup/ymq.yaml
-
-kubectl apply -f setup/service.yaml
-kubectl apply -f setup/server.yaml
-kubectl apply -f setup/worker.yaml
+until [ "$(kubectl -n yandex-cloud-connectors get pod -l control-plane=connector-manager --output=json | jq '.items[0].status.phase')" = '"Running"' ]; do
+  echo "Not yet Running"
+  sleep 1
+done
 ```
 
-Теперь можно сделать 
+Затем применяем к кластеру `yaml`-ы с нашим приложением (не забывайте проставить свой реестр в подах):
+
+```shell
+kubectl apply -k setup
+```
+
+Теперь можно проверить работоспособность этого подхода. Сначала узнаем внешний **IP** вашего кластера, например,
+такой командой:
+
+```shell
+CLUSTER_ENDPOINT=$(yc managed-kubernetes cluster get --name YOUR_CLUSTER_NAME --format json | jq '.master.endpoints.external_v4_endpoint' | tr -d '"')
+```
+
+Отправим нашему серверу запрос:
+
+```shell
+curl -X POST -d "Hello Yandex Cloud Connectors!" "${CLUSTER_ENDPOINT}/report?filename=greetings.txt"
+```
+
+Заглядываем в веб-интерфейс **Yandex Object Storage** и видим появившийся файл!

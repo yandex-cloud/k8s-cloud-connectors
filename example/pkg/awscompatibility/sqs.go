@@ -12,21 +12,19 @@ import (
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
-
-	"example/pkg/config"
 )
 
 func NewSQSClient(_ context.Context, cred *credentials.Credentials) (*sqs.SQS, error) {
 	ses, err := session.NewSession(
 		&aws.Config{
 			Credentials: cred,
-			Endpoint:    aws.String(config.SqsEndpoint),
+			Endpoint:    aws.String(SqsEndpoint),
 			EndpointResolver: endpoints.ResolverFunc(
 				func(service, region string, opts ...func(*endpoints.Options)) (endpoints.ResolvedEndpoint, error) {
-					return endpoints.ResolvedEndpoint{URL: config.SqsEndpoint}, nil
+					return endpoints.ResolvedEndpoint{URL: SqsEndpoint}, nil
 				},
 			),
-			Region:           aws.String(config.SqsRegion),
+			Region:           aws.String(SqsRegion),
 			S3ForcePathStyle: aws.Bool(true),
 		},
 	)

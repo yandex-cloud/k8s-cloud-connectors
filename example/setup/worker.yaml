@@ -3,20 +3,18 @@ kind: Deployment
 metadata:
   name: ycc-example-worker
   namespace: yandex-cloud-connectors-example
-  labels:
-    control-plane: ycc-example-worker
 spec:
   selector:
     matchLabels:
-      control-plane: ycc-example-worker
+      control-plane: worker
   replicas: 1
   template:
     metadata:
       labels:
-        control-plane: ycc-example-worker
+        control-plane: worker
     spec:
       containers:
-        - image: cr.yandex/crptp7j81e7caog8r6gq/ycc-example-worker:latest
+        - image: cr.yandex/crptp7j81e7caog8r6gq/ycc-example/worker:latest
           name: worker
           resources:
             limits:

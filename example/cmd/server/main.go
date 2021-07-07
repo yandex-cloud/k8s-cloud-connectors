@@ -5,19 +5,39 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/gin-gonic/gin"
 
 	"example/pkg/awscompatibility"
-	"example/pkg/util"
 )
 
+func getEnvOrDie(key string) string {
+	res, ok := os.LookupEnv(key)
+	if !ok {
+		log.Fatal("unable to get environmental variable \"" + key + "\"")
+	}
+	return res
+}
+
+func composeMessage(filename, contents string) *string {
+	res, _ := json.Marshal(map[string]string{
+		"filename" : filename,
+		"content" : contents,
+	})
+
+	strRes := string(res)
+
+	return &strRes
+}
+
 func main() {
-	key, secret := util.GetEnvOrDie("AWS_ACCESS_KEY_ID"), util.GetEnvOrDie("AWS_SECRET_ACCESS_KEY")
+	key, secret := getEnvOrDie("AWS_ACCESS_KEY_ID"), getEnvOrDie("AWS_SECRET_ACCESS_KEY")
 
 	ymq, err := awscompatibility.NewSQSClient(context.TODO(), credentials.NewStaticCredentials(key, secret, ""))
 	if err != nil {
@@ -25,26 +45,44 @@ func main() {
 	}
 	log.Printf("ymq client with %s/%s built\n", key, secret)
 
-	ymqURL := util.StrPtr(util.GetEnvOrDie("YMQ_URL"))
-	log.Printf("ymq url is %s\n", *ymqURL)
+	ymqURL := getEnvOrDie("YMQ_URL")
+	log.Printf("ymq url is %s\n", ymqURL)
 
-	r := gin.Default()
-	r.POST("/report", func(c *gin.Context) {
-		if _, err := ymq.SendMessage(&sqs.SendMessageInput{
-			MessageBody: util.StrPtr(c.Query("message")),
-			QueueUrl:    ymqURL,
-		}); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"message": err.Error(),
-			})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{
-			"message": "ok",
-		})
-	})
+	http.HandleFunc(
+		"/report", func(w http.ResponseWriter, req *http.Request) {
+			resp := map[string]string{
+				"message": "ok",
+			}
 
-	if err := r.Run(); err != nil {
-		log.Fatal(err)
-	}
+			defer func() {
+				bytes, _ := json.Marshal(resp)
+				_, _ = w.Write(bytes)
+			}()
+
+			defer func() { _ = req.Body.Close() }()
+			filename, ok := req.URL.Query()["filename"]
+			if !ok || len(filename) == 0 {
+				resp["message"] = "no filename provided in query"
+				return
+			}
+
+			msg, err := ioutil.ReadAll(req.Body)
+			if err != nil {
+				resp["message"] = err.Error()
+				return
+			}
+
+			if _, err := ymq.SendMessage(
+				&sqs.SendMessageInput{
+					MessageBody: composeMessage(filename[0], string(msg)),
+					QueueUrl:    &ymqURL,
+				},
+			); err != nil {
+				resp["message"] = err.Error()
+				return
+			}
+		},
+	)
+
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
