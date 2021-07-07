@@ -38,13 +38,6 @@ func (r *argList) Set(val string) error {
 	return nil
 }
 
-func logAndExitOnError(log logr.Logger, err error, msg string) {
-	if err != nil {
-		log.Error(err, msg)
-		os.Exit(1)
-	}
-}
-
 const (
 	serverKeyFile = "server-key.pem"
 	serverCSRFile = "server.csr"
@@ -99,51 +92,74 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err := execute(log, secretName, serviceName, namespaceName, mutatingWebhooks, validatingWebhooks); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+}
+
+func execute(log logr.Logger, secretName, serviceName, namespaceName string, mutating, validating []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), certifierTotalTimeout)
 	defer cancel()
 
 	tmpdir, err := ioutil.TempDir("", "cert_tmp_*")
-	logAndExitOnError(log, err, "unable to create temporary directory")
+	if err != nil {
+		return fmt.Errorf("unable to create temporary directory: %w", err)
+	}
 	defer func() { _ = os.RemoveAll(tmpdir) }()
 
 	key, err := createSecretKey(log, tmpdir)
-	logAndExitOnError(log, err, "unable to generate secret key")
+	if err != nil {
+		return fmt.Errorf("unable to generate secret key: %w", err)
+	}
 
 	csr, err := createCertificates(log, tmpdir, serviceName, namespaceName)
-	logAndExitOnError(log, err, "unable to create certificate")
+	if err != nil {
+		return fmt.Errorf("unable to create certificate: %w", err)
+	}
 
 	config, err := ctrl.GetConfig()
-	logAndExitOnError(log, err, "unable to get kubernetes config")
+	if err != nil {
+		return fmt.Errorf("unable to get kubernetes config: %w", err)
+	}
 
 	client, err := kubernetes.NewForConfig(config)
-	logAndExitOnError(log, err, "unable to create kubernetes client from config")
+	if err != nil {
+		return fmt.Errorf("unable to create kubernetes client from config: %w", err)
+	}
 
 	cert, err := signCertificate(ctx, log, client, serviceName, namespaceName, csr)
-	logAndExitOnError(log, err, "unable to sign certificate")
+	if err != nil {
+		return fmt.Errorf("unable to sign certificate: %w", err)
+	}
 
-	logAndExitOnError(
+	if err := putKeyAndCertToSecret(
+		ctx,
 		log,
-		putKeyAndCertToSecret(ctx, log, client.CoreV1().Secrets(namespaceName), namespaceName, secretName, key, cert),
-		"unable to create secret with certificate",
-	)
-
-	for _, mutatingWebhook := range mutatingWebhooks {
-		log.Info("patching mutating webhook: " + mutatingWebhook)
-		logAndExitOnError(
-			log,
-			patchMutatingConfig(ctx, client, mutatingWebhook, namespaceName, cert),
-			"unable to patch config",
-		)
+		client.CoreV1().Secrets(namespaceName),
+		namespaceName,
+		secretName,
+		key,
+		cert,
+	); err != nil {
+		return fmt.Errorf("unable to create secret with certificate: %w", err)
 	}
 
-	for _, validatingWebhook := range validatingWebhooks {
-		log.Info("patching validating webhook: " + validatingWebhook)
-		logAndExitOnError(
-			log,
-			patchValidatingConfig(ctx, client, validatingWebhook, namespaceName, cert),
-			"unable to patch config",
-		)
+	for _, webhook := range mutating {
+		log.Info("patching mutating webhook: " + webhook)
+		if err := patchMutatingConfig(ctx, client, webhook, namespaceName, cert); err != nil {
+			return fmt.Errorf("unable to patch config: %w", err)
+		}
 	}
+
+	for _, webhook := range validating {
+		log.Info("patching validating webhook: " + webhook)
+		if err := patchValidatingConfig(ctx, client, webhook, namespaceName, cert); err != nil {
+			return fmt.Errorf("unable to patch config: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func createSecretKey(log logr.Logger, tmpdir string) ([]byte, error) {
