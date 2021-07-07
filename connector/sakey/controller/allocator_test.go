@@ -11,7 +11,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	sakeyconfig "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/pkg/config"
+	sakeyconfig "k8s-connectors/connector/sakey/pkg/config"
 )
 
 func TestAllocate(t *testing.T) {

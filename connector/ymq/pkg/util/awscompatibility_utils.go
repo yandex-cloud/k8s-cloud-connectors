@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 
-	"github.com/yandex-cloud/k8s-cloud-connectors/connector/ymq/pkg/config"
+	"k8s-connectors/connector/ymq/pkg/config"
 )
 
 func NewSQSClient(_ context.Context, cred *credentials.Credentials) (*sqs.SQS, error) {

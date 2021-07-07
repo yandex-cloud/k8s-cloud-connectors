@@ -3,7 +3,7 @@
 
 package config
 
-import "github.com/yandex-cloud/k8s-cloud-connectors/pkg/config"
+import "k8s-connectors/pkg/config"
 
 const (
 	FinalizerName = "finalizer.sakey.connectors.cloud.yandex.com"

@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/types"
 
-	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/api/v1"
-	ycrutils "github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/pkg/util"
+	connectorsv1 "k8s-connectors/connector/ycr/api/v1"
+	ycrutils "k8s-connectors/connector/ycr/pkg/util"
 )
 
 func TestUpdateStatus(t *testing.T) {

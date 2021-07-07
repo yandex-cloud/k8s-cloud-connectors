@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/config"
+	"k8s-connectors/pkg/config"
 )
 
 func TestAllocate(t *testing.T) {

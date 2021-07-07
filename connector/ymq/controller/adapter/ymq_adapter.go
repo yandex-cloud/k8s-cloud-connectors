@@ -8,8 +8,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/sqs"
 
-	ymqutil "github.com/yandex-cloud/k8s-cloud-connectors/connector/ymq/pkg/util"
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/util"
+	ymqutil "k8s-connectors/connector/ymq/pkg/util"
+	"k8s-connectors/pkg/util"
 )
 
 type YandexMessageQueueAdapterSDK struct {

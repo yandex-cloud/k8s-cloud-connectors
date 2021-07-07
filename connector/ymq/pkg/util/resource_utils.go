@@ -6,8 +6,8 @@ package util
 import (
 	"strconv"
 
-	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/ymq/api/v1"
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/util"
+	connectorsv1 "k8s-connectors/connector/ymq/api/v1"
+	"k8s-connectors/pkg/util"
 )
 
 const (

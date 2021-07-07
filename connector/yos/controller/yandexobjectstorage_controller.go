@@ -13,14 +13,14 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/yos/api/v1"
-	"github.com/yandex-cloud/k8s-cloud-connectors/connector/yos/controller/adapter"
-	yosconfig "github.com/yandex-cloud/k8s-cloud-connectors/connector/yos/pkg/config"
-	yosutils "github.com/yandex-cloud/k8s-cloud-connectors/connector/yos/pkg/util"
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/awsutils"
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/config"
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/phase"
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/util"
+	connectorsv1 "k8s-connectors/connector/yos/api/v1"
+	"k8s-connectors/connector/yos/controller/adapter"
+	yosconfig "k8s-connectors/connector/yos/pkg/config"
+	yosutils "k8s-connectors/connector/yos/pkg/util"
+	"k8s-connectors/pkg/awsutils"
+	"k8s-connectors/pkg/config"
+	"k8s-connectors/pkg/phase"
+	"k8s-connectors/pkg/util"
 )
 
 // yandexObjectStorageReconciler reconciles a YandexContainerRegistry object

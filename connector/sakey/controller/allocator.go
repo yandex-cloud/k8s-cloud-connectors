@@ -11,11 +11,11 @@ import (
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/iam/v1/awscompatibility"
 	"go.uber.org/multierr"
 
-	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/api/v1"
-	sakeyconfig "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/pkg/config"
-	sakeyutils "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/pkg/util"
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/errorhandling"
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/secret"
+	connectorsv1 "k8s-connectors/connector/sakey/api/v1"
+	sakeyconfig "k8s-connectors/connector/sakey/pkg/config"
+	sakeyutils "k8s-connectors/connector/sakey/pkg/util"
+	"k8s-connectors/pkg/errorhandling"
+	"k8s-connectors/pkg/secret"
 )
 
 func (r *staticAccessKeyReconciler) allocateResource(

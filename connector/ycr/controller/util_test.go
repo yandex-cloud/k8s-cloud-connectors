@@ -13,11 +13,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/api/v1"
-	"github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/controller/adapter"
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/config"
-	k8sfake "github.com/yandex-cloud/k8s-cloud-connectors/testing/k8s-fake"
-	logrfake "github.com/yandex-cloud/k8s-cloud-connectors/testing/logr-fake"
+	connectorsv1 "k8s-connectors/connector/ycr/api/v1"
+	"k8s-connectors/connector/ycr/controller/adapter"
+	"k8s-connectors/pkg/config"
+	k8sfake "k8s-connectors/testing/k8s-fake"
+	logrfake "k8s-connectors/testing/logr-fake"
 )
 
 func setup(t *testing.T) (

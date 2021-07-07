@@ -12,12 +12,12 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/api/v1"
-	"github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/controller/adapter"
-	ycrconfig "github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/pkg/config"
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/config"
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/phase"
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/util"
+	connectorsv1 "k8s-connectors/connector/ycr/api/v1"
+	"k8s-connectors/connector/ycr/controller/adapter"
+	ycrconfig "k8s-connectors/connector/ycr/pkg/config"
+	"k8s-connectors/pkg/config"
+	"k8s-connectors/pkg/phase"
+	"k8s-connectors/pkg/util"
 )
 
 // yandexContainerRegistryReconciler reconciles a YandexContainerRegistry object

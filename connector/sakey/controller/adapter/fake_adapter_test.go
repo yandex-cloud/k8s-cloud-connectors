@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/api/v1"
-	sakeyconfig "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/pkg/config"
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/errorhandling"
+	connectorsv1 "k8s-connectors/connector/sakey/api/v1"
+	sakeyconfig "k8s-connectors/connector/sakey/pkg/config"
+	"k8s-connectors/pkg/errorhandling"
 )
 
 func setup() (context.Context, StaticAccessKeyAdapter) {

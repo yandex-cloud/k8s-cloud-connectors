@@ -10,8 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/go-logr/logr"
 
-	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/ymq/api/v1"
-	ymqutils "github.com/yandex-cloud/k8s-cloud-connectors/connector/ymq/pkg/util"
+	connectorsv1 "k8s-connectors/connector/ymq/api/v1"
+	ymqutils "k8s-connectors/connector/ymq/pkg/util"
 )
 
 func (r *yandexMessageQueueReconciler) matchSpec(

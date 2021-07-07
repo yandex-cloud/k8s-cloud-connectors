@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/util"
+	"k8s-connectors/pkg/util"
 )
 
 type FakeClient struct {

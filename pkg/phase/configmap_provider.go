@@ -10,7 +10,7 @@ import (
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/configmap"
+	"k8s-connectors/pkg/configmap"
 )
 
 func ProvideConfigmap(

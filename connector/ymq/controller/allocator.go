@@ -10,9 +10,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/go-logr/logr"
 
-	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/ymq/api/v1"
-	ymqutils "github.com/yandex-cloud/k8s-cloud-connectors/connector/ymq/pkg/util"
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/awsutils"
+	connectorsv1 "k8s-connectors/connector/ymq/api/v1"
+	ymqutils "k8s-connectors/connector/ymq/pkg/util"
+	"k8s-connectors/pkg/awsutils"
 )
 
 func (r *yandexMessageQueueReconciler) allocateResource(
