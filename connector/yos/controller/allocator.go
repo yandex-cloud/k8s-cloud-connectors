@@ -33,8 +33,10 @@ func (r *yandexObjectStorageReconciler) allocateResource(
 		}
 	}
 
-	err = r.adapter.Create(ctx, sdk, object.Spec.Name)
-	if err != nil {
+	if err := r.adapter.Create(ctx, sdk, object.Spec.Name); err != nil && !awsutils.CheckS3AlreadyOwnedByYou(err) {
+		// NOTE (covariance) If we have not found bucket in List, but cannot create it because of
+		// error 409 aka "Already Owned By You", it means that we succeeded on creation, but list does not
+		// yet reflect that changes.
 		return fmt.Errorf("unable to create resource: %w", err)
 	}
 	log.Info("successful")
