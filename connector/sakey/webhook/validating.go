@@ -5,7 +5,6 @@ package webhook
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,12 +29,10 @@ func (r *SAKeyValidator) ValidateUpdate(_ context.Context, log logr.Logger, curr
 	log.Info("validate update", "name", util.NamespacedName(castedCurrent))
 
 	if castedCurrent.Spec.ServiceAccountID != castedOld.Spec.ServiceAccountID {
-		return webhook.NewValidationError(
-			fmt.Errorf(
-				"binded service account must be immutable, was changed from %s to %s",
-				castedOld.Spec.ServiceAccountID,
-				castedCurrent.Spec.ServiceAccountID,
-			),
+		return webhook.NewValidationErrorf(
+			"bound service account must be immutable, was changed from %s to %s",
+			castedOld.Spec.ServiceAccountID,
+			castedCurrent.Spec.ServiceAccountID,
 		)
 	}
 

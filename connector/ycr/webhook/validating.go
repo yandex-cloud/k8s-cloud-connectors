@@ -5,7 +5,6 @@ package webhook
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,12 +29,10 @@ func (r *YCRValidator) ValidateUpdate(_ context.Context, log logr.Logger, curren
 	log.Info("validate update", "name", util.NamespacedName(castedCurrent))
 
 	if castedCurrent.Spec.FolderID != castedOld.Spec.FolderID {
-		return webhook.NewValidationError(
-			fmt.Errorf(
-				"folder id must be immutable, was changed from %s to %s",
-				castedOld.Spec.FolderID,
-				castedCurrent.Spec.FolderID,
-			),
+		return webhook.NewValidationErrorf(
+			"folder id must be immutable, was changed from %s to %s",
+			castedOld.Spec.FolderID,
+			castedCurrent.Spec.FolderID,
 		)
 	}
 

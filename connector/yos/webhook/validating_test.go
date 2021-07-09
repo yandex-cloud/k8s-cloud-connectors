@@ -70,6 +70,6 @@ func TestUpdateValidation(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-		assert.True(t, errors.Is(err, webhook.ValidationError{}))
+		assert.True(t, errors.Is(err, &webhook.ValidationError{}))
 	})
 }

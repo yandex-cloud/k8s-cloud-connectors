@@ -25,8 +25,9 @@ func (r *YMQValidator) ValidateCreation(_ context.Context, log logr.Logger, obj 
 	log.Info("validate create", "name", util.NamespacedName(castedObj))
 
 	if castedObj.Spec.FifoQueue && !strings.HasSuffix(castedObj.Spec.Name, ".fifo") {
-		return webhook.NewValidationError(
-			fmt.Errorf("name of FIFO queue must end with \".fifo\", currently is: %s", castedObj.Spec.Name),
+		return webhook.NewValidationErrorf(
+			"name of FIFO queue must end with \".fifo\", currently is: %s",
+			castedObj.Spec.Name,
 		)
 	}
 
@@ -50,19 +51,23 @@ func (r *YMQValidator) ValidateUpdate(_ context.Context, log logr.Logger, curren
 	log.Info("validate update", "name", util.NamespacedName(castedCurrent))
 
 	if castedCurrent.Spec.Name != castedOld.Spec.Name {
-		return webhook.NewValidationError(fmt.Errorf(
-			"name of YandexMessageQueue must be immutable, was changed from %s to %s",
-			castedOld.Spec.Name,
-			castedCurrent.Spec.Name,
-		))
+		return webhook.NewValidationError(
+			fmt.Errorf(
+				"name of YandexMessageQueue must be immutable, was changed from %s to %s",
+				castedOld.Spec.Name,
+				castedCurrent.Spec.Name,
+			),
+		)
 	}
 
 	if castedCurrent.Spec.FifoQueue != castedOld.Spec.FifoQueue {
-		return webhook.NewValidationError(fmt.Errorf(
-			"FIFO flag of YandexMessageQueue must be immutable, was changed from %t to %t",
-			castedOld.Spec.FifoQueue,
-			castedCurrent.Spec.FifoQueue,
-		))
+		return webhook.NewValidationError(
+			fmt.Errorf(
+				"FIFO flag of YandexMessageQueue must be immutable, was changed from %t to %t",
+				castedOld.Spec.FifoQueue,
+				castedCurrent.Spec.FifoQueue,
+			),
+		)
 	}
 
 	return nil

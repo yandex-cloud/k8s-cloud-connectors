@@ -5,7 +5,6 @@ package webhook
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,11 +28,11 @@ func (r *YOSValidator) ValidateUpdate(ctx context.Context, log logr.Logger, curr
 	log.Info("validate update", "name", util.NamespacedName(castedCurrent))
 
 	if castedOld.Spec.Name != castedCurrent.Spec.Name {
-		return webhook.NewValidationError(fmt.Errorf(
+		return webhook.NewValidationErrorf(
 			"name of YandexObjectStorage must be immutable, was changed from %s to %s",
 			castedOld.Spec.Name,
 			castedCurrent.Spec.Name,
-		))
+		)
 	}
 
 	return nil

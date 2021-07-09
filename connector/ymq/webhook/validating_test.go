@@ -71,7 +71,7 @@ func TestCreateValidation(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-		assert.True(t, errors.Is(err, webhook.ValidationError{}))
+		assert.True(t, errors.Is(err, &webhook.ValidationError{}))
 	})
 
 	t.Run("usual queue with fifo suffix is invalid", func(t *testing.T) {
@@ -89,7 +89,7 @@ func TestCreateValidation(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-		assert.True(t, errors.Is(err, webhook.ValidationError{}))
+		assert.True(t, errors.Is(err, &webhook.ValidationError{}))
 	})
 
 	t.Run("usual queue with content based deduplication is invalid", func(t *testing.T) {
@@ -108,7 +108,7 @@ func TestCreateValidation(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-		assert.True(t, errors.Is(err, webhook.ValidationError{}))
+		assert.True(t, errors.Is(err, &webhook.ValidationError{}))
 	})
 }
 
@@ -157,7 +157,7 @@ func TestUpdateValidation(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-		assert.True(t, errors.Is(err, webhook.ValidationError{}))
+		assert.True(t, errors.Is(err, &webhook.ValidationError{}))
 	})
 
 	t.Run("queue type change is invalid update", func(t *testing.T) {
@@ -181,6 +181,6 @@ func TestUpdateValidation(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-		assert.True(t, errors.Is(err, webhook.ValidationError{}))
+		assert.True(t, errors.Is(err, &webhook.ValidationError{}))
 	})
 }

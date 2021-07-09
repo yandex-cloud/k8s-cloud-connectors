@@ -89,7 +89,7 @@ func TestUpdateValidation(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-		assert.True(t, errors.Is(err, webhook.ValidationError{}))
+		assert.True(t, errors.Is(err, &webhook.ValidationError{}))
 	})
 
 	t.Run("folder and name change is invalid update", func(t *testing.T) {
@@ -113,6 +113,6 @@ func TestUpdateValidation(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-		assert.True(t, errors.Is(err, webhook.ValidationError{}))
+		assert.True(t, errors.Is(err, &webhook.ValidationError{}))
 	})
 }

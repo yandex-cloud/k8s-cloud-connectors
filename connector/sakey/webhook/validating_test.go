@@ -22,7 +22,7 @@ func setupValidation(t *testing.T) (context.Context, webhook.Validator, logr.Log
 }
 
 func TestUpdateValidation(t *testing.T) {
-	t.Run("no change is valid update", func(t *testing.T) {
+	t.Run("no-change-is-valid-update", func(t *testing.T) {
 		// Arrange
 		ctx, wh, log := setupValidation(t)
 		old := v1.StaticAccessKey{
@@ -39,7 +39,7 @@ func TestUpdateValidation(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("service account ID change is invalid update", func(t *testing.T) {
+	t.Run("service-account-ID-change-is-invalid-update", func(t *testing.T) {
 		// Arrange
 		ctx, wh, log := setupValidation(t)
 		old := v1.StaticAccessKey{
@@ -54,6 +54,6 @@ func TestUpdateValidation(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-		assert.True(t, errors.Is(err, webhook.ValidationError{}))
+		assert.True(t, errors.Is(err, &webhook.ValidationError{}))
 	})
 }
