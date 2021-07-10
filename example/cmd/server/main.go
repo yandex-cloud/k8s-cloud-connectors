@@ -54,12 +54,13 @@ func main() {
 				"message": "ok",
 			}
 
+			defer func() { _ = req.Body.Close() }()
+
 			defer func() {
 				bytes, _ := json.Marshal(resp)
 				_, _ = w.Write(bytes)
 			}()
 
-			defer func() { _ = req.Body.Close() }()
 			filename, ok := req.URL.Query()["filename"]
 			if !ok || len(filename) == 0 {
 				resp["message"] = "no filename provided in query"

@@ -57,7 +57,7 @@ kubectl apply -k setup
 такой командой:
 
 ```shell
-CLUSTER_ENDPOINT=$(yc managed-kubernetes cluster get --name YOUR_CLUSTER_NAME --format json | jq '.master.endpoints.external_v4_endpoint' | tr -d '"')
+CLUSTER_ENDPOINT=$(kubectl -n yandex-cloud-connectors-example get service/image-reporter --output=json | jq '.status.loadBalancer.ingress[0].ip' | tr -d '"')
 ```
 
 Отправим нашему серверу запрос:
