@@ -1,0 +1,3 @@
+# This is a sample scheme to show principle of work
+# Scaffolder should probably be tested
+api/groupversion_info.tmpl => api/{{ .version }}/groupversion_info.go
