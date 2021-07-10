@@ -28,12 +28,15 @@ import (
 	ycr "k8s-connectors/connector/ycr/api/v1"
 	ycrconnector "k8s-connectors/connector/ycr/controller"
 	ycrconfig "k8s-connectors/connector/ycr/pkg/config"
+	ycrwebhook "k8s-connectors/connector/ycr/webhook"
 	ymq "k8s-connectors/connector/ymq/api/v1"
 	ymqconnector "k8s-connectors/connector/ymq/controller"
 	ymqconfig "k8s-connectors/connector/ymq/pkg/config"
+	ymqwebhook "k8s-connectors/connector/ymq/webhook"
 	yos "k8s-connectors/connector/yos/api/v1"
 	yosconnector "k8s-connectors/connector/yos/controller"
 	yosconfig "k8s-connectors/connector/yos/pkg/config"
+	yoswebhook "k8s-connectors/connector/yos/webhook"
 	"k8s-connectors/pkg/util"
 	"k8s-connectors/pkg/webhook"
 	// +kubebuilder:scaffold:imports
@@ -212,7 +215,7 @@ func setupSAKeyWebhook(mgr ctrl.Manager) {
 	setupLog.V(1).Info("starting " + sakeyconfig.ShortName + " webhook")
 
 	webhookCreationErrorExit(
-		webhook.RegisterValidatingHandler(mgr, &sakey.StaticAccessKey{}, sakeywebhook.SAKeyValidator{}),
+		webhook.RegisterValidatingHandler(mgr, &sakey.StaticAccessKey{}, &sakeywebhook.SAKeyValidator{}),
 		sakeyconfig.LongName,
 		setupLog,
 	)
@@ -231,7 +234,12 @@ func setupYCRConnector(mgr ctrl.Manager, clusterID string) {
 
 func setupYCRWebhook(mgr ctrl.Manager) {
 	setupLog.V(1).Info("starting " + ycrconfig.ShortName + " webhook")
-	webhookCreationErrorExit((&ycr.YandexContainerRegistry{}).SetupWebhookWithManager(mgr), ycrconfig.LongName, setupLog)
+
+	webhookCreationErrorExit(
+		webhook.RegisterValidatingHandler(mgr, &ycr.YandexContainerRegistry{}, &ycrwebhook.YCRValidator{}),
+		ycrconfig.LongName,
+		setupLog,
+	)
 }
 
 func setupYMQConnector(mgr ctrl.Manager) {
@@ -246,7 +254,12 @@ func setupYMQConnector(mgr ctrl.Manager) {
 
 func setupYMQWebhook(mgr ctrl.Manager) {
 	setupLog.V(1).Info("starting " + ymqconfig.ShortName + " webhook")
-	webhookCreationErrorExit((&ymq.YandexMessageQueue{}).SetupWebhookWithManager(mgr), ymqconfig.LongName, setupLog)
+
+	webhookCreationErrorExit(
+		webhook.RegisterValidatingHandler(mgr, &ymq.YandexMessageQueue{}, &ymqwebhook.YMQValidator{}),
+		ymqconfig.LongName,
+		setupLog,
+	)
 }
 
 func setupYOSConnector(mgr ctrl.Manager) {
@@ -261,5 +274,10 @@ func setupYOSConnector(mgr ctrl.Manager) {
 
 func setupYOSWebhook(mgr ctrl.Manager) {
 	setupLog.V(1).Info("starting " + yosconfig.ShortName + " webhook")
-	webhookCreationErrorExit((&yos.YandexObjectStorage{}).SetupWebhookWithManager(mgr), yosconfig.LongName, setupLog)
+
+	webhookCreationErrorExit(
+		webhook.RegisterValidatingHandler(mgr, &yos.YandexObjectStorage{}, &yoswebhook.YOSValidator{}),
+		yosconfig.LongName,
+		setupLog,
+	)
 }

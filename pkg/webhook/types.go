@@ -5,6 +5,7 @@ package webhook
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,8 +19,21 @@ type ValidationError struct{ err error }
 
 func (v *ValidationError) Error() string { return v.err.Error() }
 
+func (v *ValidationError) Unwrap() error {
+	return v.err
+}
+
+func (v *ValidationError) Is(err error) bool {
+	_, ok := err.(*ValidationError) //nolint:errorlint
+	return ok
+}
+
 func NewValidationError(inner error) *ValidationError {
 	return &ValidationError{inner}
+}
+
+func NewValidationErrorf(format string, args ...interface{}) *ValidationError {
+	return NewValidationError(fmt.Errorf(format, args...))
 }
 
 type Validator interface {
