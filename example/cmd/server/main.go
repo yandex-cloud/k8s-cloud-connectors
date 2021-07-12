@@ -37,9 +37,12 @@ func composeMessage(filename, contents string) *string {
 }
 
 func main() {
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+
 	key, secret := getEnvOrDie("AWS_ACCESS_KEY_ID"), getEnvOrDie("AWS_SECRET_ACCESS_KEY")
 
-	ymq, err := awscompatibility.NewSQSClient(context.TODO(), credentials.NewStaticCredentials(key, secret, ""))
+	ymq, err := awscompatibility.NewSQSClient(ctx, credentials.NewStaticCredentials(key, secret, ""))
 	if err != nil {
 		log.Fatal(err)
 	}

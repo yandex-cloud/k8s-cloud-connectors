@@ -48,16 +48,19 @@ func processMessage(client *s3.S3, s3URL, msg string) error {
 // main function of Worker infinitely polls YMQ specified by environmental variables and processes
 // queries placed there
 func main() {
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+
 	key, secret := getEnvOrDie("AWS_ACCESS_KEY_ID"), getEnvOrDie("AWS_SECRET_ACCESS_KEY")
 
-	ymq, err := awscompatibility.NewSQSClient(context.TODO(), credentials.NewStaticCredentials(key, secret, ""))
+	ymq, err := awscompatibility.NewSQSClient(ctx, credentials.NewStaticCredentials(key, secret, ""))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	ymqURL := getEnvOrDie("YMQ_URL")
 
-	s3Client, err := awscompatibility.NewS3Client(context.TODO(), credentials.NewStaticCredentials(key, secret, ""))
+	s3Client, err := awscompatibility.NewS3Client(ctx, credentials.NewStaticCredentials(key, secret, ""))
 	if err != nil {
 		log.Fatal(err)
 	}
