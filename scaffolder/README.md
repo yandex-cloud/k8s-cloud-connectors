@@ -7,20 +7,16 @@ values provided as a value file or command-line options.
 
 ### Scheme
 Scheme file just explains how value-populated files would be located in the output. It can hold templates, 
-too. Its syntax is quite simple:
+too. It is a simple `yaml` file:
 
 ```
-# Every line that starts with an '#' is considered a comment and therefore is not processed
+scheme:
+  - source: path/to/{{ .template }}/file
+    destination: path/to/output/file
 
-input/path/to/scaffolding/template => output/path/to/result
-
-input/path/is/relative/to/template/sirectory => output/path/is/relative/to/output/directory
-
-{{ .This.Path.Is.Templatable }} => somewhere
-
-somewhere => {{ .And.This.One.Is.Templatable.Also }}
-
-{{ .Both.Paths }} => {{ .Are.Templatable }}
+  - source: path/to/{{ .template }}/directory
+    destination: path/to/output/directory
+    recursive: true
 ```
 
 ### Value file 

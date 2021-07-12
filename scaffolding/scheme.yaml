@@ -1,0 +1,3 @@
+scheme:
+  - source: api/groupversion_info.tmpl
+    destination: api/{{ .version }}/groupversion_info.tmpl

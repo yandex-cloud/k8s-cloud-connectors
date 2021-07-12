@@ -6,42 +6,38 @@ package scaffolder
 import (
 	"bytes"
 	"fmt"
-	"strings"
 	"text/template"
+
+	"gopkg.in/yaml.v3"
 )
 
-// Scheme holds compiled rules for scaffolding process.
-type Scheme []struct{ in, out string }
+// Scheme holds a set of rules for scaffolding processFile.
+type Scheme struct {
+	Entries []SchemeEntry `yaml:"scheme"`
+}
+
+// SchemeEntry holds one rule for scaffolding processFile.
+type SchemeEntry struct {
+	Source      string `yaml:"source"`
+	Destination string `yaml:"destination"`
+	Recursive   bool   `yaml:"recursive,omitempty"`
+}
 
 // ParseScheme compiles scheme from given file, completing it with given Values.
 func ParseScheme(path string, val Values) (Scheme, error) {
 	tmpl, err := template.ParseFiles(path)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse sceheme: %w", err)
+		return Scheme{}, fmt.Errorf("unable to parse sceheme: %w", err)
 	}
 
 	buf := bytes.NewBufferString("")
 	if err := tmpl.Execute(buf, val); err != nil {
-		return nil, fmt.Errorf("unable to execute template: %w", err)
+		return Scheme{}, fmt.Errorf("unable to execute template: %w", err)
 	}
 
-	var res Scheme
-
-	// TODO (covariance) this can be implemented in a more convenient for user way, skipping whitespaces
-	for _, line := range strings.Split(buf.String(), "\n") {
-		if len(line) == 0 {
-			// Empty lines are ignored
-			continue
-		}
-		if line[0] == '#' {
-			// Comments are ignored
-			continue
-		}
-		split := strings.Split(line, " => ")
-		if len(split) != 2 {
-			return nil, fmt.Errorf("invalid Scheme format \"%s\"", line)
-		}
-		res = append(res, struct{ in, out string }{in: split[0], out: split[1]})
+	res := Scheme{}
+	if err := yaml.Unmarshal(buf.Bytes(), &res); err != nil {
+		return Scheme{}, fmt.Errorf("unable to parse scheme yaml structure: %w", err)
 	}
 
 	return res, nil

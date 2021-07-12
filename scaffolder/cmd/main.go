@@ -4,9 +4,9 @@
 package main
 
 import (
-	"k8s-connectors/scaffolder/cmd"
+	"k8s-connectors/scaffolder/pkg/command"
 )
 
 func main() {
-	cmd.Execute()
+	command.Execute()
 }
