@@ -26,3 +26,9 @@ Value file must be provided as either `.json` or `.yaml` file. It can be specifi
 a valid `.json` string.
 
 Currently, only string values are supported.
+
+### Templating
+
+Scaffolder uses standard [**Go template**](https://golang.org/pkg/text/template/) syntax and functionality
+as well as [**Sprig library**](https://github.com/Masterminds/sprig) to provide additional
+functions. All the documentation about them can be found [here](https://masterminds.github.io/sprig/).

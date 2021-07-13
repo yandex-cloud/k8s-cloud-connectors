@@ -8,10 +8,12 @@ import (
 	"os"
 	"path/filepath"
 	"text/template"
+
+	"github.com/Masterminds/sprig/v3"
 )
 
 func processFile(input, output string, values Values) error {
-	processedInput, err := template.ParseFiles(input)
+	processedInput, err := template.New(filepath.Base(input)).Funcs(sprig.TxtFuncMap()).ParseFiles(input)
 	if err != nil {
 		return fmt.Errorf("unable to parse input file \"%s\": %w", input, err)
 	}

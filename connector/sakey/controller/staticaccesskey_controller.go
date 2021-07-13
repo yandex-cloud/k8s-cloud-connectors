@@ -89,7 +89,7 @@ func (r *staticAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	if err := r.updateStatus(ctx, log.WithName("update-status"), &object, res); err != nil {
-		return config.GetErroredResult(fmt.Errorf("unble to update status: %w", err))
+		return config.GetErroredResult(fmt.Errorf("unable to update status: %w", err))
 	}
 
 	log.V(1).Info("finished reconciliation")

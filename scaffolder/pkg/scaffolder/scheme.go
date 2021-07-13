@@ -6,8 +6,10 @@ package scaffolder
 import (
 	"bytes"
 	"fmt"
+	"path/filepath"
 	"text/template"
 
+	"github.com/Masterminds/sprig"
 	"gopkg.in/yaml.v3"
 )
 
@@ -25,7 +27,7 @@ type SchemeEntry struct {
 
 // ParseScheme compiles scheme from given file, completing it with given Values.
 func ParseScheme(path string, val Values) (Scheme, error) {
-	tmpl, err := template.ParseFiles(path)
+	tmpl, err := template.New(filepath.Base(path)).Funcs(sprig.TxtFuncMap()).ParseFiles(path)
 	if err != nil {
 		return Scheme{}, fmt.Errorf("unable to parse sceheme: %w", err)
 	}
