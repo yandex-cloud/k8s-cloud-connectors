@@ -2,6 +2,9 @@ module k8s-connectors
 
 go 1.15
 
+// Exclude example directory
+exclude k8s-connectors/example v0.0.0
+
 require (
 	github.com/aws/aws-sdk-go v1.38.21
 	github.com/go-logr/logr v0.3.0
