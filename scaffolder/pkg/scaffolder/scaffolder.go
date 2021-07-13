@@ -27,7 +27,7 @@ func processFile(input, output string, values Values) error {
 	defer func() { _ = out.Close() }()
 
 	if err := processedInput.Execute(out, values); err != nil {
-		return fmt.Errorf("unable to processFile template and write to \"%s\": %w", output, err)
+		return fmt.Errorf("unable to process template and write to \"%s\": %w", output, err)
 	}
 
 	return nil

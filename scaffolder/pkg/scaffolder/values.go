@@ -29,20 +29,20 @@ func ParseValuesByUnmarshal(path string, unmarshal func([]byte, interface{})erro
 	return res, nil
 }
 
-func ParseValuesFromJson(path string) (Values, error) {
+func ParseValuesFromJSON(path string) (Values, error) {
 	return ParseValuesByUnmarshal(path, json.Unmarshal)
 }
 
-func ParseValuesFromYaml(path string) (Values, error) {
+func ParseValuesFromYAML(path string) (Values, error) {
 	return ParseValuesByUnmarshal(path, yaml.Unmarshal)
 }
 
 func ParseValuesFromFile(path string) (Values, error) {
 	if strings.HasSuffix(path, ".json") {
-		return ParseValuesFromJson(path)
+		return ParseValuesFromJSON(path)
 	}
 	if strings.HasSuffix(path, ".yaml") || strings.HasSuffix(path, ".yml") {
-		return ParseValuesFromYaml(path)
+		return ParseValuesFromYAML(path)
 	}
 
 	return nil, fmt.Errorf("unable to detect type of file \"%s\"", path)

@@ -49,11 +49,11 @@ func appendToValuesFromMappedSlice(
 func scaffold(_ *cobra.Command, _ []string) error {
 	val := scaffolder.Values{}
 
-	if err := appendToValuesFromMappedSlice(&val, jsonValues, scaffolder.ParseValuesFromJson); err != nil {
+	if err := appendToValuesFromMappedSlice(&val, jsonValues, scaffolder.ParseValuesFromJSON); err != nil {
 		return fmt.Errorf("unable to parse JSON values: %w", err)
 	}
 
-	if err := appendToValuesFromMappedSlice(&val, yamlValues, scaffolder.ParseValuesFromYaml); err != nil {
+	if err := appendToValuesFromMappedSlice(&val, yamlValues, scaffolder.ParseValuesFromYAML); err != nil {
 		return fmt.Errorf("unable to parse YAML values: %w", err)
 	}
 
