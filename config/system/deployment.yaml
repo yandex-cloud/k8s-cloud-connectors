@@ -18,7 +18,7 @@ spec:
       securityContext:
         runAsNonRoot: true
       containers:
-        - image: cr.yandex/crptp7j81e7caog8r6gq/yc-connector-manager:latest
+        - image: cr.yandex/yc/cloud-connectors/manager:latest
           args:
             - --debug
           name: manager

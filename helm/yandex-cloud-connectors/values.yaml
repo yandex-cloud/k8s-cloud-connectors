@@ -1,4 +1,4 @@
 namespace: yandex-cloud-connectors
-imageRegistry: cr.yandex/crptp7j81e7caog8r6gq
+imageRegistry: cr.yandex/yc/cloud-connectors
 imageTag: latest
 debug: false

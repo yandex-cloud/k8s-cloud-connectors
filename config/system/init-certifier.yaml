@@ -9,7 +9,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: certifier
-          image: cr.yandex/crptp7j81e7caog8r6gq/yc-connector-certifier:latest
+          image: cr.yandex/yc/cloud-connectors/certifier:latest
           args:
             - --namespace=yandex-cloud-connectors
             - --service=webhook-service

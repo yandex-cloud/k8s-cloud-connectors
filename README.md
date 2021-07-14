@@ -13,7 +13,7 @@
 
 ```shell
 folder_id=b1g7jvgmf06eel94s22d # Подставить свой
-nodegroup_id=catnmbc81hdag58trmgi # Подставить свой свой
+nodegroup_id=catnmbc81hdag58trmgi # Подставить свой
 
 instance_group_id=$(yc managed-kubernetes node-group get --id ${nodegroup_id} --format json | jq -r ".instance_group_id")
 service_account_id=$(yc compute instance-group get --id ${instance_group_id} --format json | jq -r ".instance_template.service_account_id")

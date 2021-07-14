@@ -18,7 +18,7 @@ spec:
       securityContext:
         runAsNonRoot: true
       containers:
-        - image: {{ .Values.imageRegistry }}/yc-connector-manager:{{ .Values.imageTag }}
+        - image: {{ .Values.imageRegistry }}/manager:{{ .Values.imageTag }}
           args:
             {{ if .Values.debug }}- --debug{{ end }}
           name: manager
