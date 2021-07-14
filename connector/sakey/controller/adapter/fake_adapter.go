@@ -7,10 +7,10 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/iam/v1/awscompatibility"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type FakeStaticAccessKeyAdapter struct {
@@ -32,7 +32,7 @@ func (r *FakeStaticAccessKeyAdapter) Create(
 		AccessKey: &awscompatibility.AccessKey{
 			Id:               strconv.Itoa(r.FreeID),
 			ServiceAccountId: saID,
-			CreatedAt:        ptypes.TimestampNow(),
+			CreatedAt:        timestamppb.Now(),
 			Description:      description,
 			KeyId:            strconv.Itoa(r.FreeID),
 		},

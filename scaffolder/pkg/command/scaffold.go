@@ -14,15 +14,15 @@ import (
 
 var (
 	scaffoldCmd = cobra.Command{
-		Use:   "scaffolder ",
+		Use:   "scaffolder",
 		Short: "scaffolder creates scaffolding populated with specified values based on provided scheme",
 		Args:  cobra.NoArgs,
 		RunE:  scaffold,
 	}
 
-	scaffoldingDir string
-	outputDir      string
-	scheme         string
+	templatesDir string
+	outputDir    string
+	scheme       string
 
 	jsonValues   []string
 	yamlValues   []string
@@ -70,7 +70,7 @@ func scaffold(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("unable to parse scheme: %w", err)
 	}
 
-	if err := scaffolder.Scaffold(scaffoldingDir, outputDir, val, scheme); err != nil {
+	if err := scaffolder.Scaffold(templatesDir, outputDir, val, scheme); err != nil {
 		return fmt.Errorf("unable to perform scaffolding: %w", err)
 	}
 
@@ -79,10 +79,10 @@ func scaffold(_ *cobra.Command, _ []string) error {
 
 func init() {
 	scaffoldCmd.PersistentFlags().StringVar(
-		&scaffoldingDir,
-		"scaffolding",
-		"scaffolding",
-		"sets custom scaffolding directory",
+		&templatesDir,
+		"templates-dir",
+		"templates",
+		"sets directory with scaffolding templates",
 	)
 
 	scaffoldCmd.PersistentFlags().StringVar(
@@ -101,21 +101,21 @@ func init() {
 
 	scaffoldCmd.PersistentFlags().StringSliceVar(
 		&jsonValues,
-		"valJson",
+		"values-from-json",
 		[]string{},
 		"set value files that are to be parsed as json",
 	)
 
 	scaffoldCmd.PersistentFlags().StringSliceVar(
 		&yamlValues,
-		"valYaml",
+		"values-from-yaml",
 		[]string{},
 		"set value files that are to be parsed as yaml",
 	)
 
 	scaffoldCmd.PersistentFlags().StringSliceVar(
 		&fileValues,
-		"valFile",
+		"values-from-file",
 		[]string{},
 		"set value files that are to be parsed as either json or yaml, depending on file extension",
 	)
@@ -124,7 +124,7 @@ func init() {
 		&inlineValues,
 		"val",
 		[]string{},
-		"inlined values in json format",
+		"inlined values in \"key=value\" format",
 	)
 }
 

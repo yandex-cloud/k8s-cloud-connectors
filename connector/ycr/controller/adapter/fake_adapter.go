@@ -7,10 +7,10 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type FakeYandexContainerRegistryAdapter struct {
@@ -33,7 +33,7 @@ func (r *FakeYandexContainerRegistryAdapter) Create(
 		Id:        strconv.Itoa(r.FreeID),
 		FolderId:  request.FolderId,
 		Name:      request.Name,
-		CreatedAt: ptypes.TimestampNow(),
+		CreatedAt: timestamppb.Now(),
 		Labels:    request.Labels,
 	}
 	r.Storage[strconv.Itoa(r.FreeID)] = &registry

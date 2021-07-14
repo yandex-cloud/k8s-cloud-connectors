@@ -15,7 +15,7 @@ import (
 // Values is a container with strings that are to be substituted in scaffolding and scheme.
 type Values map[string]string
 
-func ParseValuesByUnmarshal(path string, unmarshal func([]byte, interface{})error) (Values, error) {
+func ParseValuesByUnmarshal(path string, unmarshal func([]byte, interface{}) error) (Values, error) {
 	contents, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open value file: %w", err)
@@ -49,11 +49,9 @@ func ParseValuesFromFile(path string) (Values, error) {
 }
 
 func ParseValuesFromString(contents string) (Values, error) {
-	var res map[string]string
-
-	if err := json.Unmarshal([]byte(contents), &res); err != nil {
-		return nil, fmt.Errorf("unable to parse Values: %w", err)
+	split := strings.Split(contents, "=")
+	if len(split) == 1 {
+		return nil, fmt.Errorf("invalid \"key=value\" pair provided: %s", contents)
 	}
-
-	return res, nil
+	return map[string]string{split[0]: strings.Join(split[1:], "=")}, nil
 }
