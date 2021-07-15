@@ -15,5 +15,4 @@ spec:
             - --namespace={{ .Values.namespace }}
             - --service=webhook-service
             - --secret=webhook-tls-cert
-            - --mw=mutating-webhook-configuration
             - --vw=validating-webhook-configuration

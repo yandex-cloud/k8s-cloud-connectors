@@ -2,6 +2,9 @@
 
 ## Установка на свой кластер
 
+*Для установки __Yandex Cloud Connectors__ необходим настроенный кластер [__k8s__](https://kubernetes.io/) 
+и установленный [__helm__](https://helm.sh/).*
+
 Проверим работоспособность коннекторов на Container Registry. Для начала нам надо дать права на работу с Container Registry
 сервисному аккаунту, под управлением которого работают ноды в нашем кластере.
 
@@ -20,10 +23,9 @@ service_account_id=$(yc compute instance-group get --id ${instance_group_id} --f
 yc resource-manager folder add-access-binding --id $folder_id --role container-registry.admin --service-account-id $service_account_id
 ```
 
-Теперь у нод кластера есть права администрировать Container Registry в облаке. Теперь установим контроллер в кластер.
+Теперь у нод кластера есть права администрировать Container Registry в облаке. Теперь установим контроллер в кластер, добавляем в кластер все необходимые сущности и контроллер:
 
 ```shell
-# Добавляем в кластер все необходимые сущности и контроллер
 make install
 ```
 
