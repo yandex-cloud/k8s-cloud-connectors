@@ -49,9 +49,12 @@ func ParseValuesFromFile(path string) (Values, error) {
 }
 
 func ParseValuesFromString(contents string) (Values, error) {
-	split := strings.Split(contents, "=")
+	split := strings.SplitN(contents, "=", 2)
 	if len(split) == 1 {
-		return nil, fmt.Errorf("invalid \"key=value\" pair provided: %s", contents)
+		if strings.HasPrefix(contents, "=") {
+			return nil, fmt.Errorf("invalid \"key=value\" pair provided: %s", contents)
+		}
+		return map[string]string{split[0]: ""}, nil
 	}
-	return map[string]string{split[0]: strings.Join(split[1:], "=")}, nil
+	return map[string]string{split[0]: split[1]}, nil
 }
