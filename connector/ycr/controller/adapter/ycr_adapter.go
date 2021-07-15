@@ -14,9 +14,9 @@ type YandexContainerRegistryAdapterSDK struct {
 	sdk *ycsdk.SDK
 }
 
-func NewYandexContainerRegistryAdapterSDK() (YandexContainerRegistryAdapter, error) {
+func NewYandexContainerRegistryAdapterSDK(ctx context.Context) (YandexContainerRegistryAdapter, error) {
 	sdk, err := ycsdk.Build(
-		context.Background(), ycsdk.Config{
+		ctx, ycsdk.Config{
 			Credentials: ycsdk.InstanceServiceAccount(),
 		},
 	)

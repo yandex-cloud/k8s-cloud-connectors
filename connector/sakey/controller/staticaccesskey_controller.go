@@ -29,9 +29,9 @@ type staticAccessKeyReconciler struct {
 }
 
 func NewStaticAccessKeyReconciler(
-	cl client.Client, log logr.Logger, clusterID string,
+	ctx context.Context, cl client.Client, log logr.Logger, clusterID string,
 ) (*staticAccessKeyReconciler, error) {
-	impl, err := adapter.NewStaticAccessKeyAdapter()
+	impl, err := adapter.NewStaticAccessKeyAdapter(ctx)
 	if err != nil {
 		return nil, err
 	}
