@@ -39,14 +39,21 @@ help: ## Display this message.
 
 ##@ Development
 
+CHART_NAME := yandex-cloud-connectors
+
 manifest: ensure-controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects via controller-gen tool.
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=connector-manager-role webhook paths="./..." \
-			output:crd:artifacts:config=./config/base/crd \
-			output:rbac:artifacts:config=./config/system \
-			output:webhook:artifacts:config=./config/webhook
+				output:crd:artifacts:config=./helm/$(CHART_NAME)/crds \
+    			output:rbac:artifacts:config=./helm/$(CHART_NAME)/templates/system \
+    			output:webhook:artifacts:config=./helm/$(CHART_NAME)/templates/webhook
 
 generate: ensure-controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="LICENSE" paths="./..."
+
+helm-license: ## Copy project license into helm chart.
+	cp ./LICENSE ./helm/$(CHART_NAME)
+
+prepare-chart: manifest helm-license ## Creates all the files needed inside the helm chart.
 
 fmt: ## Run go fmt against code.
 	go fmt ./...
@@ -57,24 +64,8 @@ vet: ## Run go vet against code.
 lint: ensure-linter ## Run golangci-lint (https://golangci-lint.run/) against code.
 	$(GOLANGCI-LINT) run ./... --verbose
 
-test: manifest generate fmt vet lint ## Run tests for this connector and common packages.
+test: generate fmt vet lint ## Run tests for this connector and common packages.
 	go test ./... -coverprofile cover.out
-
-##@ Helm
-
-CHART_NAME := yandex-cloud-connectors
-
-helm-manifest: ensure-controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects for chart via controller-gen tool.
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=connector-manager-role webhook paths="./..." \
-    			output:crd:artifacts:config=./helm/$(CHART_NAME)/crds \
-    			output:rbac:artifacts:config=./helm/$(CHART_NAME)/templates/system \
-    			output:webhook:artifacts:config=./helm/$(CHART_NAME)/templates/webhook
-
-helm-license: ## Copy project license into chart.
-	cp ./LICENSE ./helm/$(CHART_NAME)
-
-
-helm-generate: helm-manifest helm-license ## Execute all targets for helm chart creation.
 
 ##@ Build
 
@@ -90,16 +81,15 @@ local-build: local-build-manager local-build-certifier ## Build all binaries loc
 IMG_TAG ?= latest
 
 ## Image name of a manager binary
-MANAGER_IMG_NAME := yc-connector-manager
+
 ## Resulting tag of a manager binary
-MANAGER_IMG := $(MANAGER_IMG_NAME):$(IMG_TAG)
+MANAGER_IMG := manager:$(IMG_TAG)
+
 docker-build-manager: test ## Build docker image with the manager.
 	docker build -t $(MANAGER_IMG) --file manager.dockerfile .
 
-## Image name of a certifier binary
-CERTIFIER_IMG_NAME := yc-connector-certifier
 ## Resulting tag of a certifier binary
-CERTIFIER_IMG := $(CERTIFIER_IMG_NAME):$(IMG_TAG)
+CERTIFIER_IMG := certifier:$(IMG_TAG)
 docker-build-certifier: test ## Build docker image with the certifier.
 	docker build -t $(CERTIFIER_IMG) --file certifier.dockerfile .
 
@@ -121,11 +111,11 @@ docker-push: docker-push-manager docker-push-certifier ## Push all images to doc
 
 ##@ Deployment
 
-install: manifest ## Deploy to the k8s cluster specified in ~/.kube/config.
-	kubectl apply -k ./config/base
+install: prepare-chart ## Deploy to the k8s cluster
+	helm install yandex-cloud-connectors helm/yandex-cloud-connectors
 
-uninstall: ## Undeploy from the k8s cluster specified in ~/.kube/config.
-	kubectl delete -k ./config/base
+uninstall: ## Undeploy from the k8s cluster
+	helm uninstall yandex-cloud-connectors
 
 ##@ Dependencies
 

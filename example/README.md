@@ -12,7 +12,7 @@
 
 ## Запуск
 
-В первую очередь необходимо собрать наше приложение и положить его в какой-нибудь реестр образов, доступный кластеру:
+В первую очередь необходимо собрать наше приложение и положить его в какой-нибудь реестр образов, доступный кластеру (`make build-all REGISTRY=cr.yandex/crptp7j81e7caog8r6gq`):
 
 ```shell
 REGISTRY=cr.yandex/crptp7j81e7caog8r6gq
@@ -36,7 +36,7 @@ docker push ${REGISTRY}/ycc-example/worker:latest
 TODO когда у нас появится итоговая инструкция, надо вставить её сюда
 ```
 
-Ждём, пока *pod* с менеджером перейдёт в состояние `Running`, например, так:
+Ждём, пока *pod* с менеджером перейдёт в состояние `Running`, например, так (`make wait-for-ycc`):
 
 ```shell
 #!/bin/bash
@@ -47,10 +47,19 @@ until [ "$(kubectl -n yandex-cloud-connectors get pod -l control-plane=connector
 done
 ```
 
-Затем применяем к кластеру `yaml`-ы с нашим приложением (не забывайте проставить свой реестр в подах):
+Затем применяем к кластеру `yaml`-ы с нашим приложением, не забывая проставить свой реестр в подах (`make install`):
 
 ```shell
-kubectl apply -k setup
+kubectl apply -f setup/ns.yaml
+kubectl apply -f setup/sakey.yaml
+sleep 1
+kubectl apply -f setup/yos.yaml
+kubectl apply -f setup/ycr.yaml
+kubectl apply -f setup/ymq.yaml
+sleep 1
+kubectl apply -f setup/server.yaml
+kubectl apply -f setup/worker.yaml
+kubectl apply -f setup/service.yaml
 ```
 
 Теперь можно проверить работоспособность этого подхода. Сначала узнаем внешний **IP** вашего кластера, например,
@@ -60,7 +69,7 @@ kubectl apply -k setup
 CLUSTER_ENDPOINT=$(kubectl -n yandex-cloud-connectors-example get service/image-reporter --output=json | jq '.status.loadBalancer.ingress[0].ip' | tr -d '"')
 ```
 
-Отправим нашему серверу запрос:
+Отправим нашему серверу запрос (`make make-sample-request`):
 
 ```shell
 curl -X POST -d "Hello Yandex Cloud Connectors!" "${CLUSTER_ENDPOINT}/report?filename=greetings.txt"

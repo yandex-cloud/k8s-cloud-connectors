@@ -9,11 +9,10 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: certifier
-          image: {{ .Values.imageRegistry }}/yc-connector-certifier:{{ .Values.imageTag }}
+          image: {{ .Values.imageRegistry }}/certifier:{{ .Values.imageTag }}
           args:
             {{ if .Values.debug }}- --debug{{ end }}
             - --namespace={{ .Values.namespace }}
             - --service=webhook-service
             - --secret=webhook-tls-cert
-            - --mw=mutating-webhook-configuration
             - --vw=validating-webhook-configuration
