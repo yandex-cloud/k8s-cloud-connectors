@@ -21,6 +21,10 @@ func setupValidation(t *testing.T) (context.Context, webhook.Validator, logr.Log
 	return context.TODO(), &YCRValidator{}, logrfake.NewFakeLogger(t)
 }
 
+func TestCreateValidation(t *testing.T) {
+	// TODO: test with ycsdk mock
+}
+
 func TestUpdateValidation(t *testing.T) {
 	t.Run("name change is valid update", func(t *testing.T) {
 		// Arrange
@@ -115,4 +119,8 @@ func TestUpdateValidation(t *testing.T) {
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, &webhook.ValidationError{}))
 	})
+}
+
+func TestDeleteValidate(t *testing.T) {
+	// TODO: test with ycsdk mock
 }
