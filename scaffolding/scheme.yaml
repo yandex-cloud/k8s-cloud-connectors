@@ -1,0 +1,18 @@
+scheme:
+  - source: api/vx/groupversion_info.tpl
+    destination: '{{ .shortName }}/api/{{ .version }}/groupversion_info.go'
+
+  - source: api/vx/x_types.tpl
+    destination: '{{ .shortName }}/api/{{ .version }}/{{ .longName | lower }}_types.go'
+
+  - source: controller/x_controller.tpl
+    destination: '{{ .shortName }}/controller/{{ .longName | lower }}_controller.go'
+
+  - source: controller/adapter/interface.tpl
+    destination: '{{ .shortName }}/controller/adapter/interface.go'
+
+  - source: controller/adapter/adapter.tpl
+    destination: '{{ .shortName }}/controller/adapter/adapter.go'
+
+  - source: pkg/config/config.tpl
+    destination: '{{ .shortName }}/pkg/config/config.go'
