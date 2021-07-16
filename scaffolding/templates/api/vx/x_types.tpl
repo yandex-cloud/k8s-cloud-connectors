@@ -22,7 +22,7 @@ type {{ .longName }}Status struct {
 
 // {{ .longName }} is the Schema for the {{ .longName | lower }} API
 // +kubebuilder:object:root=true
-// +kubebuilder:resource:path={{ .longName }}s,singular={{ .longName }}{{ if .shortName }},shortName={{ .shortName }}{{ end }}
+// +kubebuilder:resource:path={{ .longName }}s,singular={{ .longName }},shortName={{ .shortName }}
 type {{ .longName }} struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

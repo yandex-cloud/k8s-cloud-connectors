@@ -1,18 +1,18 @@
 scheme:
   - source: api/vx/groupversion_info.tpl
-    destination: '{{ if .shortName }}{{ .shortName }}{{ else }}{{ "" | regexReplaceAll "[^A-Z]" .longName | lower }}{{ end }}/api/{{ .version }}/groupversion_info.go'
+    destination: '{{ .shortName }}/api/{{ .version }}/groupversion_info.go'
 
   - source: api/vx/x_types.tpl
-    destination: '{{ if .shortName }}{{ .shortName }}{{ else }}{{ "" | regexReplaceAll "[^A-Z]" .longName | lower }}{{ end }}/api/{{ .version }}/{{ .longName | lower }}_types.go'
+    destination: '{{ .shortName }}/api/{{ .version }}/{{ .longName | lower }}_types.go'
 
   - source: controller/x_controller.tpl
-    destination: '{{ if .shortName }}{{ .shortName }}{{ else }}{{ "" | regexReplaceAll "[^A-Z]" .longName | lower }}{{ end }}/controller/{{ .longName | lower }}_controller.go'
+    destination: '{{ .shortName }}/controller/{{ .longName | lower }}_controller.go'
 
   - source: controller/adapter/interface.tpl
-    destination: '{{ if .shortName }}{{ .shortName }}{{ else }}{{ "" | regexReplaceAll "[^A-Z]" .longName | lower }}{{ end }}/controller/adapter/interface.go'
+    destination: '{{ .shortName }}/controller/adapter/interface.go'
 
   - source: controller/adapter/adapter.tpl
-    destination: '{{ if .shortName }}{{ .shortName }}{{ else }}{{ "" | regexReplaceAll "[^A-Z]" .longName | lower }}{{ end }}/controller/adapter/adapter.go'
+    destination: '{{ .shortName }}/controller/adapter/adapter.go'
 
   - source: pkg/config/config.tpl
-    destination: '{{ if .shortName }}{{ .shortName }}{{ else }}{{ "" | regexReplaceAll "[^A-Z]" .longName | lower }}{{ end }}/pkg/config/config.go'
+    destination: '{{ .shortName }}/pkg/config/config.go'
