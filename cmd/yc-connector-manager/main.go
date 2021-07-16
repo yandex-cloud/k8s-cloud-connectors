@@ -191,17 +191,17 @@ func execute(log logr.Logger) error {
 		return fmt.Errorf("unable to set up %s webhook: %w", ycrconfig.LongName, err)
 	}
 
-	if err := setupYMQConnector(ctx, log, mgr); err != nil {
+	if err := setupYMQConnector(log, mgr); err != nil {
 		return fmt.Errorf("unable to set up %s connector: %w", ymqconfig.LongName, err)
 	}
-	if err := setupYMQWebhook(ctx, log, mgr); err != nil {
+	if err := setupYMQWebhook(log, mgr); err != nil {
 		return fmt.Errorf("unable to set up %s webhook: %w", ymqconfig.LongName, err)
 	}
 
-	if err := setupYOSConnector(ctx, log, mgr); err != nil {
+	if err := setupYOSConnector(log, mgr); err != nil {
 		return fmt.Errorf("unable to set up %s connector: %w", yosconfig.LongName, err)
 	}
-	if err := setupYOSWebhook(ctx, log, mgr); err != nil {
+	if err := setupYOSWebhook(log, mgr); err != nil {
 		return fmt.Errorf("unable to set up %s webhook: %w", yosconfig.LongName, err)
 	}
 
@@ -276,7 +276,7 @@ func setupYCRWebhook(ctx context.Context, log logr.Logger, mgr ctrl.Manager) err
 	return webhook.RegisterValidatingHandler(mgr, &ycr.YandexContainerRegistry{}, validator)
 }
 
-func setupYMQConnector(_ context.Context, log logr.Logger, mgr ctrl.Manager) error {
+func setupYMQConnector(log logr.Logger, mgr ctrl.Manager) error {
 	log.V(1).Info("starting " + ymqconfig.ShortName + " connector")
 	ymqReconciler, err := ymqconnector.NewYandexMessageQueueReconciler(
 		mgr.GetClient(),
@@ -288,7 +288,7 @@ func setupYMQConnector(_ context.Context, log logr.Logger, mgr ctrl.Manager) err
 	return ymqReconciler.SetupWithManager(mgr)
 }
 
-func setupYMQWebhook(_ context.Context, log logr.Logger, mgr ctrl.Manager) error {
+func setupYMQWebhook(log logr.Logger, mgr ctrl.Manager) error {
 	log.V(1).Info("starting " + ymqconfig.ShortName + " webhook")
 
 	validator, err := ymqwebhook.NewYMQValidator(mgr.GetClient())
@@ -299,7 +299,7 @@ func setupYMQWebhook(_ context.Context, log logr.Logger, mgr ctrl.Manager) error
 	return webhook.RegisterValidatingHandler(mgr, &ymq.YandexMessageQueue{}, validator)
 }
 
-func setupYOSConnector(_ context.Context, log logr.Logger, mgr ctrl.Manager) error {
+func setupYOSConnector(log logr.Logger, mgr ctrl.Manager) error {
 	log.V(1).Info("starting " + yosconfig.ShortName + " connector")
 	yosReconciler, err := yosconnector.NewYandexObjectStorageReconciler(
 		mgr.GetClient(),
@@ -311,7 +311,7 @@ func setupYOSConnector(_ context.Context, log logr.Logger, mgr ctrl.Manager) err
 	return yosReconciler.SetupWithManager(mgr)
 }
 
-func setupYOSWebhook(_ context.Context, log logr.Logger, mgr ctrl.Manager) error {
+func setupYOSWebhook(log logr.Logger, mgr ctrl.Manager) error {
 	log.V(1).Info("starting " + yosconfig.ShortName + " webhook")
 
 	validator, err := yoswebhook.NewYOSValidator(mgr.GetClient())
