@@ -61,22 +61,15 @@ func scaffold(_ *cobra.Command, _ []string) error {
 		val[k] = v
 	}
 
-	if groupName == "" {
-		return fmt.Errorf("group name is not specified")
-	}
-	val["groupName"] = groupName
-	val["version"] = version
-
-	if longName == "" {
-		return fmt.Errorf("name is not specified")
-	}
-	val["longName"] = longName
-
 	if shortName == "" {
 		if err := shortNameFromLong(); err != nil {
 			return err
 		}
 	}
+
+	val["groupName"] = groupName
+	val["version"] = version
+	val["longName"] = longName
 	val["shortName"] = shortName
 
 	scheme, err := scaffolder.ParseScheme(scheme, val)
@@ -119,6 +112,7 @@ func init() {
 		"",
 		"group name of the resource, such as \"connectors.cloud.yandex.com\"",
 	)
+	_ = scaffoldCmd.MarkFlagRequired("group")
 
 	scaffoldCmd.PersistentFlags().StringVar(
 		&version,
@@ -133,6 +127,7 @@ func init() {
 		"",
 		"name of the resource, such as \"YetAnotherYandexResource\"",
 	)
+	_ = scaffoldCmd.MarkFlagRequired("name")
 
 	scaffoldCmd.PersistentFlags().StringVar(
 		&shortName,
