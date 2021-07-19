@@ -30,9 +30,7 @@ type yandexMessageQueueReconciler struct {
 	log     logr.Logger
 }
 
-func NewYandexMessageQueueReconciler(
-	cl client.Client, log logr.Logger,
-) (*yandexMessageQueueReconciler, error) {
+func NewYandexMessageQueueReconciler(cl client.Client, log logr.Logger) (*yandexMessageQueueReconciler, error) {
 	impl, err := adapter.NewYandexMessageQueueAdapterSDK()
 	if err != nil {
 		return nil, err

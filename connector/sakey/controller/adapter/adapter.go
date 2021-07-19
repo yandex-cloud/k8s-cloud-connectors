@@ -14,9 +14,10 @@ type StaticAccessKeyAdapterSDK struct {
 	sdk *ycsdk.SDK
 }
 
-func NewStaticAccessKeyAdapter() (StaticAccessKeyAdapter, error) {
+func NewStaticAccessKeyAdapter(ctx context.Context) (StaticAccessKeyAdapter, error) {
 	sdk, err := ycsdk.Build(
-		context.Background(), ycsdk.Config{
+		ctx,
+		ycsdk.Config{
 			Credentials: ycsdk.InstanceServiceAccount(),
 		},
 	)

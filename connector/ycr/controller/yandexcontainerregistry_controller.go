@@ -29,9 +29,9 @@ type yandexContainerRegistryReconciler struct {
 }
 
 func NewYandexContainerRegistryReconciler(
-	cl client.Client, log logr.Logger, clusterID string,
+	ctx context.Context, cl client.Client, log logr.Logger, clusterID string,
 ) (*yandexContainerRegistryReconciler, error) {
-	impl, err := adapter.NewYandexContainerRegistryAdapterSDK()
+	impl, err := adapter.NewYandexContainerRegistryAdapterSDK(ctx)
 	if err != nil {
 		return nil, err
 	}

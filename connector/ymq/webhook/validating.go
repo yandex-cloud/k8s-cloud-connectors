@@ -8,8 +8,12 @@ import (
 	"fmt"
 	"strings"
 
+	sakey "k8s-connectors/connector/sakey/api/v1"
+
 	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "k8s-connectors/connector/ymq/api/v1"
 	"k8s-connectors/pkg/util"
@@ -18,29 +22,52 @@ import (
 
 // +kubebuilder:webhook:path=/validate-connectors-cloud-yandex-com-v1-yandexmessagequeue,mutating=false,failurePolicy=fail,sideEffects=None,groups=connectors.cloud.yandex.com,resources=yandexmessagequeues,verbs=create;update;delete,versions=v1,name=vyandexmessagequeue.yandex.com,admissionReviewVersions=v1
 
-type YMQValidator struct{}
+type YMQValidator struct {
+	cl client.Client
+}
 
-func (r *YMQValidator) ValidateCreation(_ context.Context, log logr.Logger, obj runtime.Object) error {
-	castedObj := obj.(*v1.YandexMessageQueue)
-	log.Info("validate create", "name", util.NamespacedName(castedObj))
+func NewYMQValidator(cl client.Client) (webhook.Validator, error) {
+	return &YMQValidator{cl: cl}, nil
+}
 
-	if castedObj.Spec.FifoQueue && !strings.HasSuffix(castedObj.Spec.Name, ".fifo") {
+func (r *YMQValidator) ValidateCreation(ctx context.Context, log logr.Logger, obj runtime.Object) error {
+	casted := obj.(*v1.YandexMessageQueue)
+	log.Info("validate create", "name", util.NamespacedName(casted))
+
+	if casted.Spec.FifoQueue && !strings.HasSuffix(casted.Spec.Name, ".fifo") {
 		return webhook.NewValidationErrorf(
 			"name of FIFO queue must end with \".fifo\", currently is: %s",
-			castedObj.Spec.Name,
+			casted.Spec.Name,
 		)
 	}
 
-	if !castedObj.Spec.FifoQueue && strings.HasSuffix(castedObj.Spec.Name, ".fifo") {
+	if !casted.Spec.FifoQueue && strings.HasSuffix(casted.Spec.Name, ".fifo") {
 		return webhook.NewValidationError(
-			fmt.Errorf("name of non-FIFO queue must NOT end with \".fifo\", currently is: %s", castedObj.Spec.Name),
+			fmt.Errorf("name of non-FIFO queue must NOT end with \".fifo\", currently is: %s", casted.Spec.Name),
 		)
 	}
 
-	if castedObj.Spec.ContentBasedDeduplication && !castedObj.Spec.FifoQueue {
+	if casted.Spec.ContentBasedDeduplication && !casted.Spec.FifoQueue {
 		return webhook.NewValidationError(
 			fmt.Errorf("content based deduplication is available only for FIFO queue"),
 		)
+	}
+
+	var key sakey.StaticAccessKey
+	if err := r.cl.Get(
+		ctx,
+		client.ObjectKey{
+			Name:      casted.Spec.SAKeyName,
+			Namespace: casted.Namespace,
+		},
+		&key,
+	); err != nil {
+		if errors.IsNotFound(err) {
+			return webhook.NewValidationErrorf(
+				"static access key \"%s\" not found in the %s namespace", casted.Spec.SAKeyName, casted.Namespace,
+			)
+		}
+		return fmt.Errorf("unable to get specified static access key: %w", err)
 	}
 
 	return nil
