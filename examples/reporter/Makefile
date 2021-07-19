@@ -44,6 +44,14 @@ build-worker: ## Builds worker container and pushes it to the specified registry
 
 build-all: build-server build-worker ## Builds both server and worker
 
+create-sa:
+	SAID=$(yc iam service-account create ycc-example-sa --format json | jq -r '.id')
+	yc resource-manager folder add-access-binding --id "${FOLDER_ID}" --role ymq.admin --service-account-id "${SAID}"
+	yc resource-manager folder add-access-binding --id "${FOLDER_ID}" --role storage.admin --service-account-id "${SAID}"
+
+delete-sa:
+	yc iam service-account delete ycc-example-sa
+
 ##@ Deploy
 
 wait-for-ycc: ## Waits for Yandex Cloud Connectors to become operational
