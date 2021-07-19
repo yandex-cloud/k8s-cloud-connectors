@@ -1,4 +1,4 @@
-module example
+module github.com/yandex-cloud/k8s-cloud-connectors/examples/reporter
 
 go 1.15
 
