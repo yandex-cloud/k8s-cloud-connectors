@@ -13,14 +13,13 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	connectorsv1 "k8s-connectors/connector/ymq/api/v1"
-	"k8s-connectors/connector/ymq/controller/adapter"
-	ymqconfig "k8s-connectors/connector/ymq/pkg/config"
-	ymqutils "k8s-connectors/connector/ymq/pkg/util"
-	"k8s-connectors/pkg/awsutils"
-	"k8s-connectors/pkg/config"
-	"k8s-connectors/pkg/phase"
-	"k8s-connectors/pkg/util"
+	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/ymq/api/v1"
+	"github.com/yandex-cloud/k8s-cloud-connectors/connector/ymq/controller/adapter"
+	ymqconfig "github.com/yandex-cloud/k8s-cloud-connectors/connector/ymq/pkg/config"
+	ymqutils "github.com/yandex-cloud/k8s-cloud-connectors/connector/ymq/pkg/util"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/awsutils"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/config"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/phase"
 )
 
 // yandexMessageQueueReconciler reconciles a YandexContainerRegistry object
@@ -76,11 +75,7 @@ func (r *yandexMessageQueueReconciler) Reconcile(ctx context.Context, req ctrl.R
 	}
 
 	// If object must be currently finalized, do it and quit
-	mustBeFinalized, err := r.mustBeFinalized(&object)
-	if err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %w", err))
-	}
-	if mustBeFinalized {
+	if phase.MustBeFinalized(&object.ObjectMeta, ymqconfig.FinalizerName) {
 		if err := r.finalize(ctx, log.WithName("finalize"), &object, sdk); err != nil {
 			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %w", err))
 		}
@@ -113,12 +108,6 @@ func (r *yandexMessageQueueReconciler) Reconcile(ctx context.Context, req ctrl.R
 
 	log.V(1).Info("finished reconciliation")
 	return config.GetNormalResult()
-}
-
-func (r *yandexMessageQueueReconciler) mustBeFinalized(object *connectorsv1.YandexMessageQueue) (bool, error) {
-	return !object.DeletionTimestamp.IsZero() && util.ContainsString(
-		object.Finalizers, ymqconfig.FinalizerName,
-	), nil
 }
 
 func (r *yandexMessageQueueReconciler) finalize(

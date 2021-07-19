@@ -7,9 +7,9 @@ import (
 	"context"
 	"fmt"
 
-	sakey "k8s-connectors/connector/sakey/api/v1"
-	yosutils "k8s-connectors/connector/yos/pkg/util"
-	"k8s-connectors/pkg/awsutils"
+	sakey "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/api/v1"
+	yosutils "github.com/yandex-cloud/k8s-cloud-connectors/connector/yos/pkg/util"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/awsutils"
 
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/go-logr/logr"
@@ -17,9 +17,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	v1 "k8s-connectors/connector/yos/api/v1"
-	"k8s-connectors/pkg/util"
-	"k8s-connectors/pkg/webhook"
+	v1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/yos/api/v1"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/util"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/webhook"
 )
 
 // +kubebuilder:webhook:path=/validate-connectors-cloud-yandex-com-v1-yandexobjectstorage,mutating=false,failurePolicy=fail,sideEffects=None,groups=connectors.cloud.yandex.com,resources=yandexobjectstorages,verbs=create;update;delete,versions=v1,name=vyandexobjectstorage.yandex.com,admissionReviewVersions=v1

@@ -9,9 +9,9 @@ import (
 
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/iam/v1/awscompatibility"
 
-	"k8s-connectors/connector/sakey/controller/adapter"
-	sakeyconfig "k8s-connectors/connector/sakey/pkg/config"
-	"k8s-connectors/pkg/errorhandling"
+	"github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/controller/adapter"
+	sakeyconfig "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/pkg/config"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/errorhandling"
 )
 
 func GetStaticAccessKey(

@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 
-	"k8s-connectors/pkg/errorhandling"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/errorhandling"
 
 	"github.com/go-logr/logr"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
@@ -15,9 +15,9 @@ import (
 	ycsdk "github.com/yandex-cloud/go-sdk"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	v1 "k8s-connectors/connector/ycr/api/v1"
-	"k8s-connectors/pkg/util"
-	"k8s-connectors/pkg/webhook"
+	v1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/api/v1"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/util"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/webhook"
 )
 
 // +kubebuilder:webhook:path=/validate-connectors-cloud-yandex-com-v1-yandexcontainerregistry,mutating=false,failurePolicy=fail,sideEffects=None,groups=connectors.cloud.yandex.com,resources=yandexcontainerregistries,verbs=create;update;delete,versions=v1,name=vyandexcontainerregistry.yandex.com,admissionReviewVersions=v1

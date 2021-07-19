@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"k8s-connectors/connector/ycr/pkg/util"
+	"github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/pkg/util"
 )
 
 func TestMatchSpec(t *testing.T) {

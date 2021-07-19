@@ -13,14 +13,13 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	connectorsv1 "k8s-connectors/connector/yos/api/v1"
-	"k8s-connectors/connector/yos/controller/adapter"
-	yosconfig "k8s-connectors/connector/yos/pkg/config"
-	yosutils "k8s-connectors/connector/yos/pkg/util"
-	"k8s-connectors/pkg/awsutils"
-	"k8s-connectors/pkg/config"
-	"k8s-connectors/pkg/phase"
-	"k8s-connectors/pkg/util"
+	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/yos/api/v1"
+	"github.com/yandex-cloud/k8s-cloud-connectors/connector/yos/controller/adapter"
+	yosconfig "github.com/yandex-cloud/k8s-cloud-connectors/connector/yos/pkg/config"
+	yosutils "github.com/yandex-cloud/k8s-cloud-connectors/connector/yos/pkg/util"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/awsutils"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/config"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/phase"
 )
 
 // yandexObjectStorageReconciler reconciles a YandexContainerRegistry object
@@ -78,11 +77,7 @@ func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	// If object must be currently finalized, do it and quit
-	mustBeFinalized, err := r.mustBeFinalized(&object)
-	if err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %w", err))
-	}
-	if mustBeFinalized {
+	if phase.MustBeFinalized(&object.ObjectMeta, yosconfig.FinalizerName) {
 		if err := r.finalize(ctx, log.WithName("finalize"), &object, sdk); err != nil {
 			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %w", err))
 		}
@@ -111,12 +106,6 @@ func (r *yandexObjectStorageReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	log.V(1).Info("finished reconciliation")
 	return config.GetNormalResult()
-}
-
-func (r *yandexObjectStorageReconciler) mustBeFinalized(object *connectorsv1.YandexObjectStorage) (bool, error) {
-	return !object.DeletionTimestamp.IsZero() && util.ContainsString(
-		object.Finalizers, yosconfig.FinalizerName,
-	), nil
 }
 
 func (r *yandexObjectStorageReconciler) finalize(

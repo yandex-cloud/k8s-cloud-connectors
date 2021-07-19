@@ -11,9 +11,9 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 
-	v1 "k8s-connectors/connector/sakey/api/v1"
-	"k8s-connectors/pkg/webhook"
-	logrfake "k8s-connectors/testing/logr-fake"
+	v1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/api/v1"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/webhook"
+	logrfake "github.com/yandex-cloud/k8s-cloud-connectors/testing/logr-fake"
 )
 
 func setupValidation(t *testing.T) (context.Context, webhook.Validator, logr.Logger) {

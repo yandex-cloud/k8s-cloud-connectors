@@ -9,12 +9,12 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	connectorsv1 "k8s-connectors/connector/{{ .shortName }}/api/v1"
-	"k8s-connectors/connector/{{ .shortName }}/controller/adapter"
-	{{ .shortName }}config "k8s-connectors/connector/{{ .shortName }}/pkg/config"
-	"k8s-connectors/pkg/config"
-	"k8s-connectors/pkg/phase"
-	"k8s-connectors/pkg/util"
+	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/{{ .shortName }}/api/v1"
+	"github.com/yandex-cloud/k8s-cloud-connectors/connector/{{ .shortName }}/controller/adapter"
+	{{ .shortName }}config "github.com/yandex-cloud/k8s-cloud-connectors/connector/{{ .shortName }}/pkg/config"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/config"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/phase"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/util"
 )
 
 // {{ .longName | untitle }}Reconciler reconciles a {{ .longName }} object

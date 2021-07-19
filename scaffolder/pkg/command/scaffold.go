@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"k8s-connectors/scaffolder/pkg/scaffolder"
+	"github.com/yandex-cloud/k8s-cloud-connectors/scaffolder/pkg/scaffolder"
 
 	"github.com/spf13/cobra"
 )
