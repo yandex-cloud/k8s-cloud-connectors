@@ -5,5 +5,5 @@ type {{ .longName }}AdapterSDK struct {
 }
 
 func New{{ .longName }}Adapter() ({{ .longName }}Adapter, error) {
-    return {{ .longName }}AdapterSDK{}, nil
+	return {{ .longName }}AdapterSDK{}, nil
 }
