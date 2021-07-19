@@ -9,10 +9,10 @@ import (
 
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
 
-	"k8s-connectors/connector/ycr/controller/adapter"
-	ycrconfig "k8s-connectors/connector/ycr/pkg/config"
-	"k8s-connectors/pkg/config"
-	"k8s-connectors/pkg/errorhandling"
+	"github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/controller/adapter"
+	ycrconfig "github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/pkg/config"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/config"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/errorhandling"
 )
 
 func checkRegistryMatchWithYcr(ycr *containerregistry.Registry, registryName, clusterName string) bool {

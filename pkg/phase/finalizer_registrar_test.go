@@ -11,7 +11,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"k8s-connectors/pkg/util"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/util"
 )
 
 func TestRegisterFinalizer(t *testing.T) {

@@ -4,7 +4,7 @@
 package main
 
 import (
-	"k8s-connectors/scaffolder/pkg/command"
+	"github.com/yandex-cloud/k8s-cloud-connectors/scaffolder/pkg/command"
 )
 
 func main() {

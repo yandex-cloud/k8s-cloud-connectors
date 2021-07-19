@@ -10,11 +10,11 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/containerregistry/v1"
 
-	connectorsv1 "k8s-connectors/connector/ycr/api/v1"
-	ycrconfig "k8s-connectors/connector/ycr/pkg/config"
-	ycrutils "k8s-connectors/connector/ycr/pkg/util"
-	"k8s-connectors/pkg/config"
-	"k8s-connectors/pkg/errorhandling"
+	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/api/v1"
+	ycrconfig "github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/pkg/config"
+	ycrutils "github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/pkg/util"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/config"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/errorhandling"
 )
 
 func (r *yandexContainerRegistryReconciler) allocateResource(

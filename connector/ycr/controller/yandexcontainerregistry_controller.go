@@ -12,12 +12,11 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	connectorsv1 "k8s-connectors/connector/ycr/api/v1"
-	"k8s-connectors/connector/ycr/controller/adapter"
-	ycrconfig "k8s-connectors/connector/ycr/pkg/config"
-	"k8s-connectors/pkg/config"
-	"k8s-connectors/pkg/phase"
-	"k8s-connectors/pkg/util"
+	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/api/v1"
+	"github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/controller/adapter"
+	ycrconfig "github.com/yandex-cloud/k8s-cloud-connectors/connector/ycr/pkg/config"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/config"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/phase"
 )
 
 // yandexContainerRegistryReconciler reconciles a YandexContainerRegistry object
@@ -67,11 +66,7 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 	}
 
 	// If object must be currently finalized, do it and quit
-	mustBeFinalized, err := r.mustBeFinalized(&object)
-	if err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %w", err))
-	}
-	if mustBeFinalized {
+	if phase.MustBeFinalized(&object.ObjectMeta, ycrconfig.FinalizerName) {
 		if err := r.finalize(ctx, log.WithName("finalize"), &object); err != nil {
 			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %w", err))
 		}
@@ -109,14 +104,6 @@ func (r *yandexContainerRegistryReconciler) Reconcile(ctx context.Context, req c
 
 	log.V(1).Info("finished reconciliation")
 	return config.GetNormalResult()
-}
-
-func (r *yandexContainerRegistryReconciler) mustBeFinalized(object *connectorsv1.YandexContainerRegistry) (
-	bool, error,
-) {
-	return !object.DeletionTimestamp.IsZero() && util.ContainsString(
-		object.Finalizers, ycrconfig.FinalizerName,
-	), nil
 }
 
 func (r *yandexContainerRegistryReconciler) finalize(

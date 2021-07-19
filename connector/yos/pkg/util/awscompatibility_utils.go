@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 
-	"k8s-connectors/connector/yos/pkg/config"
+	"github.com/yandex-cloud/k8s-cloud-connectors/connector/yos/pkg/config"
 )
 
 func NewS3Client(_ context.Context, cred *credentials.Credentials) (*s3.S3, error) {

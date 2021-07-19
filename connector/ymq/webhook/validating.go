@@ -8,16 +8,16 @@ import (
 	"fmt"
 	"strings"
 
-	sakey "k8s-connectors/connector/sakey/api/v1"
+	sakey "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/api/v1"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	v1 "k8s-connectors/connector/ymq/api/v1"
-	"k8s-connectors/pkg/util"
-	"k8s-connectors/pkg/webhook"
+	v1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/ymq/api/v1"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/util"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/webhook"
 )
 
 // +kubebuilder:webhook:path=/validate-connectors-cloud-yandex-com-v1-yandexmessagequeue,mutating=false,failurePolicy=fail,sideEffects=None,groups=connectors.cloud.yandex.com,resources=yandexmessagequeues,verbs=create;update;delete,versions=v1,name=vyandexmessagequeue.yandex.com,admissionReviewVersions=v1

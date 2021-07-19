@@ -10,8 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/go-logr/logr"
 
-	connectorsv1 "k8s-connectors/connector/yos/api/v1"
-	"k8s-connectors/pkg/awsutils"
+	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/yos/api/v1"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/awsutils"
 )
 
 func (r *yandexObjectStorageReconciler) allocateResource(

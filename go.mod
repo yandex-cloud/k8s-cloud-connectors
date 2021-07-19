@@ -1,10 +1,10 @@
-module k8s-connectors
+module github.com/yandex-cloud/k8s-cloud-connectors
 
 go 1.15
 
 exclude (
-	k8s-connectors/example v0.0.0
-	k8s-connectors/scaffolder v0.0.0
+	github.com/yandex-cloud/k8s-cloud-connectors/example v0.0.0
+	github.com/yandex-cloud/k8s-cloud-connectors/scaffolder v0.0.0
 )
 
 require (
@@ -13,7 +13,6 @@ require (
 	github.com/go-logr/logr v0.3.0
 	github.com/go-logr/zapr v0.2.0
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang/protobuf v1.5.2
 	github.com/jinzhu/copier v0.2.9
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/stretchr/testify v1.7.0

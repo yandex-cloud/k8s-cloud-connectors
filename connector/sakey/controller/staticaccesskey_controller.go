@@ -12,12 +12,11 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	connectorsv1 "k8s-connectors/connector/sakey/api/v1"
-	"k8s-connectors/connector/sakey/controller/adapter"
-	sakeyconfig "k8s-connectors/connector/sakey/pkg/config"
-	"k8s-connectors/pkg/config"
-	"k8s-connectors/pkg/phase"
-	"k8s-connectors/pkg/util"
+	connectorsv1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/api/v1"
+	"github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/controller/adapter"
+	sakeyconfig "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/pkg/config"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/config"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/phase"
 )
 
 // staticAccessKeyReconciler reconciles a StaticAccessKey object
@@ -66,11 +65,7 @@ func (r *staticAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	// If object must be currently finalized, do it and quit
-	mustBeFinalized, err := r.mustBeFinalized(&object)
-	if err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %w", err))
-	}
-	if mustBeFinalized {
+	if phase.MustBeFinalized(&object.ObjectMeta, sakeyconfig.FinalizerName) {
 		if err := r.finalize(ctx, log.WithName("finalize"), &object); err != nil {
 			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %w", err))
 		}
@@ -94,10 +89,6 @@ func (r *staticAccessKeyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	log.V(1).Info("finished reconciliation")
 	return config.GetNormalResult()
-}
-
-func (r *staticAccessKeyReconciler) mustBeFinalized(object *connectorsv1.StaticAccessKey) (bool, error) {
-	return !object.DeletionTimestamp.IsZero() && util.ContainsString(object.Finalizers, sakeyconfig.FinalizerName), nil
 }
 
 func (r *staticAccessKeyReconciler) finalize(

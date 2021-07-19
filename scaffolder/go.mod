@@ -1,4 +1,4 @@
-module k8s-connectors/scaffolder
+module github.com/yandex-cloud/k8s-cloud-connectors/scaffolder
 
 go 1.15
 

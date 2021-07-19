@@ -28,7 +28,7 @@ func NewFakeYandexContainerRegistryAdapter() FakeYandexContainerRegistryAdapter 
 func (r *FakeYandexContainerRegistryAdapter) Create(
 	_ context.Context, request *containerregistry.CreateRegistryRequest,
 ) (*containerregistry.Registry, error) {
-	// TODO (covariance) Remember that this is not intended behavior and in future YCR must be checked for name uniqueness
+	// TODO (covariance) remember that this is not intended behavior and in future YCR must be checked for name uniqueness
 	registry := containerregistry.Registry{
 		Id:        strconv.Itoa(r.FreeID),
 		FolderId:  request.FolderId,

@@ -8,8 +8,8 @@ import (
 	"errors"
 	"testing"
 
-	sakey "k8s-connectors/connector/sakey/api/v1"
-	k8sfake "k8s-connectors/testing/k8s-fake"
+	sakey "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/api/v1"
+	k8sfake "github.com/yandex-cloud/k8s-cloud-connectors/testing/k8s-fake"
 
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
@@ -17,9 +17,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	v1 "k8s-connectors/connector/yos/api/v1"
-	"k8s-connectors/pkg/webhook"
-	logrfake "k8s-connectors/testing/logr-fake"
+	v1 "github.com/yandex-cloud/k8s-cloud-connectors/connector/yos/api/v1"
+	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/webhook"
+	logrfake "github.com/yandex-cloud/k8s-cloud-connectors/testing/logr-fake"
 )
 
 func setupValidation(t *testing.T) (context.Context, webhook.Validator, logr.Logger, client.Client) {
