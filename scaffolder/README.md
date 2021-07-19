@@ -23,7 +23,7 @@ scheme:
 To create scaffolding for **YetAnotherResource** with default scaffolding we can use the following command:
 ```shell
 > scaffolder --group yet.another.group.com --name YetAnotherResource \
-             --templates-dir scaffolding/templates --scheme scaffolding/scheme.yaml --output ./connector
+             --templates-dir templates --scheme scheme.yaml --output connector
 ```
 
 For most use cases, you would not need `--short` and `--version` flags, as they are defaulted to their most common values.
