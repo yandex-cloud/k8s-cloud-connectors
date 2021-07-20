@@ -16,7 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sqs"
 
-	"example/pkg/awscompatibility"
+	"github.com/yandex-cloud/k8s-cloud-connectors/examples/reporter/pkg/awscompatibility"
 )
 
 func getEnvOrDie(key string) string {

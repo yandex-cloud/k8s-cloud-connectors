@@ -41,6 +41,39 @@ It is enough to provide us such notification once.
 
 If you have any questions, please mail us at opensource@yandex-team.ru.
 
+## Contribution guidelines
+
+### How to create new connector
+Let's follow a step-by-step guide for creation of **YetAnotherResource** connector.
+
+1. You can use [scaffolder](scaffolder) to create baseline connector for you in a `./connector` directory, or 
+   you can just copy-paste one of the existing ones and refactor it a bit. 
+2. Add the resource api to the manager scheme by adding `utilruntime.Must(yar.AddToScheme(scheme))` line
+   (where `yar` is name of the `api/v1` import of your resource folder) into 
+   [main's](cmd/yc-connector-manager/main.go) `init` function.
+3. In the `execute` function of the same file setup that connector
+   (you can look at how it is done for existing ones and do it in the same manner), passing down everything needed,
+   such as *logger*, *context* and *clusterId*.
+4. You're ready to use your connector, now it is time to fill it with some code!
+
+### How to create new webhook
+
+1. In order to create new webhook, you shall create a struct that implements either `webhook.Validator` or `webhook.Mutator`,
+   depending on the type of webhook needed.
+2. Add a marker comment specifying your webhook configuration. You can use [this webhook](connector/ycr/webhook/validating.go) as
+   an example, or you can look for detailed description of each parameter [here](https://book.kubebuilder.io/reference/markers/webhook.html).
+3. Register your webhook in the [manager](cmd/yc-connector-manager/main.go) `execute` function, following existing ones
+   as an example.
+4. You're good to go!
+
+#### Things to remember
+* You must pass an empty object of the type that webhook supervises into the helper functions 
+  `webhook.RegisterValidatingHandler` and `webhook.RegisterMutatingHandler`. This is used to unmarshall **k8s**
+  requests into (Go 2.0 and Generics are near, but not here yet).
+* In every method of `webhook.Validator` or `webhook.Mutator` you get a raw object, so you should cast it to desired
+  type by hands. It is better to use *optimistic* casts without typechecking, because there is a layer in webhook system that
+  recovers from panics, just in case something goes wrong.
+
 ## Code Guidelines
 
 ### Naming Convention
@@ -64,3 +97,13 @@ If you have any questions, please mail us at opensource@yandex-team.ru.
   
 * If your code receives an `error` from a subordinate function call and is not re-throwing it, it **must** be logged
    on at least `ERROR` level.
+  
+### Logging conventions
+
+* Remember to pass logger to any underlying function specifying that function via `.WithName(string)`. Thus, 
+  it would be possible to write very simple logging messages, such as "started" or "finished", as well as writing
+  common code that accepts logger as an argument without specifying, where it is called 
+  (for example, `phase.RegisterFinalizer` can be called from both `YandexContainerRegistryReconciler` 
+  and `YandexObjectStorage`, and inner logging would remain the same).
+* While most loggers have debug-level logging via some method like `log.Debug(message)`, unfortunately, 
+  `logr.Logger` does not have this method. To imitate it, you shall use `log.V(1).Info(message)`.

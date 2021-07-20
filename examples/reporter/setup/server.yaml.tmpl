@@ -1,21 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ycc-example-worker
+  name: ycc-example-server
   namespace: yandex-cloud-connectors-example
 spec:
   selector:
     matchLabels:
-      control-plane: worker
+      control-plane: server
   replicas: 1
   template:
     metadata:
       labels:
-        control-plane: worker
+        control-plane: server
     spec:
       containers:
-        - image: cr.yandex/crptp7j81e7caog8r6gq/ycc-example/worker:latest
-          name: worker
+        - image: $REGISTRY/ycc-example/server:latest
+          name: server
+          ports:
+            - containerPort: 8080
+              name: image-reporter
+              protocol: TCP
           resources:
             limits:
               cpu: 100m
@@ -24,11 +28,6 @@ spec:
               cpu: 100m
               memory: 20Mi
           env:
-            - name: S3_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: yos-example-object-storage-configmap
-                  key: name
             - name: YMQ_URL
               valueFrom:
                 configMapKeyRef:

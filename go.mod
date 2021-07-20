@@ -3,7 +3,7 @@ module github.com/yandex-cloud/k8s-cloud-connectors
 go 1.15
 
 exclude (
-	github.com/yandex-cloud/k8s-cloud-connectors/example v0.0.0
+	github.com/yandex-cloud/k8s-cloud-connectors/examples/reporter v0.0.0
 	github.com/yandex-cloud/k8s-cloud-connectors/scaffolder v0.0.0
 )
 
