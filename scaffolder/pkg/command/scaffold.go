@@ -109,16 +109,15 @@ func init() {
 	scaffoldCmd.PersistentFlags().StringVar(
 		&groupName,
 		"group",
-		"",
-		"group name of the resource, such as \"connectors.cloud.yandex.com\"",
+		"connectors.cloud.yandex.com",
+		"group name of the resource, such as \"yet.another.group.com\"",
 	)
-	_ = scaffoldCmd.MarkFlagRequired("group")
 
 	scaffoldCmd.PersistentFlags().StringVar(
 		&version,
 		"version",
 		"v1",
-		"version of the resource, such as \"v1beta1\", defaults to \"v1\"",
+		"version of the resource, such as \"v1beta1\"",
 	)
 
 	scaffoldCmd.PersistentFlags().StringVar(
