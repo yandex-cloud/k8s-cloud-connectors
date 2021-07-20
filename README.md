@@ -35,10 +35,9 @@ _Более развернутый пример, демонстрирующий 
 
 ```shell
 FOLDER_ID=<your_folder_id>
-NODEGROUP_ID=<your_nodegroup_id>
+CLUSTER_ID=<your_cluster_id>
 
-INSTANCE_GROUP_ID=$(yc managed-kubernetes node-group get --id ${NODEGROUP_ID} --format json | jq -r ".instance_group_id")
-SERVICE_ACCOUNT_ID=$(yc compute instance-group get --id ${INSTANCE_GROUP_ID} --format json | jq -r ".instance_template.service_account_id")
+SERVICE_ACCOUNT_ID=$(yc k8s cluster get "$CLUSTER_ID" --format json | jq -r '.node_service_account_id')
 yc resource-manager folder add-access-binding --id "$FOLDER_ID" --role container-registry.admin --service-account-id "$SERVICE_ACCOUNT_ID"
 ```
 
@@ -68,10 +67,3 @@ FOLDER_ID="$FOLDER_ID" envsubst < ./examples/test-registry.yaml.tmpl | kubectl d
 ```shell
 helm uninstall yandex-cloud-connectors
 ```
-
-## Продвинутое использование
-**YCC** можно использовать и на других кластерах, не только *mk8s* от Яндекса. Для их корректной работы придётся 
-сделать несколько вещей:
-
-1. Положить на ноды credentials для доступа к аккаунту в Яндекс Облаке так, как это делается в mk8s;
-2. Передать в аргументах для `connector-manager` желаемое имя кластера, или разложить его на нодах так, как это сделано в mk8s.
