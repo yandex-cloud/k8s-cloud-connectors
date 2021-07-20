@@ -17,9 +17,7 @@
 * [yc](https://cloud.yandex.ru/docs/cli/quickstart) - для управления ресурсами в Яндекс Облаке.
 ## Запуск
 
-Для каждого этапа также будет указана команда из `Makefile`, которая исполняет его.
-
-В первую очередь необходимо собрать наше приложение и положить его в какой-нибудь реестр образов, доступный кластеру (`make build-all REGISTRY=<your_registry>`):
+В первую очередь необходимо собрать наше приложение и положить его в какой-нибудь реестр образов, доступный кластеру:
 
 ```shell
 REGISTRY=<your_registry>
@@ -31,8 +29,8 @@ docker build -t ${REGISTRY}/ycc-example/worker:latest --file worker.dockerfile .
 docker push ${REGISTRY}/ycc-example/worker:latest
 ```
 
-Затем в нашем фолдере новый сервисный аккаунт, который будет ответственным за это приложение и выдать ему права
-`ymq.admin` и `storage.uploader` (`make create-sa FOLDER_ID=<your_folder_id>`):
+Затем создадим в нашем фолдере новый сервисный аккаунт, который будет ответственным за это приложение и выдать ему права
+`ymq.admin` и `storage.uploader`:
 
 ```shell
 FOLDER_ID=<your_folder_id>
@@ -42,7 +40,7 @@ yc resource-manager folder add-access-binding --id "$FOLDER_ID" --role ymq.admin
 yc resource-manager folder add-access-binding --id "$FOLDER_ID" --role storage.admin --service-account-id "$SAID"
 ```
 
-Устанавливаем в кластер `yaml`-ы с нашим приложением (`make install SAID=$SAID REGISTRY=$REGISTRY`):
+Устанавливаем в кластер `yaml`-ы с нашим приложением:
 
 ```shell
 kubectl apply -f setup/ns.yaml
@@ -64,7 +62,7 @@ kubectl apply -f setup/service.yaml
 CLUSTER_ENDPOINT=$(kubectl -n yandex-cloud-connectors-example get service/image-reporter --output=json | jq '.status.loadBalancer.ingress[0].ip' | tr -d '"')
 ```
 
-Отправим нашему серверу запрос (`make make-sample-request`):
+Отправим нашему серверу запрос:
 
 ```shell
 curl -X POST -d "Hello Yandex Cloud Connectors!" "${CLUSTER_ENDPOINT}/report?filename=greetings.txt"
@@ -85,9 +83,7 @@ SAID=$SAID envsubst < setup/sakey.yaml.tmpl | kubectl delete -f -
 kubectl delete -f setup/ns.yaml
 ```
 
-Также это можно сделать командой `make uninstall`.
-
-Затем удалим созданный сервисный аккаунт (`make delete-sa`):
+Затем удалим созданный сервисный аккаунт:
 
 ```shell
 yc iam service-account delete ycc-example-sa
