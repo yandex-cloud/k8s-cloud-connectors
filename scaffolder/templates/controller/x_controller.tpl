@@ -14,14 +14,13 @@ import (
 	{{ .shortName }}config "github.com/yandex-cloud/k8s-cloud-connectors/connector/{{ .shortName }}/pkg/config"
 	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/config"
 	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/phase"
-	"github.com/yandex-cloud/k8s-cloud-connectors/pkg/util"
 )
 
 // {{ .longName | untitle }}Reconciler reconciles a {{ .longName }} object
 type {{ .longName | untitle }}Reconciler struct {
 	client.Client
-	adapter   adapter.{{ .longName }}Adapter
-	log       logr.Logger
+	adapter adapter.{{ .longName }}Adapter
+	log     logr.Logger
 }
 
 func New{{ .longName }}Reconciler(
@@ -32,9 +31,9 @@ func New{{ .longName }}Reconciler(
 		return nil, err
 	}
 	return &{{ .longName | untitle }}Reconciler{
-		Client:    cl,
-		adapter:   impl,
-		log:       log,
+		Client:  cl,
+		adapter: impl,
+		log:     log,
 	}, nil
 }
 
@@ -60,11 +59,7 @@ func (r *{{ .longName | untitle }}Reconciler) Reconcile(ctx context.Context, req
 	}
 
 	// If object must be currently finalized, do it and quit
-	mustBeFinalized, err := r.mustBeFinalized(&object)
-	if err != nil {
-		return config.GetErroredResult(fmt.Errorf("unable to check if object must be finalized: %w", err))
-	}
-	if mustBeFinalized {
+	if phase.MustBeFinalized(&object.ObjectMeta, {{ .shortName }}config.FinalizerName) {
 		if err := r.finalize(ctx, log.WithName("finalize"), &object); err != nil {
 			return config.GetErroredResult(fmt.Errorf("unable to finalize object: %w", err))
 		}
@@ -79,10 +74,6 @@ func (r *{{ .longName | untitle }}Reconciler) Reconcile(ctx context.Context, req
 
 	log.V(1).Info("finished reconciliation")
 	return config.GetNormalResult()
-}
-
-func (r *{{ .longName | untitle }}Reconciler) mustBeFinalized(object *connectorsv1.{{ .longName }}) (bool, error) {
-	return !object.DeletionTimestamp.IsZero() && util.ContainsString(object.Finalizers, {{ .shortName }}config.FinalizerName), nil
 }
 
 func (r *{{ .longName | untitle }}Reconciler) finalize(

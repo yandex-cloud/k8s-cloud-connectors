@@ -1,9 +1,9 @@
 # Scaffolder
 
-Scaffolder is a customizable scaffolding generator. It takes in a value file, a scaffolding
-directory, and a scheme to produce scaffolding with inserted values. All the scaffolding files
-follow a standard [**Go template**](https://golang.org/pkg/text/template/) syntax and are populated with
-values provided as a value file or command-line options.
+Scaffolder is a scaffolding generator for creating new connectors. It takes in a scaffolding
+directory, scheme, and some values to produce scaffolding with inserted values. All the scaffolding files
+follow a standard [**Go template**](https://golang.org/pkg/text/template/) syntax with additional functions provided by
+[**Sprig library**](https://github.com/Masterminds/sprig) and are populated with values provided as a command-line options.
 
 ### Scheme
 Scheme file just explains how value-populated files would be located in the output. It can hold templates, 
@@ -19,16 +19,14 @@ scheme:
     recursive: true
 ```
 
-### Value file 
+### Example
+To create scaffolding for **YetAnotherResource** with default scaffolding we can use the following command:
+```shell
+> scaffolder --group yet.another.group.com --name YetAnotherResource \
+             --templates-dir templates --scheme scheme.yaml --output connector
+```
 
-Value file must be provided as either `.json` or `.yaml` file. It can be specified via 
-`input` flag of the command line. If you provide values in command line, they must be
-a valid `.json` string.
+For most use cases, you would not need `--short` and `--version` flags, as they are defaulted to their most common values.
+However, if you would ever need to dig deeper, you can always use `scaffolder --help` command.
 
-Currently, only string values are supported.
-
-### Templating
-
-Scaffolder uses standard [**Go template**](https://golang.org/pkg/text/template/) syntax and functionality
-as well as [**Sprig library**](https://github.com/Masterminds/sprig) to provide additional
-functions. All the documentation about them can be found [here](https://masterminds.github.io/sprig/).
+*__WARNING:__ do not forget to use `make generate` and `make manifest` after creating scaffolding. It will autogenerate rest of the files needed.*

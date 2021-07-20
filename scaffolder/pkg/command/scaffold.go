@@ -6,6 +6,8 @@ package command
 import (
 	"fmt"
 	"os"
+	"strings"
+	"unicode"
 
 	"github.com/yandex-cloud/k8s-cloud-connectors/scaffolder/pkg/scaffolder"
 
@@ -24,46 +26,51 @@ var (
 	outputDir    string
 	scheme       string
 
-	jsonValues   []string
-	yamlValues   []string
-	fileValues   []string
+	groupName string
+	version   string
+	longName  string
+	shortName string
+
 	inlineValues []string
 )
 
-func appendToValuesFromMappedSlice(
-	val *scaffolder.Values, slice []string, mapper func(string) (scaffolder.Values, error),
-) error {
-	for _, s := range slice {
-		appendant, err := mapper(s)
-		if err != nil {
-			return err
-		}
-		for k, v := range appendant {
-			(*val)[k] = v
+func shortNameFromLong() error {
+	var builder strings.Builder
+	for _, rn := range longName {
+		if unicode.IsUpper(rn) {
+			builder.WriteRune(rn)
 		}
 	}
 
+	if builder.Len() == 0 {
+		return fmt.Errorf("unable to deduce short name: long name has no capital letters")
+	}
+
+	shortName = strings.ToLower(builder.String())
 	return nil
 }
 
 func scaffold(_ *cobra.Command, _ []string) error {
 	val := scaffolder.Values{}
 
-	if err := appendToValuesFromMappedSlice(&val, jsonValues, scaffolder.ParseValuesFromJSON); err != nil {
-		return fmt.Errorf("unable to parse JSON values: %w", err)
+	for _, s := range inlineValues {
+		k, v, err := scaffolder.ParseKeyValueFromString(s)
+		if err != nil {
+			return fmt.Errorf("unable to parse inline values: %w", err)
+		}
+		val[k] = v
 	}
 
-	if err := appendToValuesFromMappedSlice(&val, yamlValues, scaffolder.ParseValuesFromYAML); err != nil {
-		return fmt.Errorf("unable to parse YAML values: %w", err)
+	if shortName == "" {
+		if err := shortNameFromLong(); err != nil {
+			return err
+		}
 	}
 
-	if err := appendToValuesFromMappedSlice(&val, fileValues, scaffolder.ParseValuesFromFile); err != nil {
-		return fmt.Errorf("unable to parse file values: %w", err)
-	}
-
-	if err := appendToValuesFromMappedSlice(&val, inlineValues, scaffolder.ParseValuesFromString); err != nil {
-		return fmt.Errorf("unable to parse inline values: %w", err)
-	}
+	val["groupName"] = groupName
+	val["version"] = version
+	val["longName"] = longName
+	val["shortName"] = shortName
 
 	scheme, err := scaffolder.ParseScheme(scheme, val)
 	if err != nil {
@@ -99,32 +106,40 @@ func init() {
 		"sets scheme for this scaffolding",
 	)
 
-	scaffoldCmd.PersistentFlags().StringSliceVar(
-		&jsonValues,
-		"values-from-json",
-		[]string{},
-		"set value files that are to be parsed as json",
+	scaffoldCmd.PersistentFlags().StringVar(
+		&groupName,
+		"group",
+		"connectors.cloud.yandex.com",
+		"group name of the resource, such as \"yet.another.group.com\"",
 	)
 
-	scaffoldCmd.PersistentFlags().StringSliceVar(
-		&yamlValues,
-		"values-from-yaml",
-		[]string{},
-		"set value files that are to be parsed as yaml",
+	scaffoldCmd.PersistentFlags().StringVar(
+		&version,
+		"version",
+		"v1",
+		"version of the resource, such as \"v1beta1\"",
 	)
 
-	scaffoldCmd.PersistentFlags().StringSliceVar(
-		&fileValues,
-		"values-from-file",
-		[]string{},
-		"set value files that are to be parsed as either json or yaml, depending on file extension",
+	scaffoldCmd.PersistentFlags().StringVar(
+		&longName,
+		"name",
+		"",
+		"name of the resource, such as \"YetAnotherYandexResource\"",
+	)
+	_ = scaffoldCmd.MarkFlagRequired("name")
+
+	scaffoldCmd.PersistentFlags().StringVar(
+		&shortName,
+		"short",
+		"",
+		"short name of the resource, such as \"yayr\", is optional",
 	)
 
 	scaffoldCmd.PersistentFlags().StringSliceVar(
 		&inlineValues,
 		"val",
 		[]string{},
-		"inlined values in \"key=value\" format",
+		"any additional values in \"key=value\" format",
 	)
 }
 

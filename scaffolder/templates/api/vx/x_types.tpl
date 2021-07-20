@@ -6,7 +6,7 @@ import (
 
 // {{ .longName }}Spec defines the desired state of {{ .longName }}
 type {{ .longName }}Spec struct {
-    // SpecField: some field in the spec
+	// SpecField: some field in the spec
 	SpecField string `json:"specField"`
 
 	// TODO: fill the spec
