@@ -77,37 +77,21 @@ local-build-certifier: test ## Build manager binary locally.
 
 local-build: local-build-manager local-build-certifier ## Build all binaries locally.
 
-## Version of an images, can be set up externally
-IMG_TAG ?= latest
-
-## Image name of a manager binary
-
-## Resulting tag of a manager binary
-MANAGER_IMG := manager:$(IMG_TAG)
-
 docker-build-manager: test ## Build docker image with the manager.
 	docker build -t $(MANAGER_IMG) --file manager.dockerfile .
 
-## Resulting tag of a certifier binary
-CERTIFIER_IMG := certifier:$(IMG_TAG)
 docker-build-certifier: test ## Build docker image with the certifier.
 	docker build -t $(CERTIFIER_IMG) --file certifier.dockerfile .
 
-docker-push-manager: docker-build-manager ## Push docker image with the manager. <REGISTRY> must be specified.
-ifndef REGISTRY
-	$(error "You must set REGISTRY in order to push")
-endif
-	docker tag $(MANAGER_IMG) $(REGISTRY)/$(MANAGER_IMG)
-	docker push $(REGISTRY)/$(MANAGER_IMG)
+docker-build: docker-build-manager docker-build-certifier ## Build all docker images.
 
-docker-push-certifier: docker-build-certifier ## Push docker image with the certifier. <REGISTRY> must be specified.
-ifndef REGISTRY
-	$(error "You must set REGISTRY in order to push")
-endif
-	docker tag $(CERTIFIER_IMG) $(REGISTRY)/$(CERTIFIER_IMG)
-	docker push $(REGISTRY)/$(CERTIFIER_IMG)
+docker-push-manager: docker-build-manager ## Push docker image with the manager.
+	docker push $(MANAGER_IMG)
 
-docker-push: docker-push-manager docker-push-certifier ## Push all images to docker. <REGISTRY> must be specified.
+docker-push-certifier: docker-build-certifier ## Push docker image with the certifier.
+	docker push $(CERTIFIER_IMG)
+
+docker-push: docker-push-manager docker-push-certifier ## Push all images to docker.
 
 ##@ Deployment
 
