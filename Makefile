@@ -78,18 +78,20 @@ local-build-certifier: test ## Build manager binary locally.
 local-build: local-build-manager local-build-certifier ## Build all binaries locally.
 
 docker-build-manager: test ## Build docker image with the manager.
-	docker build -t $(MANAGER_IMG) --file manager.dockerfile .
+	docker build -t $(MANAGER_IMG):$(TAG) -t $(MANAGER_IMG):latest --file manager.dockerfile .
 
 docker-build-certifier: test ## Build docker image with the certifier.
-	docker build -t $(CERTIFIER_IMG) --file certifier.dockerfile .
+	docker build -t $(CERTIFIER_IMG):$(TAG) -t $(CERTIFIER_IMG):latest --file certifier.dockerfile .
 
 docker-build: docker-build-manager docker-build-certifier ## Build all docker images.
 
 docker-push-manager: docker-build-manager ## Push docker image with the manager.
-	docker push $(MANAGER_IMG)
+	docker push $(MANAGER_IMG):$(TAG)
+	docker push $(MANAGER_IMG):latest
 
 docker-push-certifier: docker-build-certifier ## Push docker image with the certifier.
-	docker push $(CERTIFIER_IMG)
+	docker push $(CERTIFIER_IMG):$(TAG)
+	docker push $(CERTIFIER_IMG):latest
 
 docker-push: docker-push-manager docker-push-certifier ## Push all images to docker.
 
