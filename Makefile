@@ -75,7 +75,13 @@ local-build-manager: test ## Build manager binary locally.
 local-build-certifier: test ## Build manager binary locally.
 	go build -o ./bin/certifier ./cmd/yc-connector-certifier/main.go
 
-local-build: local-build-manager local-build-certifier ## Build all binaries locally.
+local-build-reporter: test ## Build reporter example binaries locally.
+	go build -o ./bin/reporter/server ./examples/reporter/cmd/server/main.go
+	go build -o ./bin/reporter/worker ./examples/reporter/cmd/worker/main.go
+
+local-build: local-build-manager local-build-certifier ## Build all ycc binaries locally.
+
+local-build-all: local-build local-build-reporter ## Build all ycc and example binaries locally
 
 docker-build-manager: test ## Build docker image with the manager.
 	docker build -t $(MANAGER_IMG):$(TAG) -t $(MANAGER_IMG):latest --file manager.dockerfile .
@@ -83,7 +89,13 @@ docker-build-manager: test ## Build docker image with the manager.
 docker-build-certifier: test ## Build docker image with the certifier.
 	docker build -t $(CERTIFIER_IMG):$(TAG) -t $(CERTIFIER_IMG):latest --file certifier.dockerfile .
 
-docker-build: docker-build-manager docker-build-certifier ## Build all docker images.
+docker-build-reporter: test ## Build docker images with the reporter example.
+	docker build -t $(REPORTER_SERVER_IMG):$(TAG) -t $(REPORTER_SERVER_IMG):latest --file ./examples/reporter/server.dockerfile ./examples/reporter
+	docker build -t $(REPORTER_WORKER_IMG):$(TAG) -t $(REPORTER_WORKER_IMG):latest --file ./examples/reporter/worker.dockerfile ./examples/reporter
+
+docker-build: docker-build-manager docker-build-certifier ## Build all ycc docker images.
+
+docker-build-all: docker-build docker-build-reporter ## Build all ycc and example docker images.
 
 docker-push-manager: docker-build-manager ## Push docker image with the manager.
 	docker push $(MANAGER_IMG):$(TAG)
@@ -93,7 +105,15 @@ docker-push-certifier: docker-build-certifier ## Push docker image with the cert
 	docker push $(CERTIFIER_IMG):$(TAG)
 	docker push $(CERTIFIER_IMG):latest
 
-docker-push: docker-push-manager docker-push-certifier ## Push all images to docker.
+docker-push-reporter: docker-build-reporter ## Push docker images with the reporter example.
+	docker push $(REPORTER_SERVER_IMG):$(TAG)
+	docker push $(REPORTER_SERVER_IMG):latest
+	docker push $(REPORTER_WORKER_IMG):$(TAG)
+	docker push $(REPORTER_WORKER_IMG):latest
+
+docker-push: docker-push-manager docker-push-certifier ## Push all ycc images to registry.
+
+docker-push-all: docker-push docker-push-reporter ## Push all ycc and example images to registry.
 
 helm-push:
 	helm lint helm/yandex-cloud-connectors
