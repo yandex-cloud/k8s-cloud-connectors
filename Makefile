@@ -131,11 +131,12 @@ uninstall: ## Undeploy from the k8s cluster
 ##@ Dependencies
 
 GOLANGCI-LINT := $(ROOT)/bin/golangci-lint ## Location of golangci-lint binary
+GOLANGCI-LINT-VERSION := v1.42.1
 ensure-linter: ## Download golangci-lint if necessary.
 	@if [ ! -x "$(command -v golangci-lint)" ] && [ ! -x $(GOLANGCI-LINT) ]; \
  	then \
   		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
-                         | sh -s -- -b $(ROOT)/bin v1.41.0; \
+                         | sh -s -- -b $(ROOT)/bin $(GOLANGCI-LINT-VERSION); \
   	fi
 
 CONTROLLER_GEN := $(ROOT)/bin/controller-gen ## Location of controller-gen binary

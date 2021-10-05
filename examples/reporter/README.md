@@ -28,19 +28,7 @@
 
 ## Запуск
 
-В первую очередь необходимо собрать наше приложение и положить его в какой-нибудь реестр образов, доступный кластеру:
-
-```shell
-REGISTRY=cr.yandex/<your_registry_id>
-
-docker build -t ${REGISTRY}/ycc-example/server:latest --file server.dockerfile .
-docker push ${REGISTRY}/ycc-example/server:latest
-
-docker build -t ${REGISTRY}/ycc-example/worker:latest --file worker.dockerfile .
-docker push ${REGISTRY}/ycc-example/worker:latest
-```
-
-Затем создадим в нашем фолдере новый сервисный аккаунт, который будет ответственным за это приложение и выдать ему права
+Создадим в нашем фолдере новый сервисный аккаунт, который будет ответственным за это приложение и выдать ему права
 `ymq.admin` и `storage.uploader`:
 
 ```shell
@@ -60,8 +48,8 @@ sleep 1
 kubectl apply -f setup/yos.yaml
 kubectl apply -f setup/ymq.yaml
 sleep 1
-REGISTRY=$REGISTRY envsubst < setup/server.yaml.tmpl | kubectl apply -f -
-REGISTRY=$REGISTRY envsubst < setup/worker.yaml.tmpl | kubectl apply -f -
+kubectl apply -f setup/server.yaml
+kubectl apply -f setup/worker.yaml
 kubectl apply -f setup/service.yaml
 ```
 

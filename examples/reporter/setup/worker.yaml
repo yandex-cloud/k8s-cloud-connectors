@@ -14,7 +14,7 @@ spec:
         control-plane: worker
     spec:
       containers:
-        - image: $REGISTRY/ycc-example/worker:latest
+        - image: cr.yandex/yc/cloud-connectors/example/reporter/worker:0.0.1
           name: worker
           resources:
             limits:
