@@ -9,7 +9,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: certifier
-          image: {{ .Values.imageRegistry }}/certifier:{{ .Values.imageTag }}
+          image: {{ .Values.imageRegistry }}/certifier:{{ .Chart.AppVersion }}
           args:
             {{ if .Values.debug }}- --debug{{ end }}
             - --namespace={{ .Values.namespace }}
