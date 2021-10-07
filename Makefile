@@ -95,6 +95,12 @@ docker-push-certifier: docker-build-certifier ## Push docker image with the cert
 
 docker-push: docker-push-manager docker-push-certifier ## Push all images to docker.
 
+helm-push: export HELM_EXPERIMENTAL_OCI=1
+helm-push: export HELM_REGISTRY_CONFIG="$(HOME)/.docker/config.json"
+helm-push:
+	helm chart save helm/yandex-cloud-connectors $(CHART_IMG):$(TAG)
+	HELM_REGISTRY_CONFIG=$(HELM_REGISTRY_CONFIG) helm chart push $(CHART_IMG):$(TAG)
+
 ##@ Deployment
 
 install: prepare-chart ## Deploy to the k8s cluster
