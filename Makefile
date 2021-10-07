@@ -97,8 +97,8 @@ docker-push: docker-push-manager docker-push-certifier ## Push all images to doc
 
 helm-push:
 	helm lint helm/yandex-cloud-connectors
-	helm chart save helm/yandex-cloud-connectors $(CHART_IMG):$(TAG)
-	helm chart push $(CHART_IMG):$(TAG)
+	helm package helm/yandex-cloud-connectors --version $(TAG) --app-version $(TAG)
+	helm push yandex-cloud-connectors-$(TAG).tgz oci://$(CHART_IMG)
 
 ##@ Deployment
 
