@@ -11,15 +11,21 @@
 
 #### Необходимые инструменты
 1. Настроенный кластер [**Kubernetes**](https://kubernetes.io) - [mk8s](https://cloud.yandex.ru/services/managed-kubernetes) в Яндекс Облаке.
-2. Установленный [__Helm__](https://helm.sh).
+2. Установленный [__Helm__](https://helm.sh). Для установки из реестра необходима версия 3.7+
 
-На данный момент установить **Yandex Cloud Connectors** можно только загрузив этот репозиторий и выполнив команду:
+Для установки **Yandex Cloud Connectors** из реестра:
+```
+export HELM_EXPERIMENTAL_OCI=1
+export HELM_REGISTRY_CONFIG="$HOME/.docker/config.json"
+helm install yandex-cloud-connectors oci://cr.yandex/yc/cloud-connectors/chart/yandex-cloud-connectors --version <version>
+```
+список доступных версий можно найти здесь: https://github.com/yandex-cloud/k8s-cloud-connectors/tags
+
+Для установки **Yandex Cloud Connectors** из репозитория (latest версия образов):
 
 ```shell
-> helm install yandex-cloud-connectors helm/yandex-cloud-connectors
+helm install yandex-cloud-connectors helm/yandex-cloud-connectors
 ```
-
-В дальнейшем *helm*-чарт с **YCC** появится в официальных репозиториях Яндекс Облака для более удобной установки.
 
 ## Пример использования
 
