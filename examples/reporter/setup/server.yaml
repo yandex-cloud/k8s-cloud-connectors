@@ -14,7 +14,7 @@ spec:
         control-plane: server
     spec:
       containers:
-        - image: cr.yandex/yc/cloud-connectors/example/reporter/worker:0.0.1
+        - image: cr.yandex/yc/cloud-connectors/example/reporter/server:0.0.1
           name: server
           ports:
             - containerPort: 8080
