@@ -20,6 +20,8 @@ spec:
       containers:
         - image: {{ .Values.imageRegistry }}/manager:{{ .Chart.AppVersion }}
           args:
+            - --service-account-key-file
+            - /secret/key
             {{ if .Values.debug }}- --debug{{ end }}
           name: manager
           securityContext:
@@ -51,8 +53,14 @@ spec:
             - mountPath: /etc/yandex-cloud-connectors/certs
               name: tls-certificate
               readOnly: true
+            - mountPath: /secret
+              name: sakey
+              readOnly: true
       volumes:
         - name: tls-certificate
           secret:
             secretName: webhook-tls-cert
+        - name: sakey
+          secret:
+            secretName: connector-sakey-secret
       terminationGracePeriodSeconds: 10
