@@ -79,8 +79,8 @@ curl -X POST -d 'Hello Yandex Cloud Connectors!' "${CLUSTER_ENDPOINT}/report?fil
 Теперь приберёмся за собой, удалив все созданные ресурсы (не забудьте очистить **Yandex Object Storage** от всех положенных в него файлов):
 
 ```shell
-REGISTRY=$REGISTRY envsubst < setup/server.yaml.tmpl | kubectl delete -f -
-REGISTRY=$REGISTRY envsubst < setup/worker.yaml.tmpl | kubectl delete -f -
+kubectl delete -f setup/server.yaml
+kubectl delete -f setup/worker.yaml
 kubectl delete -f setup/service.yaml
 kubectl delete -f setup/yos.yaml
 kubectl delete -f setup/ymq.yaml

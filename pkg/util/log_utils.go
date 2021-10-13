@@ -7,18 +7,22 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-const developmentStepsSkipped = 1
+const stepsSkipped = 1
 
 func NewZaprLogger(debug bool) (logr.Logger, error) {
-	var log *zap.Logger
-	var err error
+	loggerConfig := zap.NewProductionConfig()
+	loggerConfig.EncoderConfig.TimeKey = "timestamp"
+	loggerConfig.EncoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
+
 	if debug {
-		log, err = zap.NewDevelopment(zap.AddCallerSkip(developmentStepsSkipped))
-	} else {
-		log, err = zap.NewProduction()
+		loggerConfig.Development = true
+		loggerConfig.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
 	}
+
+	log, err := loggerConfig.Build(zap.AddCallerSkip(stepsSkipped))
 	if err != nil {
 		return nil, err
 	}
