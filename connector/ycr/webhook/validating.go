@@ -26,17 +26,8 @@ type YCRValidator struct {
 	sdk *ycsdk.SDK
 }
 
-func NewYCRValidator(ctx context.Context) (webhook.Validator, error) {
-	sdk, err := ycsdk.Build(
-		ctx,
-		ycsdk.Config{
-			Credentials: ycsdk.InstanceServiceAccount(),
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &YCRValidator{sdk: sdk}, nil
+func NewYCRValidator(sdk *ycsdk.SDK) webhook.Validator {
+	return &YCRValidator{sdk: sdk}
 }
 
 func (r *YCRValidator) ValidateCreation(ctx context.Context, log logr.Logger, obj runtime.Object) error {

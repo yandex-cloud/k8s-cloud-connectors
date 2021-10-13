@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 
+	ycsdk "github.com/yandex-cloud/go-sdk"
+
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -27,19 +29,14 @@ type staticAccessKeyReconciler struct {
 	clusterID string
 }
 
-func NewStaticAccessKeyReconciler(
-	ctx context.Context, cl client.Client, log logr.Logger, clusterID string,
-) (*staticAccessKeyReconciler, error) {
-	impl, err := adapter.NewStaticAccessKeyAdapter(ctx)
-	if err != nil {
-		return nil, err
-	}
+func NewStaticAccessKeyReconciler(log logr.Logger, cl client.Client,
+	sdk *ycsdk.SDK, clusterID string) *staticAccessKeyReconciler {
 	return &staticAccessKeyReconciler{
 		Client:    cl,
-		adapter:   impl,
+		adapter:   adapter.NewStaticAccessKeyAdapter(sdk),
 		log:       log,
 		clusterID: clusterID,
-	}, nil
+	}
 }
 
 // +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=staticaccesskeys,verbs=get;list;watch;create;update;patch;delete

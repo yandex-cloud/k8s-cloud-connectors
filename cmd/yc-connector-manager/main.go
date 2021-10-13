@@ -73,7 +73,7 @@ func init() {
 	flag.BoolVar(&debug, "debug", false, "Enable debug logging for this connector manager.")
 }
 
-func getClusterIDFromNodeMetadata() (string, error) {
+func getClusterIDFromNodeMetadata(sdk *ycsdk.SDK) (string, error) {
 	ctx := context.Background()
 	instanceIDReq, err := http.NewRequestWithContext(
 		ctx,
@@ -99,17 +99,7 @@ func getClusterIDFromNodeMetadata() (string, error) {
 		return "", fmt.Errorf("cannot read instanceID from metadata: %w", err)
 	}
 
-	// TODO (covariance) maybe we need to create one YCSDK and just pass it everywhere?
-	yc, err := ycsdk.Build(
-		ctx, ycsdk.Config{
-			Credentials: ycsdk.InstanceServiceAccount(),
-		},
-	)
-	if err != nil {
-		return "", fmt.Errorf("unable to create ycsdk: %w", err)
-	}
-
-	instance, err := yc.Compute().Instance().Get(
+	instance, err := sdk.Compute().Instance().Get(
 		ctx, &compute.GetInstanceRequest{
 			InstanceId: string(instanceID),
 			View:       compute.InstanceView_BASIC,
@@ -150,13 +140,22 @@ func main() {
 	}
 }
 
+//nolint:gocyclo
 func execute(log logr.Logger) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var err error
+	sdk, err := ycsdk.Build(
+		ctx, ycsdk.Config{
+			Credentials: ycsdk.InstanceServiceAccount(),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("unable to create ycsdk: %w", err)
+	}
+
 	if clusterID == "" {
-		clusterID, err = getClusterIDFromNodeMetadata()
+		clusterID, err = getClusterIDFromNodeMetadata(sdk)
 		if err != nil {
 			return fmt.Errorf("unable to set cluster id: %w", err)
 		}
@@ -177,17 +176,17 @@ func execute(log logr.Logger) error {
 		return fmt.Errorf("unable to set up manager: %w", err)
 	}
 
-	if err := setupSAKeyConnector(ctx, log, mgr, clusterID); err != nil {
+	if err := setupSAKeyConnector(log, mgr, sdk, clusterID); err != nil {
 		return fmt.Errorf("unable to set up %s connector: %w", sakeyconfig.LongName, err)
 	}
-	if err := setupSAKeyWebhook(ctx, log, mgr); err != nil {
+	if err := setupSAKeyWebhook(log, mgr, sdk); err != nil {
 		return fmt.Errorf("unable to set up %s webhook: %w", sakeyconfig.LongName, err)
 	}
 
-	if err := setupYCRConnector(ctx, log, mgr, clusterID); err != nil {
+	if err := setupYCRConnector(log, mgr, sdk, clusterID); err != nil {
 		return fmt.Errorf("unable to set up %s connector: %w", ycrconfig.LongName, err)
 	}
-	if err := setupYCRWebhook(ctx, log, mgr); err != nil {
+	if err := setupYCRWebhook(log, mgr, sdk); err != nil {
 		return fmt.Errorf("unable to set up %s webhook: %w", ycrconfig.LongName, err)
 	}
 
@@ -225,77 +224,52 @@ func execute(log logr.Logger) error {
 	return nil
 }
 
-func setupSAKeyConnector(ctx context.Context, log logr.Logger, mgr ctrl.Manager, clusterID string) error {
+func setupSAKeyConnector(log logr.Logger, mgr ctrl.Manager, sdk *ycsdk.SDK, clusterID string) error {
 	log.V(1).Info("starting " + sakeyconfig.ShortName + " connector")
-	sakeyReconciler, err := sakeyconnector.NewStaticAccessKeyReconciler(
-		ctx,
-		mgr.GetClient(),
+	sakeyReconciler := sakeyconnector.NewStaticAccessKeyReconciler(
 		ctrl.Log.WithName("connector").WithName(sakeyconfig.ShortName),
+		mgr.GetClient(),
+		sdk,
 		clusterID,
 	)
-	if err != nil {
-		return err
-	}
-
 	return sakeyReconciler.SetupWithManager(mgr)
 }
 
-func setupSAKeyWebhook(ctx context.Context, log logr.Logger, mgr ctrl.Manager) error {
+func setupSAKeyWebhook(log logr.Logger, mgr ctrl.Manager, sdk *ycsdk.SDK) error {
 	log.V(1).Info("starting " + sakeyconfig.ShortName + " webhook")
-
-	validator, err := sakeywebhook.NewSAKeyValidator(ctx)
-	if err != nil {
-		return err
-	}
-
+	validator := sakeywebhook.NewSAKeyValidator(sdk)
 	return webhook.RegisterValidatingHandler(mgr, &sakey.StaticAccessKey{}, validator)
 }
 
-func setupYCRConnector(ctx context.Context, log logr.Logger, mgr ctrl.Manager, clusterID string) error {
+func setupYCRConnector(log logr.Logger, mgr ctrl.Manager, sdk *ycsdk.SDK, clusterID string) error {
 	log.V(1).Info("starting " + ycrconfig.ShortName + " connector")
-	ycrReconciler, err := ycrconnector.NewYandexContainerRegistryReconciler(
-		ctx,
-		mgr.GetClient(),
+	ycrReconciler := ycrconnector.NewYandexContainerRegistryReconciler(
 		ctrl.Log.WithName("connector").WithName(ycrconfig.ShortName),
+		mgr.GetClient(),
+		sdk,
 		clusterID,
 	)
-	if err != nil {
-		return err
-	}
 	return ycrReconciler.SetupWithManager(mgr)
 }
 
-func setupYCRWebhook(ctx context.Context, log logr.Logger, mgr ctrl.Manager) error {
+func setupYCRWebhook(log logr.Logger, mgr ctrl.Manager, sdk *ycsdk.SDK) error {
 	log.V(1).Info("starting " + ycrconfig.ShortName + " webhook")
-
-	validator, err := ycrwebhook.NewYCRValidator(ctx)
-	if err != nil {
-		return err
-	}
-
+	validator := ycrwebhook.NewYCRValidator(sdk)
 	return webhook.RegisterValidatingHandler(mgr, &ycr.YandexContainerRegistry{}, validator)
 }
 
 func setupYMQConnector(log logr.Logger, mgr ctrl.Manager) error {
 	log.V(1).Info("starting " + ymqconfig.ShortName + " connector")
-	ymqReconciler, err := ymqconnector.NewYandexMessageQueueReconciler(
+	ymqReconciler := ymqconnector.NewYandexMessageQueueReconciler(
 		mgr.GetClient(),
 		ctrl.Log.WithName("connector").WithName(ymqconfig.ShortName),
 	)
-	if err != nil {
-		return err
-	}
 	return ymqReconciler.SetupWithManager(mgr)
 }
 
 func setupYMQWebhook(log logr.Logger, mgr ctrl.Manager) error {
 	log.V(1).Info("starting " + ymqconfig.ShortName + " webhook")
-
-	validator, err := ymqwebhook.NewYMQValidator(mgr.GetClient())
-	if err != nil {
-		return err
-	}
-
+	validator := ymqwebhook.NewYMQValidator(mgr.GetClient())
 	return webhook.RegisterValidatingHandler(mgr, &ymq.YandexMessageQueue{}, validator)
 }
 
