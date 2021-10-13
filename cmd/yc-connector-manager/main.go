@@ -10,6 +10,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
+
+	"github.com/yandex-cloud/go-sdk/iamkey"
 
 	sakey "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/api/v1"
 	sakeyconnector "github.com/yandex-cloud/k8s-cloud-connectors/connector/sakey/controller"
@@ -46,11 +49,13 @@ var (
 	scheme = runtime.NewScheme()
 
 	// Flag section
-	metricsAddr          string
-	enableLeaderElection bool
-	debug                bool
-	probeAddr            string
-	clusterID            string
+	metricsAddr            string
+	enableLeaderElection   bool
+	debug                  bool
+	probeAddr              string
+	clusterID              string
+	serviceAccountKeyFile  string
+	serviceAccountMetadata bool
 )
 
 func init() {
@@ -71,6 +76,10 @@ func init() {
 			"Enabling this will ensure there is only one active connector manager.",
 	)
 	flag.BoolVar(&debug, "debug", false, "Enable debug logging for this connector manager.")
+	flag.StringVar(&serviceAccountKeyFile, "service-account-key-file", "",
+		"Path to service account key file that will be used for authorization in Yandex Cloud")
+	flag.BoolVar(&serviceAccountMetadata, "service-account-metadata", false,
+		"If true, use service account token from metadata service for authorization in Yandex Cloud")
 }
 
 func getClusterIDFromNodeMetadata(sdk *ycsdk.SDK) (string, error) {
@@ -134,10 +143,22 @@ func main() {
 	ctrl.SetLogger(log)
 	setupLog := ctrl.Log.WithName("setup")
 
+	if err := validateFlags(); err != nil {
+		setupLog.Error(err, "failed to validate arguments")
+		os.Exit(1)
+	}
+
 	if err := execute(setupLog); err != nil {
 		setupLog.Error(err, "connector manager error")
 		os.Exit(1)
 	}
+}
+
+func validateFlags() error {
+	if serviceAccountMetadata && serviceAccountKeyFile != "" {
+		return fmt.Errorf("only one of --service-account-metadata and --service-account-key-file should be set")
+	}
+	return nil
 }
 
 //nolint:gocyclo
@@ -145,13 +166,9 @@ func execute(log logr.Logger) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	sdk, err := ycsdk.Build(
-		ctx, ycsdk.Config{
-			Credentials: ycsdk.InstanceServiceAccount(),
-		},
-	)
+	sdk, err := initSDK(ctx, log)
 	if err != nil {
-		return fmt.Errorf("unable to create ycsdk: %w", err)
+		return err
 	}
 
 	if clusterID == "" {
@@ -222,6 +239,40 @@ func execute(log logr.Logger) error {
 	}
 
 	return nil
+}
+
+func initSDK(ctx context.Context, log logr.Logger) (*ycsdk.SDK, error) {
+	if serviceAccountMetadata {
+		log.Info("SDK is initialized with service account token from metadata")
+		return ycsdk.Build(ctx,
+			ycsdk.Config{
+				Credentials: ycsdk.InstanceServiceAccount(),
+			})
+	}
+
+	key, err := parseServiceAccountKey(serviceAccountKeyFile)
+	if err != nil {
+		return nil, err
+	}
+
+	creds, err := ycsdk.ServiceAccountKey(key)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Info("SDK is initialized with service account key from file")
+	return ycsdk.Build(ctx,
+		ycsdk.Config{
+			Credentials: creds,
+		})
+}
+
+func parseServiceAccountKey(file string) (*iamkey.Key, error) {
+	trimmed := strings.TrimSpace(file)
+	if trimmed == "" {
+		return nil, fmt.Errorf("path to service account key file is empty")
+	}
+	return iamkey.ReadFromJSONFile(file)
 }
 
 func setupSAKeyConnector(log logr.Logger, mgr ctrl.Manager, sdk *ycsdk.SDK, clusterID string) error {
