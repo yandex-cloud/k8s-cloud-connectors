@@ -29,16 +29,12 @@ type yandexMessageQueueReconciler struct {
 	log     logr.Logger
 }
 
-func NewYandexMessageQueueReconciler(cl client.Client, log logr.Logger) (*yandexMessageQueueReconciler, error) {
-	impl, err := adapter.NewYandexMessageQueueAdapterSDK()
-	if err != nil {
-		return nil, err
-	}
+func NewYandexMessageQueueReconciler(cl client.Client, log logr.Logger) *yandexMessageQueueReconciler {
 	return &yandexMessageQueueReconciler{
 		Client:  cl,
-		adapter: impl,
+		adapter: adapter.NewYandexMessageQueueAdapterSDK(),
 		log:     log,
-	}, nil
+	}
 }
 
 // +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexmessagequeues,verbs=get;list;watch;create;update;patch;delete

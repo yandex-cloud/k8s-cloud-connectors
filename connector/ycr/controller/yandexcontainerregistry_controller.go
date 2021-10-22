@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 
+	ycsdk "github.com/yandex-cloud/go-sdk"
+
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -27,19 +29,14 @@ type yandexContainerRegistryReconciler struct {
 	clusterID string
 }
 
-func NewYandexContainerRegistryReconciler(
-	ctx context.Context, cl client.Client, log logr.Logger, clusterID string,
-) (*yandexContainerRegistryReconciler, error) {
-	impl, err := adapter.NewYandexContainerRegistryAdapterSDK(ctx)
-	if err != nil {
-		return nil, err
-	}
+func NewYandexContainerRegistryReconciler(log logr.Logger, cl client.Client,
+	sdk *ycsdk.SDK, clusterID string) *yandexContainerRegistryReconciler {
 	return &yandexContainerRegistryReconciler{
 		Client:    cl,
-		adapter:   impl,
+		adapter:   adapter.NewYandexContainerRegistryAdapterSDK(sdk),
 		log:       log,
 		clusterID: clusterID,
-	}, nil
+	}
 }
 
 // +kubebuilder:rbac:groups=connectors.cloud.yandex.com,resources=yandexcontainerregistries,verbs=get;list;watch;create;update;patch;delete

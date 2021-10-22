@@ -15,8 +15,8 @@ import (
 type YandexMessageQueueAdapterSDK struct {
 }
 
-func NewYandexMessageQueueAdapterSDK() (YandexMessageQueueAdapter, error) {
-	return &YandexMessageQueueAdapterSDK{}, nil
+func NewYandexMessageQueueAdapterSDK() YandexMessageQueueAdapter {
+	return &YandexMessageQueueAdapterSDK{}
 }
 
 func (r *YandexMessageQueueAdapterSDK) Create(

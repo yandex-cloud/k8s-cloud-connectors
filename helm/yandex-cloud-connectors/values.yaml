@@ -1,3 +1,5 @@
 namespace: yandex-cloud-connectors
 imageRegistry: cr.yandex/yc/cloud-connectors
 debug: false
+saKey:
+

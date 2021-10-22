@@ -26,8 +26,8 @@ type YMQValidator struct {
 	cl client.Client
 }
 
-func NewYMQValidator(cl client.Client) (webhook.Validator, error) {
-	return &YMQValidator{cl: cl}, nil
+func NewYMQValidator(cl client.Client) webhook.Validator {
+	return &YMQValidator{cl: cl}
 }
 
 func (r *YMQValidator) ValidateCreation(ctx context.Context, log logr.Logger, obj runtime.Object) error {

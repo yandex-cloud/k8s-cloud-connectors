@@ -25,17 +25,8 @@ type SAKeyValidator struct {
 	sdk *ycsdk.SDK
 }
 
-func NewSAKeyValidator(ctx context.Context) (webhook.Validator, error) {
-	sdk, err := ycsdk.Build(
-		ctx,
-		ycsdk.Config{
-			Credentials: ycsdk.InstanceServiceAccount(),
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &SAKeyValidator{sdk: sdk}, nil
+func NewSAKeyValidator(sdk *ycsdk.SDK) webhook.Validator {
+	return &SAKeyValidator{sdk: sdk}
 }
 
 func (r *SAKeyValidator) ValidateCreation(ctx context.Context, log logr.Logger, obj runtime.Object) error {

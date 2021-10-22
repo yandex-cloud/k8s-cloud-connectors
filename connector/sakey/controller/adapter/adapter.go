@@ -14,19 +14,10 @@ type StaticAccessKeyAdapterSDK struct {
 	sdk *ycsdk.SDK
 }
 
-func NewStaticAccessKeyAdapter(ctx context.Context) (StaticAccessKeyAdapter, error) {
-	sdk, err := ycsdk.Build(
-		ctx,
-		ycsdk.Config{
-			Credentials: ycsdk.InstanceServiceAccount(),
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
+func NewStaticAccessKeyAdapter(sdk *ycsdk.SDK) StaticAccessKeyAdapter {
 	return &StaticAccessKeyAdapterSDK{
 		sdk: sdk,
-	}, nil
+	}
 }
 
 func (r StaticAccessKeyAdapterSDK) Create(

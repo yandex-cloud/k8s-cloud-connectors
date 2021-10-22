@@ -14,19 +14,10 @@ type YandexContainerRegistryAdapterSDK struct {
 	sdk *ycsdk.SDK
 }
 
-func NewYandexContainerRegistryAdapterSDK(ctx context.Context) (YandexContainerRegistryAdapter, error) {
-	sdk, err := ycsdk.Build(
-		ctx, ycsdk.Config{
-			Credentials: ycsdk.InstanceServiceAccount(),
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
+func NewYandexContainerRegistryAdapterSDK(sdk *ycsdk.SDK) YandexContainerRegistryAdapter {
 	return YandexContainerRegistryAdapterSDK{
 		sdk: sdk,
-	}, nil
+	}
 }
 
 func (r YandexContainerRegistryAdapterSDK) Create(
