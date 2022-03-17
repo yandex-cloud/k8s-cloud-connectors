@@ -33,7 +33,7 @@ helm install yandex-cloud-connectors helm/yandex-cloud-connectors
 * [*kubectl*](https://kubernetes.io/ru/docs/reference/kubectl/overview)
 * [*yc*](https://cloud.yandex.ru/docs/cli/quickstart)
 
-_Более развернутый пример, демонстрирующий больше возможностей **YCC**, находится в этом репозитории, в [папке "example"](./example)._
+_Более развернутый пример, демонстрирующий больше возможностей **YCC**, находится в этом репозитории, в [папке "examples"](./examples)._
 
 Покажем пример работы **YCC** на [Yandex Container Registry](https://cloud.yandex.ru/services/container-registry).
 Для начала нам надо дать права на работу с Container Registry сервисному аккаунту,
